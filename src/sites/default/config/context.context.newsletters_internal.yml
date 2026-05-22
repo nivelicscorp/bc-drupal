@@ -1,0 +1,86 @@
+uuid: a797a224-a9be-4f60-b3be-3752c2902030
+langcode: es
+status: true
+dependencies:
+  config:
+    - views.view.newsletter_internal
+  content:
+    - 'block_content:sider_bar:bcbb3fb9-71f3-4699-ad1c-47e1722ecdde'
+  module:
+    - block_content
+    - ctools
+    - views
+label: 'Boletines interna'
+name: newsletters_internal
+group: theme
+description: ''
+requireAllConditions: false
+disabled: false
+conditions:
+  'entity_bundle:node':
+    id: 'entity_bundle:node'
+    negate: false
+    uuid: e175bd3f-4acf-432e-bf01-743dceabcc8c
+    context_mapping:
+      node: '@node.node_route_context:node'
+    bundles:
+      bulletin: bulletin
+reactions:
+  blocks:
+    id: blocks
+    uuid: 9e659ed4-866d-4595-afd8-582e5be6d961
+    blocks:
+      e646356a-2a03-4665-ba70-550b709a07bf:
+        uuid: e646356a-2a03-4665-ba70-550b709a07bf
+        id: 'views_block:newsletter_internal-outstanding_block_2'
+        label: 'Boletines relacionados'
+        provider: views
+        label_display: visible
+        region: sidebar_right
+        weight: '1'
+        custom_id: views_block_newsletter_internal_outstanding_block_2
+        theme: brigard
+        css_class: 'outstanding-items-container '
+        unique: 0
+        context_id: newsletters_internal
+        context_mapping: {  }
+        views_label: 'Boletines relacionados'
+        items_per_page: none
+        override: {  }
+      acc6fc22-228a-4d51-bf66-efd0c1cb047c:
+        uuid: acc6fc22-228a-4d51-bf66-efd0c1cb047c
+        id: 'block_content:bcbb3fb9-71f3-4699-ad1c-47e1722ecdde'
+        label: Contactenos
+        provider: block_content
+        label_display: '0'
+        region: sidebar_right
+        weight: '0'
+        custom_id: block_content_bcbb3fb9_71f3_4699_ad1c_47e1722ecdde
+        theme: brigard
+        css_class: 'block-contact-sidebar block-contact-sidebar-color--blue'
+        unique: 0
+        context_id: newsletters_internal
+        context_mapping: {  }
+        status: true
+        info: ''
+        view_mode: full
+      dfb33e54-667a-4ce4-8c58-910734aaa78e:
+        uuid: dfb33e54-667a-4ce4-8c58-910734aaa78e
+        id: 'views_block:newsletter_internal-block_1'
+        label: ''
+        provider: views
+        label_display: visible
+        region: sidebar_right
+        weight: '-1'
+        custom_id: views_block_newsletter_internal_block_1
+        theme: brigard
+        css_class: sidebar-boletin
+        unique: 0
+        context_id: newsletters_internal
+        context_mapping: {  }
+        views_label: ''
+        items_per_page: none
+        override: {  }
+    include_default_blocks: 0
+    saved: false
+weight: 0

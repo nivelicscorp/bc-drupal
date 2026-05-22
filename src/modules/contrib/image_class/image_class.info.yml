@@ -1,0 +1,11 @@
+name: Image Class
+type: module
+description: 'Extends the Image formatter by adding an option to add an element class.'
+core_version_requirement: ^8 || ^9
+dependencies:
+  - drupal:image
+
+# Information added by Drupal.org packaging script on 2021-11-09
+version: '8.x-1.1'
+project: 'image_class'
+datestamp: 1636460422

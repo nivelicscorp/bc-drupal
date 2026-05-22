@@ -1,0 +1,13 @@
+display:
+  highlighted_in_internship:
+    display_options:
+      pager:
+        options:
+          views_infinite_scroll:
+            button_text: 'Load more'
+  default:
+    display_options:
+      pager:
+        options:
+          views_infinite_scroll:
+            button_text: 'Load more'

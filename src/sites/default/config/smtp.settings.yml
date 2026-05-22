@@ -1,0 +1,4 @@
+langcode: es
+smtp_autotls: true
+smtp_timeout: 30
+smtp_keepalive: false

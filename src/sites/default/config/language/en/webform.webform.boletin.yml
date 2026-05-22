@@ -1,0 +1,16 @@
+elements: |
+  processed_text:
+    '#text': "<h2 class=\"text-align-center\">Subscribe to our newsletter</h2>\n"
+  nombre_completo:
+    '#placeholder': 'Full name'
+  correo_electronico_:
+    '#placeholder': Email
+  empresa:
+    '#placeholder': Company
+  area_de_practica:
+    '#placeholder': 'Practice area'
+  actions:
+    '#submit__label': REGISTER
+title: Bulletin
+settings:
+  confirmation_message: 'Your information was received correctly.'

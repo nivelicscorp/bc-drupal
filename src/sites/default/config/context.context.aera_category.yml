@@ -1,0 +1,105 @@
+uuid: 8d99fb6a-fd02-4ea9-800a-ce3918a4b7c5
+langcode: es
+status: true
+dependencies:
+  config:
+    - views.view.what_we_doing
+  content:
+    - 'block_content:sider_bar:7d106f6c-fd80-407c-b122-1eee75379fce'
+    - 'block_content:sider_bar:bcbb3fb9-71f3-4699-ad1c-47e1722ecdde'
+  module:
+    - block_content
+    - ctools
+    - views
+label: 'Categorias Areas'
+name: aera_category
+group: theme
+description: ''
+requireAllConditions: true
+disabled: false
+conditions:
+  'entity_bundle:taxonomy_term':
+    id: 'entity_bundle:taxonomy_term'
+    negate: false
+    uuid: 8ee89cf7-c68d-424f-9587-d3ef0ced97f5
+    context_mapping:
+      taxonomy_term: '@custom_context_provider.taxonomy_term_context:taxonomy_term'
+    bundles:
+      areas: areas
+      indrustrias: indrustrias
+reactions:
+  blocks:
+    id: blocks
+    uuid: 8b82952b-7db9-413f-a4a9-df2e8fb44618
+    blocks:
+      f16d18c0-e35e-4f1b-b6b8-a27d41048784:
+        uuid: f16d18c0-e35e-4f1b-b6b8-a27d41048784
+        id: 'views_block:what_we_doing-collapsibe_block_2'
+        label: ''
+        provider: views
+        label_display: '0'
+        region: sidebar_right
+        weight: '-1'
+        custom_id: views_block_what_we_doing_collapsibe_block_2
+        theme: brigard
+        css_class: ''
+        unique: 0
+        context_id: aera_category
+        context_mapping: {  }
+        views_label: ''
+        items_per_page: none
+        override: {  }
+      932bf08d-6535-44d0-afcf-d72fcf6cc4f0:
+        uuid: 932bf08d-6535-44d0-afcf-d72fcf6cc4f0
+        id: 'views_block:what_we_doing-collapsibe_block_1'
+        label: ''
+        provider: views
+        label_display: '0'
+        region: sidebar_right
+        weight: '-2'
+        custom_id: views_block_what_we_doing_collapsibe_block_1
+        theme: brigard
+        css_class: ''
+        unique: 0
+        context_id: aera_category
+        context_mapping: {  }
+        views_label: ''
+        items_per_page: none
+        override: {  }
+      4e317e40-06b4-43ac-8497-375abc05e0d7:
+        uuid: 4e317e40-06b4-43ac-8497-375abc05e0d7
+        id: 'block_content:bcbb3fb9-71f3-4699-ad1c-47e1722ecdde'
+        label: Contactenos
+        provider: block_content
+        label_display: '0'
+        region: sidebar_right
+        weight: '1'
+        custom_id: block_content_bcbb3fb9_71f3_4699_ad1c_47e1722ecdde
+        theme: brigard
+        css_class: 'block-contact-sidebar block-contact-sidebar-color--blue'
+        unique: 0
+        context_id: aera_category
+        context_mapping: {  }
+        status: true
+        info: ''
+        view_mode: full
+      70e33b09-25a5-4256-8d5d-d61d7abeab50:
+        uuid: 70e33b09-25a5-4256-8d5d-d61d7abeab50
+        id: 'block_content:7d106f6c-fd80-407c-b122-1eee75379fce'
+        label: 'Nuestros abogados'
+        provider: block_content
+        label_display: '0'
+        region: sidebar_right
+        weight: '0'
+        custom_id: block_content_7d106f6c_fd80_407c_b122_1eee75379fce
+        theme: brigard
+        css_class: 'block-contact-sidebar block-contact-sidebar-color--transparent nuestros-abogados'
+        unique: 0
+        context_id: aera_category
+        context_mapping: {  }
+        status: true
+        info: ''
+        view_mode: full
+    include_default_blocks: 0
+    saved: false
+weight: 0

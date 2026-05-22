@@ -1,0 +1,3 @@
+.block-search form input[name="fulltext_input"], .block-search form .form-actions button[data-drupal-selector="edit-submit"] {
+  display: none;
+}

@@ -1,0 +1,6 @@
+name: searcher Modal
+type: module
+description: Display a searcher modal
+core_version_requirement: ^8 || ^9 || ^10
+core: 8.x
+package: Custom

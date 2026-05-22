@@ -1,0 +1,4 @@
+services:
+  bu_sections.bu_sections_manager:
+    class: Drupal\bu_sections\BuSectionsManager
+    arguments: ['@entity_type.manager']

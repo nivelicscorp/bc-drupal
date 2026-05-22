@@ -1,0 +1,711 @@
+bu_page_header: null
+_core:
+  default_config_hash: PiKKW8ZjMIT5HDMqBln2lQmwxJqKumHf9fLfMhDPJj0
+langcode: es
+content:
+  fieldset:
+    0:
+      url: noticias
+      title: Noticias
+      subtitle: ''
+      lead: 'Las últimas noticias legales sobre diferentes industrias y áreas de práctica'
+      image:
+        - '616'
+    1:
+      url: que-hacemos
+      title: 'Qué hacemos'
+      subtitle: ''
+      lead: 'Prestamos una asesoría integral y especializada en temas de propiedad intelectual'
+      image:
+        - '617'
+    2:
+      url: boletines
+      title: 'Boletín Legal'
+      subtitle: ''
+      lead: 'Las últimas noticias legales sobre diferentes industrias y áreas de práctica'
+      image:
+        - '618'
+    3:
+      url: webform
+      title: Contáctenos
+      subtitle: ''
+      lead: 'Facilisis illum incassum interdico luctus molior nostrud scisco. Aptent dolus gilvus immitto nisl obruo pala suscipere tum vel. Dolus eum qui quidem virtus. Amet commodo ex in iustum oppeto scisco tum vicis. Et ibidem metuo praemitto premo refoveo. Adipiscing gravis premo quis ut vindico. Decet in nibh pagus persto usitas validus velit. Cogo eros facilisi praemitto utrum vindico.'
+      image:
+        - '619'
+    4:
+      url: what-we-do
+      title: 'What We Do'
+      subtitle: ''
+      lead: "We provide comprehensive and specialized advice on intellectual property issues\r\n\r\n"
+      image:
+        - '620'
+    5:
+      url: contact
+      title: 'Contact Us'
+      subtitle: ''
+      lead: "Please fill out the following form so that we can attend your request\r\n\r\n"
+      image:
+        - '621'
+    6:
+      url: contacto
+      title: Contáctenos
+      subtitle: ''
+      lead: '¿Cómo podemos ayudarle?'
+      image:
+        - '622'
+    7:
+      url: inscription
+      title: 'Work With Us'
+      subtitle: ''
+      lead: 'As a leading firm in the Colombian legal market, we are aware that our success factor is human talent'
+      image:
+        - '623'
+    8:
+      url: trabaje-con-nosotros
+      title: 'Trabaje con nosotros'
+      subtitle: ''
+      lead: 'Como firma líder del mercado legal colombiano, somos conscientes que nuestro factor de éxito es el talento humano'
+      image:
+        - '624'
+    9:
+      url: summer-internships-registration
+      title: 'Summer Internships'
+      subtitle: ''
+      lead: 'With our Summer Internships, we open our doors to final semester law students to start their career, joining our team for seven weeks'
+      image:
+        - '625'
+    10:
+      url: pasantias-verano-inscripcion
+      title: 'Pasantías de verano'
+      subtitle: ''
+      lead: 'Le abrimos las puertas de la firma a los estudiantes de últimos semestres de Derecho, integrándose a nuestro equipo de trabajo durante siete semanas'
+      image:
+        - '626'
+    11:
+      url: lawyers
+      title: 'Our People'
+      subtitle: ''
+      lead: 'We have specialized teams with expertise in intellectual property matters that work with the highest standards of professional and human excellence'
+      image:
+        - '627'
+    12:
+      url: ''
+      title: ''
+      subtitle: ''
+      lead: ''
+      image: {  }
+    13:
+      url: abogados
+      title: 'Nuestra gente'
+      subtitle: ''
+      lead: 'Tenemos un equipo especializado en temas de propiedad intelectual que trabaja con los más altos estándares de excelencia profesional y humana'
+      image:
+        - '628'
+    14:
+      url: quienes-somos
+      title: 'Quiénes somos'
+      subtitle: ''
+      lead: '“Brigard Castro es líder del mercado, ya que es reconocida por su reputación y su experiencia (...)” Chambers and Partners'
+      image:
+        - '629'
+    15:
+      url: who-we-are
+      title: ' Who We Are'
+      subtitle: ''
+      lead: '“Brigard Castro is felt to be a leader in the market, being noted for both its reputation and activity (...)” Chambers and Partners'
+      image:
+        - '630'
+    16:
+      url: shared-value
+      title: 'Shared Value'
+      subtitle: ''
+      lead: "We are committed to the integral development of the most vulnerable communities in Colombia through our Shared Value Program\r\n\r\n"
+      image:
+        - '631'
+    17:
+      url: valor-compartido
+      title: 'Valor Compartido'
+      subtitle: ''
+      lead: 'Estamos comprometidos con el desarrollo integral de las comunidades más vulnerables de Colombia a través de nuestro programa de Valor Compartido'
+      image:
+        - '632'
+    18:
+      url: contacto
+      title: Contáctenos
+      subtitle: ''
+      lead: 'Por favor diligencie el formato para atender su solicitud'
+      image:
+        - '633'
+    19:
+      url: historia
+      title: Historia
+      subtitle: ''
+      lead: "Más de 80 años como la firma líder en propiedad intelectual\r\n"
+      image:
+        - '634'
+    20:
+      url: history
+      title: History
+      subtitle: ''
+      lead: "Founded in 1934 and with more than 80 years of experience, we are recognized as the leading law firm in Colombia and one of the most prestigious in the region\r\n\r\n\r\n"
+      image:
+        - '635'
+    21:
+      url: awards
+      title: Awards
+      subtitle: ''
+      lead: "International publications specialized in legal markets highlight our attorneys and the firm\r\n\r\n"
+      image:
+        - '636'
+    22:
+      url: reconocimientos
+      title: Reconocimientos
+      subtitle: ''
+      lead: "Las publicaciones internacionales especializadas en el mercado de firmas de abogados destacan a nuestros abogados y a la firma\r\n\r\n"
+      image:
+        - '637'
+    23:
+      url: conexiones-globales
+      title: 'Conexiones Globales'
+      subtitle: ''
+      lead: 'Pertenecemos a las más importantes redes globales de firmas de abogados'
+      image:
+        - '638'
+    24:
+      url: global-connections
+      title: 'Global Connections'
+      subtitle: ''
+      lead: 'We provide our clients with a privileged access to top tier law firms in most countries. These networks allow us to be at the forefront of best practices'
+      image:
+        - '639'
+    25:
+      url: corporate-governance
+      title: 'Corporate Governance'
+      subtitle: ''
+      lead: 'We have a corporate governance structure that allows us to implement the best international practices'
+      image:
+        - '640'
+    26:
+      url: gobierno-corporativo
+      title: 'Gobierno Corporativo'
+      subtitle: ''
+      lead: 'Contamos con una estructura de gobierno corporativo que nos permite implementar las mejores prácticas internacionales'
+      image:
+        - '641'
+    27:
+      url: ambiental
+      title: Ambiental
+      subtitle: ''
+      lead: "Somos conscientes del entorno y hacemos lo posible por reducir nuestro impacto ambiental\r\n\r\n"
+      image:
+        - '642'
+    28:
+      url: environmental
+      title: Environmental
+      subtitle: ''
+      lead: "We are aware of our surroundings and do everything possible to reduce our environmental impact\r\n\r\n"
+      image:
+        - '643'
+    29:
+      url: newsletters
+      title: Newsletters
+      subtitle: ''
+      lead: 'The latest legal news about different industries and practice areas'
+      image:
+        - '644'
+    30:
+      url: diversity
+      title: Diversity
+      subtitle: ''
+      lead: 'We consider diversity as a source of creativity, innovation and interchangeability of ideas that add value to our environment.'
+      image:
+        - '645'
+    31:
+      url: diversidad
+      title: Diversidad
+      subtitle: ''
+      lead: 'Consideramos que la diversidad es fuente de creatividad, innovación e intercambio de ideas que agregan valor a nuestro entorno.'
+      image:
+        - '646'
+    32:
+      url: educacion
+      title: Educación
+      subtitle: ''
+      lead: 'Para nosotros, la educación es fuente de grandes oportunidades para las nuevas generaciones.'
+      image:
+        - '647'
+    33:
+      url: education
+      title: Education
+      subtitle: ''
+      lead: "For us education is a source of great opportunities for future generations.\r\n\r\n"
+      image:
+        - '648'
+    34:
+      url: pro-bono
+      title: 'Pro bono'
+      subtitle: ''
+      lead: 'Ofrecemos un programa de asesoría pro bono que busca facilitar el acceso a la justicia a personas con escasos recursos económicos'
+      image:
+        - '649'
+    35:
+      url: pro-bono
+      title: ''
+      subtitle: ''
+      lead: ''
+      image:
+        - '650'
+    36:
+      url: reconciliacion
+      title: Reconciliación
+      subtitle: ''
+      lead: "Nuestro equipo está comprometido con la generación de nuevas oportunidades de desarrollo económico y social para comunidades víctimas de la violencia\r\n\r\n"
+      image:
+        - '651'
+    37:
+      url: reconciliation
+      title: Reconciliation
+      subtitle: ''
+      lead: 'Our team is committed to create new opportunities in terms of economic or social development for communities that have been victim of our country’s violence'
+      image:
+        - '652'
+    38:
+      url: summer-internships
+      title: 'Summer Internships'
+      subtitle: ''
+      lead: 'With our Summer Internships, we open our doors to final semester law students to start their career, joining our team for seven weeks'
+      image:
+        - '653'
+    39:
+      url: pasantias-de-verano
+      title: 'Pasantías de verano'
+      subtitle: ''
+      lead: 'Le abrimos las puertas de la firma a los estudiantes de últimos semestres de Derecho, integrándose a nuestro equipo de trabajo durante siete semanas'
+      image:
+        - '654'
+    40:
+      url: pasantias-de-verano-2017
+      title: ' Pasantías de verano 2017'
+      subtitle: ''
+      lead: 'Le abrimos las puertas de la firma a los estudiantes de últimos semestres de Derecho, integrándose a nuestro equipo de trabajo durante siete semanas'
+      image:
+        - '655'
+    41:
+      url: pasantias-de-verano-2016
+      title: ' Pasantías de verano 2016'
+      subtitle: ''
+      lead: 'Le abrimos las puertas de la firma a los estudiantes de últimos semestres de Derecho, integrándose a nuestro equipo de trabajo durante siete semanas'
+      image:
+        - '656'
+    42:
+      url: pasantias-de-verano-2015
+      title: ' Pasantías de verano 2015'
+      subtitle: ''
+      lead: 'Le abrimos las puertas de la firma a los estudiantes de últimos semestres de Derecho, integrándose a nuestro equipo de trabajo durante siete semanas'
+      image:
+        - '657'
+    43:
+      url: pasantias-de-verano-2014
+      title: ' Pasantías de verano 2014'
+      subtitle: ''
+      lead: 'Le abrimos las puertas de la firma a los estudiantes de últimos semestres de Derecho, integrándose a nuestro equipo de trabajo durante siete semanas'
+      image:
+        - '658'
+    44:
+      url: pasantias-de-verano-2013
+      title: 'Pasantías de verano 2013'
+      subtitle: ''
+      lead: 'Le abrimos las puertas de la firma a los estudiantes de últimos semestres de Derecho, integrándose a nuestro equipo de trabajo durante siete semanas'
+      image:
+        - '659'
+    45:
+      url: pasantias-de-verano-2012
+      title: 'Pasantías de verano 2012'
+      subtitle: ''
+      lead: 'Le abrimos las puertas de la firma a los estudiantes de últimos semestres de Derecho, integrándose a nuestro equipo de trabajo durante siete semanas'
+      image:
+        - '660'
+    46:
+      url: pasantias-de-verano-2011
+      title: 'Pasantías de verano 2011'
+      subtitle: ''
+      lead: 'Le abrimos las puertas de la firma a los estudiantes de últimos semestres de Derecho, integrándose a nuestro equipo de trabajo durante siete semanas'
+      image:
+        - '661'
+    47:
+      url: pasantias-de-verano-2010
+      title: 'Pasantías de verano 2010'
+      subtitle: ''
+      lead: 'Le abrimos las puertas de la firma a los estudiantes de últimos semestres de Derecho, integrándose a nuestro equipo de trabajo durante siete semanas'
+      image:
+        - '662'
+    48:
+      url: pasantias-de-verano-2009
+      title: 'Pasantías de verano 2009'
+      subtitle: ''
+      lead: 'Le abrimos las puertas de la firma a los estudiantes de últimos semestres de Derecho, integrándose a nuestro equipo de trabajo durante siete semanas'
+      image:
+        - '663'
+    49:
+      url: strategic-consulting
+      title: ''
+      subtitle: ''
+      lead: ''
+      image:
+        - '664'
+    50:
+      url: asesoria-estrategica
+      title: ''
+      subtitle: ''
+      lead: ''
+      image:
+        - '666'
+    51:
+      url: derechos-de-autor
+      title: ''
+      subtitle: ''
+      lead: ''
+      image:
+        - '667'
+    52:
+      url: news
+      title: News
+      subtitle: ''
+      lead: 'The latest legal news about different industries and practice areas'
+      image:
+        - '668'
+    53:
+      url: litigios
+      title: ''
+      subtitle: ''
+      lead: ''
+      image:
+        - '670'
+    54:
+      url: patentes
+      title: ''
+      subtitle: ''
+      lead: ''
+      image:
+        - '671'
+    55:
+      url: registro-de-marcas
+      title: ''
+      subtitle: ''
+      lead: ''
+      image:
+        - '672'
+    56:
+      url: regulacion-de-industria-de-medicamentos-y-alimentos
+      title: ''
+      subtitle: ''
+      lead: ''
+      image:
+        - '673'
+    57:
+      url: regulacion-en-salud
+      title: ''
+      subtitle: ''
+      lead: ''
+      image:
+        - '674'
+    58:
+      url: copyright
+      title: ''
+      subtitle: ''
+      lead: ''
+      image:
+        - '675'
+    59:
+      url: asesoria-estrategica
+      title: 'Asesoría Estratégica'
+      subtitle: ''
+      lead: 'Proveemos la asesoría estratégica necesaria para proteger los activos de propiedad intelectual de nuestros clientes desde una perspectiva orientada al negocio'
+      image:
+        - '676'
+    60:
+      url: healthcare
+      title: ''
+      subtitle: ''
+      lead: ''
+      image:
+        - '677'
+    61:
+      url: life-sciences
+      title: ''
+      subtitle: ''
+      lead: ''
+      image:
+        - '679'
+    62:
+      url: litigation
+      title: ''
+      subtitle: ''
+      lead: ''
+      image:
+        - '681'
+    63:
+      url: patents
+      title: ''
+      subtitle: ''
+      lead: ''
+      image:
+        - '683'
+    64:
+      url: strategic-consulting
+      title: ''
+      subtitle: ''
+      lead: ''
+      image:
+        - '685'
+    65:
+      url: trademarks
+      title: ''
+      subtitle: ''
+      lead: ''
+      image:
+        - '686'
+    66:
+      url: agroindustria
+      title: ''
+      subtitle: ''
+      lead: ''
+      image:
+        - '687'
+    67:
+      url: automotriz
+      title: ''
+      subtitle: ''
+      lead: ''
+      image:
+        - '688'
+    68:
+      url: consumo-y-retail
+      title: ''
+      subtitle: ''
+      lead: ''
+      image:
+        - '689'
+    69:
+      url: farmaceutico
+      title: ''
+      subtitle: ''
+      lead: ''
+      image:
+        - '691'
+    70:
+      url: hoteleria-y-turismo
+      title: ''
+      subtitle: ''
+      lead: ''
+      image:
+        - '692'
+    71:
+      url: agribusiness
+      title: ''
+      subtitle: ''
+      lead: ''
+      image:
+        - '693'
+    72:
+      url: automotive
+      title: ''
+      subtitle: ''
+      lead: ''
+      image:
+        - '694'
+    73:
+      url: hotels-and-tourism
+      title: ''
+      subtitle: ''
+      lead: ''
+      image:
+        - '695'
+    74:
+      url: pharmaceutical
+      title: ''
+      subtitle: ''
+      lead: ''
+      image:
+        - '696'
+    75:
+      url: retail-and-consumption
+      title: ''
+      subtitle: ''
+      lead: ''
+      image:
+        - '697'
+    76:
+      url: inscripcion
+      title: 'Trabaje con nosotros'
+      subtitle: ''
+      lead: 'Como firma líder del mercado legal colombiano, somos conscientes que nuestro factor de éxito es el talento humano'
+      image:
+        - '698'
+    77:
+      url: vinculese-bc
+      title: ''
+      subtitle: ''
+      lead: ''
+      image:
+        - '797'
+    78:
+      url: join-bc
+      title: ''
+      subtitle: ''
+      lead: ''
+      image:
+        - '799'
+    79:
+      url: eventos
+      title: Eventos
+      subtitle: ''
+      lead: 'Nuestros eventos y conferencias tratan temas de actualidad legal. Nuestro compromiso es mantenerlo informado con las últimas tendencias del mercado'
+      image:
+        - '834'
+    80:
+      url: ''
+      title: ''
+      subtitle: ''
+      lead: ''
+      image: {  }
+    81:
+      url: ''
+      title: ''
+      subtitle: ''
+      lead: ''
+      image: {  }
+    82:
+      url: ''
+      title: ''
+      subtitle: ''
+      lead: ''
+      image: {  }
+    83:
+      url: ''
+      title: ''
+      subtitle: ''
+      lead: ''
+      image: {  }
+    84:
+      url: ''
+      title: ''
+      subtitle: ''
+      lead: ''
+      image: {  }
+    85:
+      url: ''
+      title: ''
+      subtitle: ''
+      lead: ''
+      image: {  }
+    86:
+      url: ''
+      title: ''
+      subtitle: ''
+      lead: ''
+      image: {  }
+    87:
+      url: ''
+      title: ''
+      subtitle: ''
+      lead: ''
+      image: {  }
+    88:
+      url: ''
+      title: ''
+      subtitle: ''
+      lead: ''
+      image: {  }
+    89:
+      url: ''
+      title: ''
+      subtitle: ''
+      lead: ''
+      image: {  }
+    90:
+      url: ''
+      title: ''
+      subtitle: ''
+      lead: ''
+      image: {  }
+    91:
+      url: ''
+      title: ''
+      subtitle: ''
+      lead: ''
+      image: {  }
+    92:
+      url: ''
+      title: ''
+      subtitle: ''
+      lead: ''
+      image: {  }
+    93:
+      url: ''
+      title: ''
+      subtitle: ''
+      lead: ''
+      image: {  }
+    94:
+      url: ''
+      title: ''
+      subtitle: ''
+      lead: ''
+      image: {  }
+    95:
+      url: ''
+      title: ''
+      subtitle: ''
+      lead: ''
+      image: {  }
+    96:
+      url: ''
+      title: ''
+      subtitle: ''
+      lead: ''
+      image: {  }
+    97:
+      url: ''
+      title: ''
+      subtitle: ''
+      lead: ''
+      image: {  }
+    98:
+      url: ''
+      title: ''
+      subtitle: ''
+      lead: ''
+      image: {  }
+    99:
+      url: ''
+      title: ''
+      subtitle: ''
+      lead: ''
+      image: {  }
+    100:
+      url: ''
+      title: ''
+      subtitle: ''
+      lead: ''
+      image: {  }
+    101:
+      url: ''
+      title: ''
+      subtitle: ''
+      lead: ''
+      image: {  }
+    102:
+      url: ''
+      title: ''
+      subtitle: ''
+      lead: ''
+      image: {  }
+    103:
+      url: ''
+      title: ''
+      subtitle: ''
+      lead: ''
+      image: {  }
+    actions:
+      add: 'Agregar Establecimiento'

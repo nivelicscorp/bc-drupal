@@ -1,0 +1,12 @@
+{
+  "require": {
+    "maennchen/zipstream-php": {
+      "version": "2.1.0",
+      "url": "https://github.com/maennchen/ZipStream-PHP/archive/2.1.0.zip"
+    },
+    "myclabs/php-enum": {
+      "version": "1.7.6",
+      "url": "https://github.com/myclabs/php-enum/archive/1.7.6.zip"
+    }
+  }
+}

@@ -1,0 +1,138 @@
+uuid: 918b253f-58e6-4d71-ad28-bcfc92cb44d8
+langcode: es
+status: true
+dependencies:
+  config:
+    - core.entity_view_mode.node.teaser
+    - field.field.node.evento.body
+    - field.field.node.evento.field_agenda_del_evento
+    - field.field.node.evento.field_anadir_al_calendario
+    - field.field.node.evento.field_area
+    - field.field.node.evento.field_conferencistas
+    - field.field.node.evento.field_es_privado
+    - field.field.node.evento.field_fecha_del_evento
+    - field.field.node.evento.field_fecha_y_hora
+    - field.field.node.evento.field_hora_del_vento
+    - field.field.node.evento.field_image
+    - field.field.node.evento.field_industrias
+    - field.field.node.evento.field_lugar_del_evento
+    - field.field.node.evento.field_metatags
+    - field.field.node.evento.field_tipo_de_evento
+    - field.field.node.evento.field_v
+    - image.style.300x350
+    - node.type.evento
+  module:
+    - addtocalendar
+    - datetime
+    - ds
+    - image_class
+    - options
+    - svg_image
+    - user
+id: node.evento.teaser
+targetEntityType: node
+bundle: evento
+mode: teaser
+content:
+  field_anadir_al_calendario:
+    type: add_to_calendar
+    label: above
+    settings: {  }
+    third_party_settings: {  }
+    weight: 6
+    region: content
+  field_fecha_del_evento:
+    type: datetime_custom
+    label: hidden
+    settings:
+      timezone_override: America/Bogota
+      date_format: 'd \d\e F \d\e Y'
+    third_party_settings:
+      ds:
+        ft:
+          id: default
+          settings:
+            lb: ''
+            lb-col: false
+            classes: {  }
+    weight: 1
+    region: content
+  field_hora_del_vento:
+    type: string
+    label: hidden
+    settings:
+      link_to_entity: false
+    third_party_settings:
+      ds:
+        ft:
+          id: minimal
+          settings:
+            lb: ''
+            lb-col: false
+            classes: {  }
+    weight: 3
+    region: content
+  field_image:
+    type: image
+    label: hidden
+    settings:
+      image_link: content
+      image_style: 300x350
+      svg_attributes:
+        width: 300
+        height: 350
+      svg_render_as_image: true
+      image_loading:
+        attribute: lazy
+    third_party_settings:
+      image_class:
+        class: ''
+      ds:
+        ft:
+          id: default
+          settings:
+            lb: ''
+            lb-col: false
+            classes: {  }
+    weight: 0
+    region: content
+  field_lugar_del_evento:
+    type: string
+    label: hidden
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    weight: 4
+    region: content
+  field_tipo_de_evento:
+    type: list_default
+    label: hidden
+    settings: {  }
+    third_party_settings:
+      ds:
+        ft:
+          id: minimal
+          settings:
+            lb: ''
+            lb-col: false
+            classes: {  }
+    weight: 2
+    region: content
+  links:
+    settings: {  }
+    third_party_settings: {  }
+    weight: 5
+    region: content
+hidden:
+  body: true
+  field_agenda_del_evento: true
+  field_area: true
+  field_conferencistas: true
+  field_es_privado: true
+  field_fecha_y_hora: true
+  field_industrias: true
+  field_metatags: true
+  field_v: true
+  langcode: true
+  search_api_excerpt: true
+  social_simple_buttons: true

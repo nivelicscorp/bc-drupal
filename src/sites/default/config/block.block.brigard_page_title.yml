@@ -1,0 +1,50 @@
+uuid: 32fa2c1d-bcc7-475c-ad20-0978f68fd04e
+langcode: es
+status: true
+dependencies:
+  module:
+    - block_class
+    - context
+    - system
+  theme:
+    - brigard
+third_party_settings:
+  block_class:
+    classes: null
+_core:
+  default_config_hash: 7rR9chwXvdM2H8OYMAYx9Zj3GGlPMrZp_M3ZA4thYTk
+id: brigard_page_title
+theme: brigard
+region: content
+weight: -12
+provider: null
+plugin: page_title_block
+settings:
+  id: page_title_block
+  label: 'Título de la página'
+  label_display: '0'
+  provider: core
+visibility:
+  user_status:
+    id: user_status
+    negate: false
+    context_mapping:
+      user: '@user.current_user_context:current_user'
+    user_status:
+      viewing_profile: '0'
+      logged_viewing_profile: '0'
+      own_page_true: '0'
+      field_value: '0'
+    user_fields: uid
+  context_all:
+    id: context_all
+    negate: null
+    values: ''
+  context:
+    id: context
+    negate: null
+    values: ''
+  request_path:
+    id: request_path
+    negate: true
+    pages: '<front>'

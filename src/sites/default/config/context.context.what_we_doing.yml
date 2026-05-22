@@ -1,0 +1,47 @@
+uuid: 3abe98f0-53f3-4636-8e37-10f53a87c695
+langcode: es
+status: true
+dependencies:
+  content:
+    - 'block_content:recognitions:62976485-360d-4e45-804c-294b1f41163f'
+  module:
+    - block_content
+    - system
+label: 'Que hacemos'
+name: what_we_doing
+group: theme
+description: ''
+requireAllConditions: false
+disabled: false
+conditions:
+  request_path:
+    id: request_path
+    negate: false
+    uuid: b82a8cde-b6e0-43c5-99b5-7c7d0ab45c84
+    context_mapping: {  }
+    pages: /que-hacemos
+reactions:
+  blocks:
+    id: blocks
+    uuid: 3014aadf-1bc9-4fc5-a24d-32e5b734c013
+    blocks:
+      81cdf56a-2cc3-491e-a031-7c1115fdcdf5:
+        uuid: 81cdf56a-2cc3-491e-a031-7c1115fdcdf5
+        id: 'block_content:62976485-360d-4e45-804c-294b1f41163f'
+        label: RECONOCIMIENTOS
+        provider: block_content
+        label_display: visible
+        region: footer_slider
+        weight: '-1'
+        custom_id: block_content_62976485_360d_4e45_804c_294b1f41163f
+        theme: brigard
+        css_class: ''
+        unique: 0
+        context_id: what_we_doing
+        context_mapping: {  }
+        status: true
+        info: ''
+        view_mode: full
+    include_default_blocks: 0
+    saved: false
+weight: 0

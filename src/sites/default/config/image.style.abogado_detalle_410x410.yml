@@ -1,0 +1,15 @@
+uuid: a9b48ae7-ae3f-433a-98ab-073bbdfc3052
+langcode: es
+status: true
+dependencies: {  }
+name: abogado_detalle_410x410
+label: abogado_detalle_410x410
+effects:
+  5013d2b2-0e90-4c12-a513-045534d9ca01:
+    uuid: 5013d2b2-0e90-4c12-a513-045534d9ca01
+    id: image_scale
+    weight: 1
+    data:
+      width: 410
+      height: null
+      upscale: false

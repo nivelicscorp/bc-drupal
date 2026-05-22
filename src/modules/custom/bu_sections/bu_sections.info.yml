@@ -1,0 +1,6 @@
+name: BU Sections
+description: Customizations to the sections (taxonomy vocabulary "section")
+core_version_requirement: ^8 || ^9 || ^10
+package: Custom
+type: module
+core: 8.x

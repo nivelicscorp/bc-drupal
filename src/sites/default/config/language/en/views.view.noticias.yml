@@ -1,0 +1,47 @@
+display:
+  default:
+    display_options:
+      header:
+        area:
+          content:
+            value: "<p class=\"title-block\">últimas noticias</p>\r\n"
+            format: full_html
+      filters:
+        tid:
+          expose:
+            description: ''
+  block_4:
+    display_options:
+      fields:
+        nothing:
+          alter:
+            text: "<div class=\"col-xs-12 col-md-5 col-lg-5 img-new\">\r\n    <figure>\r\n        {{ field_image }}\r\n    </figure>\r\n</div>\r\n<div class=\"col-xs-12 col-md-7 col-lg-7 content-new\">\r\n    <h3 class=\"title-new\">{{ field_sector_noticia }}</h3>\r\n    <h2>{{ title }}</h2>\r\n   \r\n<a href=\"{{ path('entity.node.canonical', {'node': nid }) }}\" class=\"btn-red-arrow\"> btn</a>\r\n</div> "
+  outstanding_block_4:
+    display_options:
+      footer:
+        area:
+          content:
+            value: "<p><a class=\"outstanding-items-bottom-text link-red\" href=\"/noticias\">See all the news</a></p>\r\n"
+            format: full_html
+  page_1:
+    display_options:
+      filters:
+        field_sector_noticia_target_id:
+          expose:
+            label: 'FILTER BY THEME'
+      pager:
+        options:
+          views_infinite_scroll:
+            button_text: 'Load more news'
+  block_1:
+    display_options:
+      fields:
+        nothing:
+          alter:
+            text: "<div class=\"content-new\">\r\n    <h3 class=\"title-new\">{{ field_sector_noticia }}</h3>\r\n    <h2>{{ title }}</h2>\r\n   \r\n<a href=\"{{ path('entity.node.canonical', {'node': nid }) }}\" class=\"btn-red-arrow\"> btn</a>\r\n</div> "
+  block_3:
+    display_options:
+      filters:
+        tid:
+          expose:
+            description: ''

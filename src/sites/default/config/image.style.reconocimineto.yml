@@ -1,0 +1,15 @@
+uuid: 7feb5f4e-4b7e-42fc-9b8b-5dfc0c928fe2
+langcode: es
+status: true
+dependencies: {  }
+name: reconocimineto
+label: reconocimineto
+effects:
+  61ae8dd2-1a6b-477e-b817-881635099fec:
+    uuid: 61ae8dd2-1a6b-477e-b817-881635099fec
+    id: image_scale
+    weight: 1
+    data:
+      width: null
+      height: 130
+      upscale: false

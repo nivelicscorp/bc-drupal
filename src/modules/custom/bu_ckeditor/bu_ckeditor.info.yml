@@ -1,0 +1,10 @@
+name: BU CKEditor
+description: Module to define, override and customize CKEditor plugins
+core_version_requirement: ^8 || ^9 || ^10
+core: '8.x'
+type: module
+package: Custom
+
+dependencies:
+  - ckeditor
+  - editor

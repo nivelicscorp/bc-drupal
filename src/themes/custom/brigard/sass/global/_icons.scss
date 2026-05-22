@@ -1,0 +1,18 @@
+.ic-linkedin{
+	&:after{
+		content: "\e902";
+		@extend %icons;
+	}
+}
+.ic-twitter{
+	&:after{
+		content: "\e900";
+		@extend %icons;
+	}
+}
+.ic-facebook{
+	&:after{
+		content: "\e901";
+		@extend %icons;
+	}
+}

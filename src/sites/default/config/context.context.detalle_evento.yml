@@ -1,0 +1,64 @@
+uuid: dada33f8-35b2-48d4-af95-bce7c2149cfe
+langcode: es
+status: true
+dependencies:
+  config:
+    - webform.webform.inscripcion_evento
+  module:
+    - bu_sections
+    - ctools
+    - webform
+label: 'Detalle evento'
+name: detalle_evento
+group: theme
+description: 'Detalle de los nodos de tipo evento eventos'
+requireAllConditions: false
+disabled: false
+conditions:
+  'entity_bundle:node':
+    id: 'entity_bundle:node'
+    negate: false
+    uuid: 6cbded2c-58e0-4d22-99b6-57e3468a41ba
+    context_mapping:
+      node: '@node.node_route_context:node'
+    bundles:
+      evento: evento
+reactions:
+  blocks:
+    id: blocks
+    uuid: 95023dad-9434-4b17-b24e-a1cf617ef49f
+    blocks:
+      509bc378-fe77-4fb1-86cf-fbe27d28de13:
+        uuid: 509bc378-fe77-4fb1-86cf-fbe27d28de13
+        id: webform_block
+        label: 'Inscríbase al evento'
+        provider: webform
+        label_display: visible
+        region: sidebar_right
+        weight: '0'
+        custom_id: webform_block
+        theme: brigard
+        css_class: tabs-formularios
+        unique: 0
+        context_id: detalle_evento
+        context_mapping: {  }
+        webform_id: inscripcion_evento
+        default_data: ''
+        redirect: false
+      324fa10c-e2f0-43c6-923e-0f0d28fc297f:
+        uuid: 324fa10c-e2f0-43c6-923e-0f0d28fc297f
+        id: register_pay_event_block
+        label: 'Inscribirse al evento como:'
+        provider: bu_sections
+        label_display: visible
+        region: sidebar_right
+        weight: '0'
+        custom_id: register_pay_event_block
+        theme: brigard
+        css_class: ''
+        unique: 0
+        context_id: detalle_evento
+        context_mapping: {  }
+    include_default_blocks: 0
+    saved: false
+weight: 0

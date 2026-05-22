@@ -1,0 +1,8 @@
+display:
+  page_1:
+    display_options:
+      empty:
+        area:
+          content:
+            value: "<style type=\"text/css\">.form-item-field-tipo-de-evento-value{display:none !important;} .content-page-full{width: 100% !important;}\r\n</style>\r\n<p style=\"text-align: center; font-size: 24px; color: #032d73;\">At this time we do not have scheduled events. For more information about future events, we invite you to subscribe to our newsletter. </p>\r\n"
+            format: full_html

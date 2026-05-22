@@ -1,0 +1,38 @@
+<div class="banner-internas" style="background-image: url('{{ image }}');" >
+  	<div class="content-caption">
+  			{% if category %}
+    			<p class="category">{{ category|trans }}</p>
+  			{% endif %}
+		    {% if node_type == "lawyer" %}
+          <p>{{ title|slice(0, 70)|trans }}</p>
+        {% else %}
+		      <h1>{{ title|slice(0, 70)|trans }}</h1>      
+        {% endif %}
+    		<div class="description">
+      			<p>{{ description|slice(0, 160)|trans }}</p>
+      	</div>
+        {% if node_type == "evento" %}
+
+          <div class="info-event">
+             {% if fecha_evento != "" %}
+               <div class="date">{{ fecha_evento }}</div>
+             {% endif%}
+             {% if hora_evento != "" %}
+                <div class="time">{{ hora_evento }}</div>
+             {% endif%}
+             {% if lugar_evento != "" %}
+                <div class="place">{{ lugar_evento }}</div>
+             {% endif%}
+             {% if valor_evento != "" %}
+							 <div class="price">$ {{ valor_evento|number_format(0, ',', '.') }}<span class="type"> más IVA - {{ tipo_evento == "1" ? "Evento pago"|trans : "Evento gratuito"|trans }}</span> </div>
+						 {% else %}
+							 <div class="price">{{ tipo_evento == "1" ? "Evento pago"|trans : "Evento gratuito"|trans }}</span> </div>
+             {% endif%}
+          </div>
+         
+        {% endif %}
+
+        
+  	</div>
+  	<div class="down-arrow"></div>
+</div>
