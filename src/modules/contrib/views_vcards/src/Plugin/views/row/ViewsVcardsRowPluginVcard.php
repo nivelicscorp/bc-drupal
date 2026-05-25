@@ -2,10 +2,10 @@
 
 namespace Drupal\views_vcards\Plugin\views\row;
 
-use Drupal\views\Plugin\views\row\RowPluginBase;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\image\Entity\ImageStyle;
 use Drupal\file\Entity\File;
+use Drupal\image\Entity\ImageStyle;
+use Drupal\views\Plugin\views\row\RowPluginBase;
 
 /**
  * Renders a single vCard from selected fields.
@@ -98,12 +98,20 @@ class ViewsVcardsRowPluginVcard extends RowPluginBase {
       '#open' => TRUE,
     ];
 
+    $form['name_email']['full'] = [
+      '#type' => 'select',
+      '#title' => $this->t('Full name'),
+      '#options' => $view_fields_labels,
+      '#default_value' => $this->options['name_email']['full'],
+      '#required' => TRUE,
+      '#empty_value' => '',
+    ];
+
     $form['name_email']['first'] = [
       '#type' => 'select',
       '#title' => $this->t('First name'),
       '#options' => $view_fields_labels,
       '#default_value' => $this->options['name_email']['first'],
-      '#required' => TRUE,
       '#empty_value' => '',
     ];
 
@@ -121,16 +129,6 @@ class ViewsVcardsRowPluginVcard extends RowPluginBase {
       '#title' => $this->t('Last name'),
       '#options' => $view_fields_labels,
       '#default_value' => $this->options['name_email']['last'],
-      '#required' => TRUE,
-      '#empty_value' => '',
-    ];
-
-    $form['name_email']['full'] = [
-      '#type' => 'select',
-      '#title' => $this->t('Full name'),
-      '#options' => $view_fields_labels,
-      '#default_value' => $this->options['name_email']['full'],
-      '#required' => TRUE,
       '#empty_value' => '',
     ];
 
@@ -148,7 +146,6 @@ class ViewsVcardsRowPluginVcard extends RowPluginBase {
       '#title' => $this->t('Primary E-mail'),
       '#options' => $view_fields_labels,
       '#default_value' => $this->options['name_email']['email'],
-      '#required' => TRUE,
       '#empty_value' => '',
     ];
 
@@ -359,24 +356,12 @@ class ViewsVcardsRowPluginVcard extends RowPluginBase {
    */
   public function validate() {
     $errors = parent::validate();
-    $required_options = [
-      // These are the required fields for a vCard v4.0.
-      'name_email' => [
-        'first',
-        'last',
-        'full',
-        'email',
-      ],
-    ];
 
-    foreach ($required_options as $group => $options) {
-      foreach ($options as $required_option) {
-        if (empty($this->options[$group][$required_option])) {
-          $errors[] = $this->t('Some required fields are missing to construct a valid vCard. Check the vCard formatter settings.');
-          break;
-        }
-      }
+    // Full name (FN) is required to construct a valid vCard v4.0.
+    if (empty($this->options['name_email']['full'])) {
+      $errors[] = $this->t('Some required fields are missing to construct a valid vCard. Check the vCard formatter settings.');
     }
+
     return $errors;
   }
 
@@ -438,8 +423,8 @@ class ViewsVcardsRowPluginVcard extends RowPluginBase {
           }
         }
 
-        $imgbinary = file_get_contents($image_uri);
-        $photo = base64_encode($imgbinary);
+        $binary_img = file_get_contents($image_uri);
+        $photo = base64_encode($binary_img);
 
         // @todo Ideally delegate the chunking to twig.
         // End with newline and start with a one space indentation.
@@ -460,7 +445,7 @@ class ViewsVcardsRowPluginVcard extends RowPluginBase {
       '#view' => $this->view,
       '#options' => $this->options,
       '#row' => $item,
-      '#field_alias' => isset($this->field_alias) ? $this->field_alias : '',
+      '#field_alias' => $this->field_alias ?? '',
     ];
   }
 

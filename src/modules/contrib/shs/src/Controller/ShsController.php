@@ -2,12 +2,15 @@
 
 namespace Drupal\shs\Controller;
 
+use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Entity\TranslatableInterface;
 use Drupal\Core\Language\LanguageInterface;
+use Drupal\Core\Session\AccountInterface;
 use Drupal\shs\Cache\ShsCacheableJsonResponse;
 use Drupal\shs\Cache\ShsTermCacheDependency;
-use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
 
 /**
  * Controller for getting taxonomy terms.
@@ -15,28 +18,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 class ShsController extends ControllerBase {
 
   /**
-   * The dependency injection container.
-   *
-   * @var \Symfony\Component\DependencyInjection\ContainerInterface
-   */
-  protected $container;
-
-  /**
-   * Construct a new ShsController object.
-   */
-  public function __construct(ContainerInterface $container) {
-    $this->container = $container;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public static function create(ContainerInterface $container) {
-    return new static($container);
-  }
-
-  /**
-   * Load term data.
+   * Gets the term data.
    *
    * @param string $identifier
    *   Name of field to load the data for.
@@ -46,7 +28,7 @@ class ShsController extends ControllerBase {
    * @param int $entity_id
    *   Id of parent term to load all children for. Defaults to 0.
    *
-   * @return CacheableJsonResponse
+   * @return \Drupal\shs\Cache\ShsCacheableJsonResponse
    *   Cacheable Json response.
    */
   public function getTermData($identifier, $bundle, $entity_id = 0) {
@@ -66,8 +48,8 @@ class ShsController extends ControllerBase {
 
     $translation_enabled = FALSE;
     if ($this->moduleHandler()->moduleExists('content_translation')) {
-      /** @var \Drupal\content_translation\ContentTranslationManagerInterface $translation_manager */
-      $translation_manager = $this->container->get('content_translation.manager');
+      /** @var \Drupal\content_translation\ContentTranslationManager $translation_manager */
+      $translation_manager = \Drupal::service('content_translation.manager');
       // If translation is enabled for the vocabulary, we need to load the full
       // term objects to get the translation for the current language.
       $translation_enabled = $translation_manager->isEnabled('taxonomy_term', $bundle);
@@ -109,6 +91,98 @@ class ShsController extends ControllerBase {
     $response->setData($result, TRUE);
 
     return $response;
+  }
+
+  /**
+   * Create term data.
+   *
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   *
+   * @return \Symfony\Component\HttpFoundation\JsonResponse
+   *   Json response.
+   */
+  public function createTerm(Request $request) {
+
+    $result = NULL;
+
+    // Obtain the data from the json.
+    $data = json_decode($request->getContent());
+    $value = $data->arguments->value;
+    $bundle = $data->arguments->bundle;
+    $entity_id = $data->arguments->entity_id;
+    $langcode = \Drupal::languageManager()->getCurrentLanguage()->getId();
+
+    if (!$langcode) {
+      $langcode = \Drupal::languageManager()->getCurrentLanguage()->getId();
+    }
+
+    $storage = $this->entityTypeManager()->getStorage('taxonomy_term');
+
+    // Try to find the term.
+    $found = NULL;
+    $terms = $storage->loadTree($bundle, $entity_id, 1, TRUE);
+    foreach ($terms as $term) {
+      if ($term->hasTranslation($langcode)) {
+        $term = $term->getTranslation($langcode);
+      }
+      else {
+        $langcode = $term->default_langcode;
+      }
+
+      if (strcasecmp($term->getName(), $value) === 0) {
+        $found = $term;
+        break;
+      }
+    }
+
+    if (!$found) {
+      $term = $storage->create([
+        'vid' => $bundle,
+        'langcode' => $langcode,
+        'name' => $value,
+        'parent' => [$entity_id],
+      ]);
+      $term->save();
+    }
+    else {
+      $term = $found;
+    }
+
+    $vid = $term->bundle();
+    $vocabulary = \Drupal::entityTypeManager()->getStorage('taxonomy_vocabulary')->load($vid);
+
+    $result = (object) [
+      'tid' => $term->id(),
+      'name' => $term->getName(),
+      'vocabulary_label' => $vocabulary->label(),
+      'description__value' => $term->getDescription(),
+      'langcode' => $langcode,
+      'hasChildren' => shs_term_has_children($term->id()),
+    ];
+
+    $response = new JsonResponse();
+    $response->setData($result);
+
+    return $response;
+  }
+
+  /**
+   * Checks access for a specific request.
+   *
+   * @param \Drupal\Core\Session\AccountInterface $account
+   *   Run access checks for this account.
+   *
+   * @return bool
+   */
+  public function createTermAccess(AccountInterface $account) {
+    $request = \Drupal::request();
+    $data = json_decode($request->getContent());
+    $bundle = $data->arguments->bundle;
+
+    return AccessResult::allowedIfHasPermissions($account, [
+      "edit terms in {$bundle}",
+      'administer taxonomy',
+    ], 'OR');
   }
 
 }

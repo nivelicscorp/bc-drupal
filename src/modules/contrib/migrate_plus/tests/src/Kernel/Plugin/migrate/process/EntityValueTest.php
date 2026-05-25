@@ -1,11 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\Tests\migrate_plus\Kernel\Plugin\migrate\process;
 
 use Drupal\KernelTests\KernelTestBase;
 use Drupal\migrate\MigrateException;
 use Drupal\migrate\MigrateExecutableInterface;
 use Drupal\migrate\Row;
+use Drupal\migrate_plus\Plugin\migrate\process\EntityValue;
 use Drupal\node\Entity\Node;
 use Drupal\language\Entity\ConfigurableLanguage;
 use Drupal\node\Entity\NodeType;
@@ -16,35 +19,27 @@ use Drupal\node\Entity\NodeType;
  * @coversDefaultClass \Drupal\migrate_plus\Plugin\migrate\process\EntityValue
  * @group migrate_drupal
  */
-class EntityValueTest extends KernelTestBase {
+final class EntityValueTest extends KernelTestBase {
 
   /**
    * The generated title.
-   *
-   * @var string
    */
-  protected $title;
+  protected ?string $title;
 
   /**
    * The generated Spanish title.
-   *
-   * @var string
    */
-  protected $titleSpanish;
+  protected ?string $titleSpanish;
 
   /**
    * The generated node ID.
-   *
-   * @var int
    */
-  protected $uid;
+  protected ?string $uid;
 
   /**
    * The plugin to test.
-   *
-   * @var \Drupal\migrate_plus\Plugin\migrate\process\EntityValue
    */
-  protected $plugin;
+  protected ?EntityValue $plugin;
 
 
   /**
@@ -65,7 +60,6 @@ class EntityValueTest extends KernelTestBase {
   protected function setUp(): void {
     parent::setUp();
     ConfigurableLanguage::createFromLangcode('es')->save();
-    $this->installSchema('system', ['sequences']);
     $this->installSchema('node', 'node_access');
     $this->installEntitySchema('user');
     $this->installEntitySchema('node');
@@ -92,7 +86,7 @@ class EntityValueTest extends KernelTestBase {
    *
    * @covers ::transform
    */
-  public function testEntityValueSuccess() {
+  public function testEntityValueSuccess(): void {
     $this->plugin = \Drupal::service('plugin.manager.migrate.process')
       ->createInstance('entity_value', [
         'entity_type' => 'node',
@@ -103,23 +97,23 @@ class EntityValueTest extends KernelTestBase {
     $row = new Row();
 
     // Ensure that the entity is returned if it really exists.
-    $value = $this->plugin->transform($this->uid, $executable, $row, 'dummmy');
+    $value = $this->plugin->transform($this->uid, $executable, $row, 'dummy');
     $this->assertSame($this->title, $value[0]['value']);
     $this->assertFalse($this->plugin->multiple());
 
     // Ensure that an array of entities is returned.
     $value = $this->plugin->transform([$this->uid], $executable, $row,
-      'dummmy');
+      'dummy');
     $this->assertSame($this->title, $value[0][0]['value']);
     $this->assertTrue($this->plugin->multiple());
 
     // Ensure that the plugin returns [] if the entity doesn't exist.
-    $value = $this->plugin->transform(9999999, $executable, $row, 'dummmy');
+    $value = $this->plugin->transform(9999999, $executable, $row, 'dummy');
     $this->assertSame([], $value);
     $this->assertFalse($this->plugin->multiple());
 
     // Ensure that the plugin returns [] if NULL is passed.
-    $value = $this->plugin->transform(NULL, $executable, $row, 'dummmy');
+    $value = $this->plugin->transform(NULL, $executable, $row, 'dummy');
     $this->assertSame([], $value);
     $this->assertFalse($this->plugin->multiple());
   }
@@ -129,7 +123,7 @@ class EntityValueTest extends KernelTestBase {
    *
    * @covers ::transform
    */
-  public function testEntityValueLangSuccess() {
+  public function testEntityValueLangSuccess(): void {
     $this->plugin = \Drupal::service('plugin.manager.migrate.process')
       ->createInstance('entity_value', [
         'entity_type' => 'node',
@@ -141,13 +135,12 @@ class EntityValueTest extends KernelTestBase {
     $row = new Row();
 
     // Ensure that the entity is returned if it really exists.
-    $value = $this->plugin->transform($this->uid, $executable, $row, 'dummmy');
+    $value = $this->plugin->transform($this->uid, $executable, $row, 'dummy');
     $this->assertSame($this->titleSpanish, $value[0]['value']);
     $this->assertFalse($this->plugin->multiple());
 
     // Ensure that an array of entities is returned.
-    $value = $this->plugin->transform([$this->uid], $executable, $row,
-      'dummmy');
+    $value = $this->plugin->transform([$this->uid], $executable, $row, 'dummy');
     $this->assertSame($this->titleSpanish, $value[0][0]['value']);
     $this->assertTrue($this->plugin->multiple());
   }
@@ -157,7 +150,7 @@ class EntityValueTest extends KernelTestBase {
    *
    * @covers ::transform
    */
-  public function testEntityValueLangException() {
+  public function testEntityValueLangException(): void {
     $config_entity = NodeType::create(['type' => 'page', 'name' => 'page']);
     $config_entity->save();
     $this->plugin = \Drupal::service('plugin.manager.migrate.process')
@@ -174,7 +167,7 @@ class EntityValueTest extends KernelTestBase {
     // Ensure that the entity is returned if it really exists.
     $this->expectException(MigrateException::class);
     $this->expectExceptionMessage('Langcode can only be used with content entities currently.');
-    $this->plugin->transform([$config_entity->id()], $executable, $row, 'dummmy');
+    $this->plugin->transform([$config_entity->id()], $executable, $row, 'dummy');
   }
 
   /**
@@ -186,7 +179,7 @@ class EntityValueTest extends KernelTestBase {
    * @covers ::__construct
    * @dataProvider entityValueFailureConfigData
    */
-  public function testEntityValueConfig($config) {
+  public function testEntityValueConfig(array $config): void {
     $this->expectException(\InvalidArgumentException::class);
     \Drupal::service('plugin.manager.migrate.process')
       ->createInstance('entity_value', $config);
@@ -195,10 +188,9 @@ class EntityValueTest extends KernelTestBase {
   /**
    * Provides data for entityLoadFailureConfigData.
    *
-   * @return array
    *   The data.
    */
-  public function entityValueFailureConfigData() {
+  public static function entityValueFailureConfigData(): array {
     return [
       [
         [

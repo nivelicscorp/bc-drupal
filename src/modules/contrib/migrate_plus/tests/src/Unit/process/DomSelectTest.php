@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\Tests\migrate_plus\Unit\process;
 
 use Drupal\Component\Utility\Html;
@@ -12,24 +14,24 @@ use Drupal\Tests\migrate\Unit\process\MigrateProcessTestCase;
  * @group migrate
  * @coversDefaultClass \Drupal\migrate_plus\Plugin\migrate\process\DomSelect
  */
-class DomSelectTest extends MigrateProcessTestCase {
+final class DomSelectTest extends MigrateProcessTestCase {
 
   /**
    * @covers ::transform
    *
    * @dataProvider providerTestTransform
    */
-  public function testTransform($input_string, $configuration, $output_array): void {
+  public function testTransform(string $input_string, array $configuration, array $output_array): void {
     $value = Html::load($input_string);
     $elements = (new DomSelect($configuration, 'dom_select', []))
-      ->transform($value, $this->migrateExecutable, $this->row, 'destinationproperty');
+      ->transform($value, $this->migrateExecutable, $this->row, 'destinationProperty');
     $this->assertEquals($output_array, $elements);
   }
 
   /**
-   * Dataprovider for testTransform().
+   * Data provider for testTransform().
    */
-  public function providerTestTransform(): array {
+  public static function providerTestTransform(): array {
     $lists = '<ul><li>Item 1</li><li>Item 2</li><li><ul><li>Item 3.1</li><li>Item 3.2</li></ul></li><li>Item 4</li><li>Item 5</li></ul>';
     $image = '<p>A broken image: <img src="https://www.example.com/img/foo.jpg" alt="metasyntactic image" /></p>';
     $cases = [

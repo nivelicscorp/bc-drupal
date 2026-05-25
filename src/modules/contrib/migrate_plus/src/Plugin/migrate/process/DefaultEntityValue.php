@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\migrate_plus\Plugin\migrate\process;
 
 use Drupal\migrate\MigrateExecutableInterface;
@@ -9,7 +11,7 @@ use Drupal\migrate\Row;
  * Returns EntityLookup for a given default value if input is empty.
  *
  * Available configuration keys:
- * - default_value: The default value that will be used as for the entity lookup.
+ * - default_value: The default value used as for the entity lookup.
  * For additional configuration keys, refer to the parent class.
  *
  * Example:

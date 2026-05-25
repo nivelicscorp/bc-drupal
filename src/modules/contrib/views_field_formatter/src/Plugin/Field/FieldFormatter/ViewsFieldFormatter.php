@@ -60,10 +60,10 @@ class ViewsFieldFormatter extends FormatterBase {
   public function calculateDependencies() {
     $dependencies = parent::calculateDependencies();
 
-    list($view_id) = \explode('::', $this->getSetting('view'), 2);
+    [$view_id] = \explode('::', $this->getSetting('view'), 2);
     // Don't call the current view, as it would result into an
     // infinite recursion.
-    // TODO: Check for infinite loop here.
+    // @todo Check for infinite loop here.
     if ($view_id !== NULL && $view = View::load($view_id)) {
       $dependencies[$view->getConfigDependencyKey()][] = $view->getConfigDependencyName();
     }
@@ -213,7 +213,7 @@ class ViewsFieldFormatter extends FormatterBase {
       ];
     }
 
-    list($view, $view_display) = \explode('::', $settings['view'], 2);
+    [$view, $view_display] = \explode('::', $settings['view'], 2);
     $multiple = ((bool) $settings['multiple'] === TRUE) ? 'Enabled' : 'Disabled';
     $hide_empty = ((bool) $settings['hide_empty'] === TRUE) ? 'Hide' : 'Display';
 
@@ -254,7 +254,7 @@ class ViewsFieldFormatter extends FormatterBase {
     $cardinality = $items->getFieldDefinition()->getFieldStorageDefinition()->getCardinality();
 
     if (isset($settings['view']) && !empty($settings['view']) && \mb_strpos($settings['view'], '::') !== FALSE) {
-      list($view_id, $view_display) = \explode('::', $settings['view'], 2);
+      [$view_id, $view_display] = \explode('::', $settings['view'], 2);
     }
     else {
       return $elements;
@@ -290,9 +290,6 @@ class ViewsFieldFormatter extends FormatterBase {
     }
 
     $elements = [
-      '#cache' => [
-        'max-age' => 0,
-      ],
       [
         '#type' => 'view',
         '#name' => $view_id,
@@ -383,7 +380,7 @@ class ViewsFieldFormatter extends FormatterBase {
           break;
 
         case 'delta':
-          $arguments[$argument] = isset($delta) ? $delta : NULL;
+          $arguments[$argument] = $delta ?? NULL;
 
           break;
       }

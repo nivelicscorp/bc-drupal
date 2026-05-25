@@ -82,7 +82,7 @@ class MetatagViewsEditForm extends FormBase {
     // Get meta tags from the view entity.
     $metatags = [];
     if ($view_id && $display_id) {
-      $metatags = metatag_get_view_tags($view_id, $display_id);
+      $metatags = metatag_views_get_view_tags($view_id, $display_id);
     }
 
     $form['metatags'] = $this->metatagManager->form($metatags, $form, ['view']);
@@ -110,7 +110,7 @@ class MetatagViewsEditForm extends FormBase {
   /**
    * {@inheritdoc}
    */
-  public function form(array $values, array $element, array $token_types = [], array $included_groups = NULL, array $included_tags = NULL, $verbose_help = FALSE) {
+  public function form(array $values, array $element, array $token_types = [], ?array $included_groups = NULL, ?array $included_tags = NULL, $verbose_help = FALSE) {
     // Add the outer fieldset.
     $element += [
       '#type' => 'details',

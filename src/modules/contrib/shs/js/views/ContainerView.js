@@ -42,7 +42,7 @@
       }
 
       this.collection = new Drupal.shs.WidgetCollection({
-        url: Drupal.url(this.app.getConfig('baseUrl') + '/' + this.app.getConfig('fieldName') + '/' + this.app.getConfig('bundle'))
+        url: Drupal.url.toAbsolute(this.app.getConfig('baseUrl') + '/' + this.app.getConfig('fieldName') + '/' + this.app.getConfig('bundle'))
       });
       this.collection.reset();
 
@@ -119,13 +119,21 @@
       container.collection.remove(models);
 
       var anyValue = container.app.getSetting('anyValue');
-      if (value !== anyValue) {
+      var createValue = container.app.getSetting('createValue');
+
+      if (value === createValue && widgetModel.get('createValue')) {
+        var item = widgetModel.get('createValue');
+        value = item.tid;
+      }
+
+      if ((value !== anyValue) && (value !== createValue)) {
         // Add new model with current selection.
         container.collection.add(new Drupal.shs.classes[container.app.getConfig('fieldName')].models.widget({
           id: value,
           level: widgetModel.get('level') + 1
         }));
       }
+
       if (value === anyValue && widgetModel.get('level') > 0) {
         // Use value of parent widget (which is the id of the model ;)).
         value = widgetModel.get('id');

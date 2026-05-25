@@ -9,10 +9,13 @@
  * migration module.
  */
 
+declare(strict_types=1);
+
 /**
  * Implements hook_schema().
  */
-function migrate_example_setup_schema() {
+function migrate_example_setup_schema(): array {
+  $schema = [];
   $schema['migrate_example_beer_account'] = migrate_example_beer_schema_account();
   $schema['migrate_example_beer_node'] = migrate_example_beer_schema_node();
   $schema['migrate_example_beer_comment'] = migrate_example_beer_schema_comment();
@@ -25,7 +28,7 @@ function migrate_example_setup_schema() {
 /**
  * Implements hook_install().
  */
-function migrate_example_setup_install() {
+function migrate_example_setup_install(): void {
   // Populate our tables.
   migrate_example_beer_data_account();
   migrate_example_beer_data_node();
@@ -37,10 +40,9 @@ function migrate_example_setup_install() {
 /**
  * The hook_schema definition for node.
  *
- * @return array
  *   The schema definition.
  */
-function migrate_example_beer_schema_node() {
+function migrate_example_beer_schema_node(): array {
   return [
     'description' => 'Beers of the world.',
     'fields' => [
@@ -109,10 +111,9 @@ function migrate_example_beer_schema_node() {
 /**
  * The hook_schema definition for topic.
  *
- * @return array
  *   The schema definition.
  */
-function migrate_example_beer_schema_topic() {
+function migrate_example_beer_schema_topic(): array {
   return [
     'description' => 'Categories',
     'fields' => [
@@ -152,10 +153,9 @@ function migrate_example_beer_schema_topic() {
 /**
  * The hook_schema definition for topic node.
  *
- * @return array
  *   The schema definition.
  */
-function migrate_example_beer_schema_topic_node() {
+function migrate_example_beer_schema_topic_node(): array {
   return [
     'description' => 'Beers topic pairs.',
     'fields' => [
@@ -178,10 +178,9 @@ function migrate_example_beer_schema_topic_node() {
 /**
  * The hook_schema definition for comment.
  *
- * @return array
  *   The schema definition.
  */
-function migrate_example_beer_schema_comment() {
+function migrate_example_beer_schema_comment(): array {
   return [
     'description' => 'Beers comments.',
     'fields' => [
@@ -237,10 +236,9 @@ function migrate_example_beer_schema_comment() {
 /**
  * The hook_schema definition for account.
  *
- * @return array
  *   The schema definition.
  */
-function migrate_example_beer_schema_account() {
+function migrate_example_beer_schema_account(): array {
   return [
     'description' => 'Beers accounts.',
     'fields' => [
@@ -303,7 +301,7 @@ function migrate_example_beer_schema_account() {
 /**
  * Populate node table.
  */
-function migrate_example_beer_data_node() {
+function migrate_example_beer_data_node(): void {
   $fields = [
     'bid',
     'name',
@@ -329,9 +327,9 @@ function migrate_example_beer_data_node() {
       'Netherlands|Belgium',
       1,
       'heineken.jpg',
-      'Heinekin alt',
-      'Heinekin title',
-      'Heinekin description',
+      'Heineken alt',
+      'Heineken title',
+      'Heineken description',
     ],
     [
       99999998,
@@ -372,7 +370,7 @@ function migrate_example_beer_data_node() {
  *
  * @todo Duplicate email also.
  */
-function migrate_example_beer_data_account() {
+function migrate_example_beer_data_account(): void {
   $fields = [
     'status',
     'registered',
@@ -390,8 +388,8 @@ function migrate_example_beer_data_account() {
       1,
       '2010-03-30 10:31:05',
       'alice',
-      'alice in beerland',
-      'alicepass',
+      'alice in beerLand',
+      'alicePass',
       'alice@example.com',
       '1',
       '99999999|99999998|99999997',
@@ -400,8 +398,8 @@ function migrate_example_beer_data_account() {
       1,
       '2010-04-04 10:31:05',
       'alice',
-      'alice in aleland',
-      'alicepass',
+      'alice in aleLand',
+      'alicePass',
       'alice2@example.com',
       '1',
       '99999999|99999998|99999997',
@@ -410,8 +408,8 @@ function migrate_example_beer_data_account() {
       0,
       '2007-03-15 10:31:05',
       'bob',
-      'rebob',
-      'bobpass',
+      'reBob',
+      'bobPass',
       'bob@example.com',
       '0',
       '99999999|99999997',
@@ -421,7 +419,7 @@ function migrate_example_beer_data_account() {
       '2004-02-29 10:31:05',
       'charlie',
       'charlie chocolate',
-      'mykids',
+      'myKids',
       'charlie@example.com',
       '0',
       '99999999|99999998',
@@ -436,7 +434,7 @@ function migrate_example_beer_data_account() {
 /**
  * Populate comment table.
  */
-function migrate_example_beer_data_comment() {
+function migrate_example_beer_data_comment(): void {
   $fields = ['bid', 'cid_parent', 'subject', 'body', 'name', 'mail', 'aid'];
   $query = \Drupal::database()->insert('migrate_example_beer_comment')
     ->fields($fields);
@@ -464,7 +462,7 @@ function migrate_example_beer_data_comment() {
 /**
  * Populate topic table.
  */
-function migrate_example_beer_data_topic() {
+function migrate_example_beer_data_topic(): void {
   $fields = ['style', 'details', 'style_parent', 'region', 'hoppiness'];
   $query = \Drupal::database()->insert('migrate_example_beer_topic')
     ->fields($fields);
@@ -488,7 +486,7 @@ function migrate_example_beer_data_topic() {
 /**
  * Populate topic node table.
  */
-function migrate_example_beer_data_topic_node() {
+function migrate_example_beer_data_topic_node(): void {
   $fields = ['bid', 'style'];
   $query = \Drupal::database()->insert('migrate_example_beer_topic_node')
     ->fields($fields);

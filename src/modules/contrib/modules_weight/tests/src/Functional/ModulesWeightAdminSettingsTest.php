@@ -34,7 +34,12 @@ class ModulesWeightAdminSettingsTest extends BrowserTestBase {
     $this->assertSession()->statusCodeEquals(403);
 
     // Creating a user with the module permission.
-    $account = $this->drupalCreateUser(['administer modules weight', 'access administration pages']);
+    $account = $this->drupalCreateUser(
+      [
+        'administer modules weight',
+        'access administration pages',
+      ]
+    );
     // Log in.
     $this->drupalLogin($account);
 
@@ -42,7 +47,7 @@ class ModulesWeightAdminSettingsTest extends BrowserTestBase {
     $this->drupalGet('/admin/config/system');
     $this->assertSession()->linkByHrefExists('/admin/config/system/modules-weight');
 
-    // @TODO Check the module local task.
+    // @todo Check the module local task.
     // Going to the config page.
     $this->drupalGet('/admin/config/system/modules-weight/configuration');
     // Checking that the request has succeeded.
@@ -58,7 +63,7 @@ class ModulesWeightAdminSettingsTest extends BrowserTestBase {
       'show_system_modules' => 1,
     ];
     // Sending the form.
-    $this->drupalPostForm(NULL, $edit, 'op');
+    $this->submitForm($edit, 'op');
     // Verifiying the save message.
     $this->assertSession()->pageTextContains('The configuration options have been saved.');
 
@@ -76,7 +81,7 @@ class ModulesWeightAdminSettingsTest extends BrowserTestBase {
       'show_system_modules' => 0,
     ];
     // Sending the form.
-    $this->drupalPostForm(NULL, $edit, 'op');
+    $this->submitForm($edit, 'op');
 
     // Getting variables.
     $show_system_modules = $config_factory->get('modules_weight.settings')->get('show_system_modules');

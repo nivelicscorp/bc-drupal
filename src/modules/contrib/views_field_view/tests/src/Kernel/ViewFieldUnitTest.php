@@ -19,7 +19,7 @@ class ViewFieldUnitTest extends ViewsKernelTestBase {
    *
    * @var array
    */
-  public static $modules = [
+  protected static $modules = [
     'views_field_view',
     'views_field_view_test_config',
     'user',
@@ -38,7 +38,7 @@ class ViewFieldUnitTest extends ViewsKernelTestBase {
   /**
    * {@inheritdoc}
    */
-  protected function setUp($import_test_views = TRUE) {
+  protected function setUp($import_test_views = TRUE): void {
     parent::setUp($import_test_views);
 
     ViewTestData::createTestViews(get_class($this), ['views_field_view_test_config']);
@@ -47,7 +47,7 @@ class ViewFieldUnitTest extends ViewsKernelTestBase {
   /**
    * Test normal view embedding.
    */
-  public function testNormalView() {
+  public function testNormalView(): void {
     $parent_view = Views::getView('views_field_view_test_parent_normal');
     $parent_view->preview();
 
@@ -65,7 +65,7 @@ class ViewFieldUnitTest extends ViewsKernelTestBase {
   /**
    * Test field handler methods in a unit test like way.
    */
-  public function testFieldHandlerMethods() {
+  public function testFieldHandlerMethods(): void {
     $view = Views::getView('views_field_view_test_parent_normal');
     $view->initDisplay();
     $view->initHandlers();

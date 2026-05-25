@@ -34,7 +34,12 @@ class ModulesListFormTest extends BrowserTestBase {
     $this->assertSession()->statusCodeEquals(403);
 
     // Creating a user with the module permission.
-    $account = $this->drupalCreateUser(['administer modules weight', 'access administration pages']);
+    $account = $this->drupalCreateUser(
+      [
+        'administer modules weight',
+        'access administration pages',
+      ]
+    );
     // Log in.
     $this->drupalLogin($account);
 
@@ -64,7 +69,7 @@ class ModulesListFormTest extends BrowserTestBase {
       'show_system_modules' => 1,
     ];
     // Sending the form.
-    $this->drupalPostForm(NULL, $edit, 'op');
+    $this->submitForm($edit, 'op');
 
     // Going to the modules list page.
     $this->drupalGet('/admin/config/system/modules-weight');
@@ -73,7 +78,7 @@ class ModulesListFormTest extends BrowserTestBase {
     $this->assertSession()->elementTextContains('css', '#edit-modules > tbody > tr > td:nth-child(4)', 'Core');
 
     // Sending the form without changes.
-    $this->drupalPostForm(NULL, [], 'op');
+    $this->submitForm([], 'op');
 
     // Checking the message.
     $this->assertSession()->pageTextContains('You don\'t have changed the weight for any module.');
@@ -87,9 +92,9 @@ class ModulesListFormTest extends BrowserTestBase {
       'modules[user][weight]' => -2,
     ];
     // Sending the form.
-    $this->drupalPostForm(NULL, $edit, 'op');
+    $this->submitForm($edit, 'op');
 
-    // Verifiying the save message.
+    // Verifying the save message.
     $this->assertSession()->pageTextContains('The modules weight was updated.');
     $this->assertSession()->pageTextContains('Internal Dynamic Page Cache have now as weight: 15');
     $this->assertSession()->pageTextContains('Internal Page Cache have now as weight: 15');
@@ -120,9 +125,9 @@ class ModulesListFormTest extends BrowserTestBase {
       'modules[user][weight]' => 0,
     ];
     // Sending the form.
-    $this->drupalPostForm(NULL, $edit, 'op');
+    $this->submitForm($edit, 'op');
 
-    // Verifiying the save message.
+    // Verifying the save message.
     $this->assertSession()->pageTextContains('The modules weight was updated.');
     $this->assertSession()->pageTextContains('System have now as weight: 15');
     $this->assertSession()->pageTextContains('Internal Page Cache have now as weight: -3');

@@ -1,13 +1,12 @@
 <?php
-
-use Drupal\Core\Form\FormStateInterface;
-use Drupal\paragraphs\Entity\ParagraphsType;
 /**
  * @file
  * Contains paragraphs_browser.module..
  */
-
+use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Routing\RouteMatchInterface;
+use Drupal\Core\StreamWrapper\StreamWrapperManager;
+use Drupal\paragraphs\Entity\ParagraphsType;
 use Drupal\paragraphs_browser\Entity\BrowserType;
 
 /**
@@ -78,7 +77,6 @@ function paragraphs_browser_form_paragraphs_type_edit_form_alter(&$form, FormSta
   $form['paragraphs_browser']['image']['image_upload'] = array(
     '#type' => 'file',
     '#title' => t('Upload image'),
-    '#maxlength' => 40,
     '#description' => t("If you don't have direct file access to the server, use this field to upload your image.")
   );
 
@@ -120,7 +118,7 @@ function paragraphs_browser_paragraph_type_form_builder($entity_type, Paragraphs
   // Get the paragraphs_browser values.
   if ($values = $form_state->getValue('paragraphs_browser')) {
     // If a new file has been uploaded, copy the file and save the new files path to the 'image_path' field.
-    if (!empty($values['image']['image_upload'])) {
+    if (!empty($values['image']['image_upload']) && $values['image']['image_upload'] instanceof \Drupal\file\Entity\File) {
       $filename = \Drupal::service('file_system')->copy($values['image']['image_upload']->getFileUri(), 'public://');
       $values['image']['image_path'] = $filename;
     }
@@ -164,7 +162,7 @@ function paragraphs_browser_image_path_validate($path) {
     return $path;
   }
   // Prepend 'public://' for relative file paths within public filesystem.
-  if (\Drupal::service('file_system')->uriScheme($path) === FALSE) {
+  if (StreamWrapperManager::getScheme($path) === FALSE) {
     $path = 'public://' . $path;
   }
   if (is_file($path)) {

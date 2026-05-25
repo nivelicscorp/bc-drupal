@@ -58,6 +58,12 @@ field.formatter.settings.svg_image_field_formatter:
     force_fill:
       type: boolean
       label: 'Force fill'
+    sanitize:
+      type: boolean
+      label: 'Sanitize'
+    sanitize_remote:
+      type: boolean
+      label: 'Sanitize remote'
 
 
 field.widget.settings.svg_image_field_widget:

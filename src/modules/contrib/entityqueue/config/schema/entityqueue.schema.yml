@@ -33,7 +33,7 @@ entityqueue.entity_queue.*:
       mapping:
         min_size:
           type: integer
-          label: 'Minimun queue size'
+          label: 'Minimum queue size'
         max_size:
           type: integer
           label: 'Maximum queue size'
@@ -72,3 +72,19 @@ views.relationship.entity_queue:
     limit_queue:
       type: string
       label: 'Limit to a specific entity queue'
+
+action.configuration.entityqueue_add_item:
+  type: mapping
+  label: 'Configuration for "Add Item to Subqueue" action'
+  mapping:
+    subqueue:
+      type: string
+      label: subqueue
+
+action.configuration.entityqueue_remove_item:
+  type: mapping
+  label: 'Configuration for "Add Item to Subqueue" action'
+  mapping:
+    subqueue:
+      type: string
+      label: subqueue

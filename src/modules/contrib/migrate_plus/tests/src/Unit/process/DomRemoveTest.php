@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\Tests\migrate_plus\Unit\process;
 
 use Drupal\Component\Utility\Html;
@@ -12,7 +14,7 @@ use Drupal\Tests\migrate\Unit\process\MigrateProcessTestCase;
  * @group migrate
  * @coversDefaultClass \Drupal\migrate_plus\Plugin\migrate\process\DomRemove
  */
-class DomRemoveTest extends MigrateProcessTestCase {
+final class DomRemoveTest extends MigrateProcessTestCase {
 
   /**
    * @covers ::transform
@@ -22,15 +24,15 @@ class DomRemoveTest extends MigrateProcessTestCase {
   public function testTransform($input_string, $configuration, $output_string): void {
     $value = Html::load($input_string);
     $document = (new DomRemove($configuration, 'dom_remove', []))
-      ->transform($value, $this->migrateExecutable, $this->row, 'destinationproperty');
+      ->transform($value, $this->migrateExecutable, $this->row, 'destinationProperty');
     $this->assertTrue($document instanceof \DOMDocument);
     $this->assertEquals($output_string, Html::serialize($document));
   }
 
   /**
-   * Dataprovider for testTransform().
+   * Data provider for testTransform().
    */
-  public function providerTestTransform(): array {
+  public static function providerTestTransform(): array {
     $input_string = '<ul><li>Item 1</li><li>Item 2</li><li><ul><li>Item 3.1</li><li>Item 3.2</li></ul></li><li>Item 4</li><li>Item 5</li></ul>';
     $attribute_input_string = '<div style="font-size:15px;"><a class="btn-lg" href="#" style="padding: 10px;">Button</a><p class="lead-paragraph">Testing</p></div>';
     $cases = [

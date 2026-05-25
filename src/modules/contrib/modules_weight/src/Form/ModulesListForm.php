@@ -4,10 +4,8 @@ namespace Drupal\modules_weight\Form;
 
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Form\FormBase;
-use Drupal\modules_weight\Utility\FormElement;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\modules_weight\ModulesWeightInterface;
-use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Extension\ModuleExtensionList;
 
 /**
@@ -20,47 +18,24 @@ class ModulesListForm extends FormBase {
    *
    * @var \Drupal\modules_weight\ModulesWeightInterface
    */
-  protected $modulesWeight;
-
-  /**
-   * The config factory.
-   *
-   * @var \Drupal\Core\Config\ConfigFactoryInterface
-   */
-  protected $configFactory;
+  protected ModulesWeightInterface $modulesWeight;
 
   /**
    * The module extension list service.
    *
    * @var \Drupal\Core\Extension\ModuleExtensionList
    */
-  protected $moduleExtensionList;
-
-  /**
-   * Constructs a new ModulesWeight object.
-   *
-   * @param \Drupal\modules_weight\ModulesWeightInterface $modules_weight
-   *   The modules weight.
-   * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
-   *   The configuration factory.
-   * @param \Drupal\Core\Extension\ModuleExtensionList $module_extension_list
-   *   The module extension list.
-   */
-  public function __construct(ModulesWeightInterface $modules_weight, ConfigFactoryInterface $config_factory, ModuleExtensionList $module_extension_list) {
-    $this->modulesWeight = $modules_weight;
-    $this->configFactory = $config_factory;
-    $this->moduleExtensionList = $module_extension_list;
-  }
+  protected ModuleExtensionList $moduleExtensionList;
 
   /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container) {
-    return new static(
-      $container->get('modules_weight'),
-      $container->get('config.factory'),
-      $container->get('extension.list.module')
-    );
+    $instance = parent::create($container);
+    $instance->modulesWeight = $container->get('modules_weight');
+    $instance->moduleExtensionList = $container->get('extension.list.module');
+
+    return $instance;
   }
 
   /**
@@ -98,7 +73,7 @@ class ModulesListForm extends FormBase {
     ];
 
     // Getting the config to know if we should show or not the core modules.
-    $show_core_modules = $this->configFactory->get('modules_weight.settings')->get('show_system_modules');
+    $show_core_modules = $this->config('modules_weight.settings')->get('show_system_modules');
     // Getting the module list.
     $modules = $this->modulesWeight->getModulesList($show_core_modules);
     // Iterate over each module.
@@ -116,7 +91,7 @@ class ModulesListForm extends FormBase {
       $form['modules'][$filename]['weight'] = [
         '#type' => 'weight',
         '#default_value' => $module['weight'],
-        '#delta' => FormElement::getMaxDelta($module['weight']),
+        '#delta' => 1500,
       ];
       // Module package.
       $form['modules'][$filename]['package'] = [
@@ -142,7 +117,7 @@ class ModulesListForm extends FormBase {
     $new_weight_value = array_combine(array_keys($modules_info), array_column($modules_info, 'weight'));
 
     // Getting the config to know if we should show or not the core modules.
-    $show_core_modules = $this->configFactory->get('modules_weight.settings')->get('show_system_modules');
+    $show_core_modules = $this->config('modules_weight.settings')->get('show_system_modules');
     // The old values information.
     $old_modules_info = $this->modulesWeight->getModulesList($show_core_modules);
     // Doing the array unidimensional.

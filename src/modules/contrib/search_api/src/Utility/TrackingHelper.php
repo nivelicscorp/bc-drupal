@@ -6,6 +6,7 @@ namespace Drupal\search_api\Utility;
 
 use Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException;
 use Drupal\Component\Plugin\Exception\PluginNotFoundException;
+use Drupal\Component\Utility\DeprecationHelper;
 use Drupal\Core\Cache\CacheableMetadata;
 use Drupal\Core\Cache\CacheBackendInterface;
 use Drupal\Core\Cache\RefinableCacheableDependencyInterface;
@@ -20,6 +21,7 @@ use Drupal\search_api\Event\MappingForeignRelationshipsEvent;
 use Drupal\search_api\Event\SearchApiEvents;
 use Drupal\search_api\IndexInterface;
 use Drupal\search_api\SearchApiException;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 /**
@@ -28,82 +30,33 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 class TrackingHelper implements TrackingHelperInterface {
 
   /**
-   * The entity type manager.
-   *
-   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
-   */
-  protected $entityTypeManager;
-
-  /**
-   * The language manager.
-   *
-   * @var \Drupal\Core\Language\LanguageManagerInterface
-   */
-  protected $languageManager;
-
-  /**
-   * The event dispatcher.
-   *
-   * @var \Symfony\Contracts\EventDispatcher\EventDispatcherInterface
-   */
-  protected $eventDispatcher;
-
-  /**
-   * The fields helper.
-   *
-   * @var \Drupal\search_api\Utility\FieldsHelperInterface
-   */
-  protected $fieldsHelper;
-
-  /**
-   * The cache backend.
-   *
-   * @var \Drupal\Core\Cache\CacheBackendInterface
-   */
-  protected $cache;
-
-  /**
-   * Constructs a new class instance.
-   *
-   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
-   *   The entity type manager.
-   * @param \Drupal\Core\Language\LanguageManagerInterface $languageManager
-   *   The language manager.
-   * @param \Symfony\Contracts\EventDispatcher\EventDispatcherInterface $eventDispatcher
-   *   The event dispatcher.
-   * @param \Drupal\search_api\Utility\FieldsHelperInterface $fieldsHelper
-   *   The fields helper.
-   * @param \Drupal\Core\Cache\CacheBackendInterface $cache
-   *   The cache backend.
-   */
-  public function __construct(EntityTypeManagerInterface $entityTypeManager, LanguageManagerInterface $languageManager, EventDispatcherInterface $eventDispatcher, FieldsHelperInterface $fieldsHelper, CacheBackendInterface $cache) {
-    $this->languageManager = $languageManager;
-    $this->entityTypeManager = $entityTypeManager;
-    $this->eventDispatcher = $eventDispatcher;
-    $this->fieldsHelper = $fieldsHelper;
-    $this->cache = $cache;
-  }
-
-  /**
    * {@inheritdoc}
    */
   public function trackReferencedEntityUpdate(EntityInterface $entity, bool $deleted = FALSE) {
+    if (!empty($entity->search_api_skip_tracking)) {
+      return;
+    }
+
     /** @var \Drupal\search_api\IndexInterface[] $indexes */
     $indexes = [];
     try {
       $indexes = $this->entityTypeManager->getStorage('search_api_index')
         ->loadMultiple();
     }
-    // @todo Replace with multi-catch once we depend on PHP 7.1+.
-    catch (InvalidPluginDefinitionException $e) {
-      // Can't really happen, but play it safe to appease static code analysis.
-    }
-    catch (PluginNotFoundException $e) {
+    catch (InvalidPluginDefinitionException | PluginNotFoundException) {
       // Can't really happen, but play it safe to appease static code analysis.
     }
 
     // Original entity, if available.
-    $original = $deleted ? NULL : ($entity->original ?? NULL);
+    $original = NULL;
+    if (!$deleted) {
+      $original = DeprecationHelper::backwardsCompatibleCall(
+        \Drupal::VERSION,
+        '11.2',
+        fn () => $entity->getOriginal(),
+        fn () => $entity->original ?? NULL,
+      );
+    }
     foreach ($indexes as $index) {
       // Do not track changes to referenced entities if the option has been
       // disabled.
@@ -134,6 +87,15 @@ class TrackingHelper implements TrackingHelperInterface {
       }
     }
   }
+
+  public function __construct(
+    protected EntityTypeManagerInterface $entityTypeManager,
+    protected LanguageManagerInterface $languageManager,
+    protected EventDispatcherInterface $eventDispatcher,
+    protected FieldsHelperInterface $fieldsHelper,
+    #[Autowire(service: 'cache.default')]
+    protected CacheBackendInterface $cache
+  ) {}
 
   /**
    * Analyzes the index fields and constructs a map of entity references.
@@ -176,7 +138,7 @@ class TrackingHelper implements TrackingHelperInterface {
       try {
         $datasource = $field->getDatasource();
       }
-      catch (SearchApiException $e) {
+      catch (SearchApiException) {
         continue;
       }
       if (!$datasource) {

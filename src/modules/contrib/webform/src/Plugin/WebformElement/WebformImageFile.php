@@ -40,7 +40,7 @@ class WebformImageFile extends WebformManagedFileBase {
   /**
    * {@inheritdoc}
    */
-  public function prepare(array &$element, WebformSubmissionInterface $webform_submission = NULL) {
+  public function prepare(array &$element, ?WebformSubmissionInterface $webform_submission = NULL) {
     parent::prepare($element, $webform_submission);
 
     // Add upload resolution validation.
@@ -174,7 +174,7 @@ class WebformImageFile extends WebformManagedFileBase {
       }
       else {
         $file_uri = $file->getFileUri();
-        $file_url = file_create_url($file->getFileUri());
+        $file_url = $file->createFileUrl(FALSE);
       }
       $attachments[] = [
         'filecontent' => file_get_contents($file_uri),

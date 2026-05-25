@@ -8,8 +8,10 @@ use Drupal\language\Entity\ConfigurableLanguage;
 use Drupal\node\Entity\Node;
 use Drupal\search_api\Entity\Index;
 use Drupal\search_api\Entity\Server;
+use Drupal\search_api\IndexInterface;
 use Drupal\Tests\search_api\Kernel\PostRequestIndexingTrait;
 use Drupal\Tests\search_api\Kernel\TestLogger;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * Tests correct functionality of the content entity datasource.
@@ -18,6 +20,7 @@ use Drupal\Tests\search_api\Kernel\TestLogger;
  *
  * @group search_api
  */
+#[RunTestsInSeparateProcesses]
 class NodeTrackingTest extends KernelTestBase {
 
   use PostRequestIndexingTrait;
@@ -33,6 +36,11 @@ class NodeTrackingTest extends KernelTestBase {
     'search_api',
     'search_api_test',
   ];
+
+  /**
+   * The test index used in this test.
+   */
+  protected IndexInterface $index;
 
   /**
    * {@inheritdoc}

@@ -2,4 +2,4 @@ admin:
   version: 1.x
   css:
     theme:
-      views_fieldsets.admin.css: {}
+      css/views-fieldsets-admin.css: {}

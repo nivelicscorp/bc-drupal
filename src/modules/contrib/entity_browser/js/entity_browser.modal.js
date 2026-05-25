@@ -4,7 +4,7 @@
  * Defines the behavior of the entity browser's modal display.
  */
 
-(function ($, Drupal, drupalSettings) {
+(function ($, Drupal, drupalSettings, window, document) {
 
   'use strict';
 
@@ -25,23 +25,28 @@
       // Object.prototype.entries() isn't available in D9/IE11.
       for (var modalId in drupalSettings.entity_browser.modal) {
         var instance = drupalSettings.entity_browser.modal[modalId]
-        for (var jsCallbackKey in instance.js_callbacks) {
-          var callback = drupalSettings.entity_browser.modal[modalId].js_callbacks[jsCallbackKey];
-          // Get the callback.
-          callback = callback.split('.');
-          var fn = window;
+        var $button = $(':input[data-uuid="' + instance.uuid + '"]', context);
 
-          for (var j = 0; j < callback.length; j++) {
-            fn = fn[callback[j]];
-          }
+        if ($button.length !== 0 && !$button.hasClass('entity-browser-processed')) {
+          for (var jsCallbackKey in instance.js_callbacks) {
+            var callback = drupalSettings.entity_browser.modal[modalId].js_callbacks[jsCallbackKey];
+            // Get the callback.
+            callback = callback.split('.');
+            var fn = window;
 
-          if (typeof fn === 'function') {
-            $(':input[data-uuid="' + instance.uuid + '"]').not('.entity-browser-processed')
-              .bind('entities-selected', fn).addClass('entity-browser-processed');
+            for (var j = 0; j < callback.length; j++) {
+              fn = fn[callback[j]];
+            }
+
+            if (typeof fn === 'function') {
+              $button.bind('entities-selected', fn);
+            }
           }
-        }
-        if (instance.auto_open) {
-          $('input[data-uuid="' + instance.uuid + '"]').click();
+          if (instance.auto_open) {
+            $button.focus();
+            $button.click();
+          }
+          $button.addClass('entity-browser-processed');
         }
       }
     }
@@ -84,6 +89,23 @@
   };
 
   /**
+   * Registers behaviours for adding throbber on modal open.
+   */
+  Drupal.behaviors.entityBrowserAddThrobber = {
+    attach: function (context) {
+      if (context === document) {
+        $(window).on({
+          'dialog:aftercreate': function (event, dialog, $element, settings) {
+            if ($element.find('iframe.entity-browser-modal-iframe').length) {
+              $element.append(Drupal.theme('ajaxProgressThrobber'));
+            }
+          }
+        });
+      }
+    }
+  };
+
+  /**
    * Recalculates size of the modal.
    */
   Drupal.entityBrowserModal.fluidDialog = function () {
@@ -94,7 +116,7 @@
       var $this = $(this);
       var dialog = $this.find('.ui-dialog-content').data('ui-dialog');
       // If fluid option == true.
-      if (dialog.options.fluid) {
+      if (dialog && dialog.options.fluid) {
         var wWidth = $(window).width();
         // Check window width against dialog width.
         if (dialog.options.maxWidth && (wWidth > parseInt(dialog.options.maxWidth) + 50)) {
@@ -124,6 +146,19 @@
         dialog.option('position', dialog.options.position);
       }
     });
+
+    /**
+     * Close modal popup on escape key press.
+     */
+    Drupal.behaviors.closeModalOnEscapeKeyPress = {
+      attach: function (context) {
+        $(document).on('keydown', function (event) {
+          if (event.key == 'Escape') {
+            $(document).find('.entity-browser-modal-iframe').parents('.ui-dialog').eq(0).find('.ui-dialog-titlebar-close').click();
+          }
+        });
+      }
+    };
   };
 
-}(jQuery, Drupal, drupalSettings));
+}(jQuery, Drupal, drupalSettings, window, document));

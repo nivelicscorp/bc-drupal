@@ -7,3 +7,4 @@ modal:
       css/paragraphs_browser.css: {}
   dependencies:
     - core/drupal.dialog.ajax
+    - core/once

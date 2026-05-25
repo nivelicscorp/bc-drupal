@@ -27,8 +27,10 @@ use Drupal\Core\State\StateInterface;
 use Drupal\Core\TypedData\ComplexDataDefinitionInterface;
 use Drupal\Core\TypedData\ComplexDataInterface;
 use Drupal\Core\TypedData\TypedDataManagerInterface;
+use Drupal\external_entities\Entity\Query\External\Query as ExternalEntitiesQuery;
 use Drupal\field\FieldConfigInterface;
 use Drupal\field\FieldStorageConfigInterface;
+use Drupal\search_api\Attribute\SearchApiDatasource;
 use Drupal\search_api\Datasource\DatasourcePluginBase;
 use Drupal\search_api\IndexInterface;
 use Drupal\search_api\LoggerTrait;
@@ -40,12 +42,11 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Represents a datasource which exposes the content entities.
- *
- * @SearchApiDatasource(
- *   id = "entity",
- *   deriver = "Drupal\search_api\Plugin\search_api\datasource\ContentEntityDeriver"
- * )
  */
+#[SearchApiDatasource(
+  id: 'entity',
+  deriver: ContentEntityDeriver::class,
+)]
 class ContentEntity extends DatasourcePluginBase implements PluginFormInterface {
 
   use LoggerTrait;
@@ -53,10 +54,8 @@ class ContentEntity extends DatasourcePluginBase implements PluginFormInterface 
 
   /**
    * The key for accessing last tracked ID information in site state.
-   *
-   * @todo Make protected once we depend on PHP 7.1+.
    */
-  const TRACKING_PAGE_STATE_KEY = 'search_api.datasource.entity.last_ids';
+  protected const TRACKING_PAGE_STATE_KEY = 'search_api.datasource.entity.last_ids';
 
   /**
    * The database connection.
@@ -678,10 +677,27 @@ class ContentEntity extends DatasourcePluginBase implements PluginFormInterface 
       $langcode = $entity->language()->getId();
       if (isset($this->getBundles()[$entity->bundle()])
           && isset($this->getLanguages()[$langcode])) {
-        return $entity->id() . ':' . $langcode;
+        return static::formatItemId($entity->getEntityTypeId(), $entity->id(), $langcode);
       }
     }
     return NULL;
+  }
+
+  /**
+   * Computes the item ID for the given entity and language.
+   *
+   * @param string $entity_type
+   *   The entity type ID.
+   * @param string|int $entity_id
+   *   The entity ID.
+   * @param string $langcode
+   *   The language ID of the entity.
+   *
+   * @return string
+   *   The datasource-specific item ID.
+   */
+  public static function formatItemId(string $entity_type, string|int $entity_id, string $langcode): string {
+    return $entity_id . ':' . $langcode;
   }
 
   /**
@@ -719,7 +735,7 @@ class ContentEntity extends DatasourcePluginBase implements PluginFormInterface 
   /**
    * {@inheritdoc}
    */
-  public function getItemAccessResult(ComplexDataInterface $item, AccountInterface $account = NULL) {
+  public function getItemAccessResult(ComplexDataInterface $item, ?AccountInterface $account = NULL) {
     $entity = $this->getEntity($item);
     if ($entity) {
       return $this->getEntityTypeManager()
@@ -775,9 +791,25 @@ class ContentEntity extends DatasourcePluginBase implements PluginFormInterface 
   }
 
   /**
-   * {@inheritdoc}
+   * Retrieves all item IDs of entities of the specified bundles.
+   *
+   * @param int|null $page
+   *   The zero-based page of IDs to retrieve, for the paging mechanism
+   *   implemented by this datasource; or NULL to retrieve all items at once.
+   * @param string[]|null $bundles
+   *   (optional) The bundles for which all item IDs should be returned; or NULL
+   *   to retrieve IDs from all enabled bundles in this datasource.
+   * @param string[]|null $languages
+   *   (optional) The languages for which all item IDs should be returned; or
+   *   NULL to retrieve IDs from all enabled languages in this datasource.
+   *
+   * @return string[]|null
+   *   An array of all item IDs matching these conditions; or NULL if a page was
+   *   specified and there are no more items for that and all following pages.
+   *   In case both bundles and languages are specified, they are combined with
+   *   OR.
    */
-  public function getPartialItemIds($page = NULL, array $bundles = NULL, array $languages = NULL) {
+  public function getPartialItemIds($page = NULL, ?array $bundles = NULL, ?array $languages = NULL) {
     // These would be pretty pointless calls, but for the sake of completeness
     // we should check for them and return early. (Otherwise makes the rest of
     // the code more complicated.)
@@ -853,10 +885,13 @@ class ContentEntity extends DatasourcePluginBase implements PluginFormInterface 
         // We only handle the case of picking up from where the last page left
         // off. (This will cause an infinite loop if anyone ever wants to index
         // Search API tasks in an index, so check for that to be on the safe
-        // side.)
+        // side. Also, the external_entities module doesn't reliably support
+        // conditions on entity queries, so disable this functionality in that
+        // case, too.)
         if (isset($last_ids[$context_key])
             && $last_ids[$context_key]['page'] == ($page - 1)
-            && $this->getEntityTypeId() !== 'search_api_task') {
+            && $this->getEntityTypeId() !== 'search_api_task'
+            && !($select instanceof ExternalEntitiesQuery)) {
           $select->condition($entity_id, $last_ids[$context_key]['last_id'], '>');
           $offset = 0;
         }
@@ -921,7 +956,7 @@ class ContentEntity extends DatasourcePluginBase implements PluginFormInterface 
         $translations = array_intersect($translations, $languages);
       }
       foreach ($translations as $langcode) {
-        $item_ids[] = "$entity_id:$langcode";
+        $item_ids[] = static::formatItemId($entity->getEntityTypeId(), $entity_id, $langcode);
       }
     }
 
@@ -1010,7 +1045,7 @@ class ContentEntity extends DatasourcePluginBase implements PluginFormInterface 
         return $this->getEntityTypeManager()->getViewBuilder($this->getEntityTypeId())->view($entity, $view_mode, $langcode);
       }
     }
-    catch (\Exception $e) {
+    catch (\Exception) {
       // The most common reason for this would be a
       // \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException in
       // getViewBuilder(), because the entity type definition doesn't specify a
@@ -1054,7 +1089,7 @@ class ContentEntity extends DatasourcePluginBase implements PluginFormInterface 
       }
       return $build;
     }
-    catch (\Exception $e) {
+    catch (\Exception) {
       // The most common reason for this would be a
       // \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException in
       // getViewBuilder(), because the entity type definition doesn't specify a
@@ -1098,7 +1133,7 @@ class ContentEntity extends DatasourcePluginBase implements PluginFormInterface 
   /**
    * {@inheritdoc}
    */
-  public function getAffectedItemsForEntityChange(EntityInterface $entity, array $foreign_entity_relationship_map, EntityInterface $original_entity = NULL): array {
+  public function getAffectedItemsForEntityChange(EntityInterface $entity, array $foreign_entity_relationship_map, ?EntityInterface $original_entity = NULL): array {
     if (!($entity instanceof ContentEntityInterface)) {
       return [];
     }
@@ -1154,7 +1189,7 @@ class ContentEntity extends DatasourcePluginBase implements PluginFormInterface 
             throw $e;
           }
           $vars = [
-            '%index' => $this->index->label(),
+            '%index' => $this->index->label() ?? $this->index->id(),
             '%entity_type' => $entity->getEntityType()->getLabel(),
             '@entity_id' => $entity->id(),
           ];
@@ -1162,7 +1197,7 @@ class ContentEntity extends DatasourcePluginBase implements PluginFormInterface 
             $link = $entity->toLink($this->t('Go to changed %entity_type with ID "@entity_id"', $vars))
               ->toString()->getGeneratedLink();
           }
-          catch (\Throwable $e) {
+          catch (\Throwable) {
             // Ignore any errors here, it's not that important that the log
             // message contains a link.
             $link = NULL;
@@ -1172,13 +1207,19 @@ class ContentEntity extends DatasourcePluginBase implements PluginFormInterface 
         }
         foreach ($entity_ids as $entity_id) {
           foreach ($this->getLanguages() as $language) {
-            $ids_to_reindex["$entity_id:{$language->getId()}"] = 1;
+            $ids_to_reindex[static::formatItemId($this->getEntityTypeId(), $entity_id, $language->getId())] = 1;
           }
         }
       }
     }
+    $ids_to_reindex = array_keys($ids_to_reindex);
 
-    return array_keys($ids_to_reindex);
+    if ($ids_to_reindex) {
+      $combined_ids = array_map($this->createCombinedId(...), $ids_to_reindex);
+      $this->getIndex()->registerUnreliableItemIds($combined_ids);
+    }
+
+    return $ids_to_reindex;
   }
 
   /**
@@ -1194,7 +1235,7 @@ class ContentEntity extends DatasourcePluginBase implements PluginFormInterface 
    *   mapping dependency types to arrays of dependency names.
    */
   protected function getPropertyPathDependencies($property_path, array $properties) {
-    list($key, $nested_path) = Utility::splitPropertyPath($property_path, FALSE);
+    [$key, $nested_path] = Utility::splitPropertyPath($property_path, FALSE);
     if (!isset($properties[$key])) {
       return [];
     }
@@ -1237,7 +1278,14 @@ class ContentEntity extends DatasourcePluginBase implements PluginFormInterface 
   }
 
   /**
-   * {@inheritdoc}
+   * Retrieves all indexes that are configured to index the given entity.
+   *
+   * @param \Drupal\Core\Entity\ContentEntityInterface $entity
+   *   The entity for which to check.
+   *
+   * @return \Drupal\search_api\IndexInterface[]
+   *   All indexes that are configured to index the given entity (using this
+   *   datasource class).
    */
   public static function getIndexesForEntity(ContentEntityInterface $entity) {
     return \Drupal::getContainer()

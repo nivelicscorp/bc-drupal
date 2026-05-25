@@ -1,6 +1,6 @@
 name: BU General Features
 description: Useful functions and features that are intended to be sitewide
-core_version_requirement: ^8 || ^9 || ^10
+core_version_requirement: ^10 || ^11
 package: Custom
 type: module
 core: 8.x

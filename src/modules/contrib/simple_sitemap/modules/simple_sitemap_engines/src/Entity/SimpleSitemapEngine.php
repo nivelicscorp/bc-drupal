@@ -53,7 +53,7 @@ class SimpleSitemapEngine extends ConfigEntityBase {
    * When submitting to search engines, '[sitemap]' will be replaced with the
    * full URL to the sitemap.xml.
    *
-   * @var string
+   * @var string|null
    */
   public $url;
 
@@ -70,7 +70,7 @@ class SimpleSitemapEngine extends ConfigEntityBase {
    * When submitting to search engines, '[key]' and '[url]' will be replaced
    * with the respective values.
    *
-   * @var string
+   * @var string|null
    */
   public $index_now_url;
 
@@ -108,6 +108,7 @@ class SimpleSitemapEngine extends ConfigEntityBase {
    * Loads all engines capable of sitemap pinging.
    *
    * @return \Drupal\simple_sitemap_engines\Entity\SimpleSitemapEngine[]
+   *   Engines capable of sitemap pinging.
    */
   public static function loadSitemapSubmissionEngines(): array {
     $ids = \Drupal::entityQuery('simple_sitemap_engine')
@@ -121,6 +122,7 @@ class SimpleSitemapEngine extends ConfigEntityBase {
    * Loads all IndexNow capable engines.
    *
    * @return \Drupal\simple_sitemap_engines\Entity\SimpleSitemapEngine[]
+   *   IndexNow capable engines.
    */
   public static function loadIndexNowEngines(): array {
     $ids = \Drupal::entityQuery('simple_sitemap_engine')

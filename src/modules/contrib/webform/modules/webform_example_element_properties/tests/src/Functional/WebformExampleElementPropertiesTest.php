@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\Tests\webform_example_element_properties\Functiona;
+namespace Drupal\Tests\webform_example_element_properties\Functional;
 
 use Drupal\Tests\webform\Functional\WebformBrowserTestBase;
 
@@ -16,7 +16,7 @@ class WebformExampleElementPropertiesTest extends WebformBrowserTestBase {
    *
    * @var array
    */
-  public static $modules = [
+  protected static $modules = [
     'webform',
     'webform_ui',
     'webform_example_element_properties',

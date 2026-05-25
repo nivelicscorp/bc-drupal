@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\upgrade_rector_test\Form;
+namespace Drupal\upgrade_rector_test_error\Form;
 
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;

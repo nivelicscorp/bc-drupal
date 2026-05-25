@@ -14,16 +14,9 @@ use Drupal\Tests\BrowserTestBase;
 class MenuBlockTitleTest extends BrowserTestBase {
 
   /**
-   * Modules to enable.
-   *
-   * @var array
-   */
-  protected static $modules = ['menu_block_title_test'];
-
-  /**
    * {@inheritdoc}
    */
-  protected $profile = 'minimal';
+  protected static $modules = ['menu_block_title_test'];
 
   /**
    * {@inheritdoc}
@@ -35,7 +28,7 @@ class MenuBlockTitleTest extends BrowserTestBase {
    *
    * @var array
    */
-  protected static $userPermissions = [
+  protected array $userPermissions = [
     'access content',
   ];
 
@@ -46,7 +39,7 @@ class MenuBlockTitleTest extends BrowserTestBase {
    */
   protected function setUp(): void {
     parent::setUp();
-    $account = $this->drupalCreateUser(static::$userPermissions);
+    $account = $this->drupalCreateUser($this->userPermissions);
     $this->drupalLogin($account);
   }
 
@@ -59,8 +52,12 @@ class MenuBlockTitleTest extends BrowserTestBase {
    *   Expected menu block title.
    * @param string $href
    *   Expected menu block title link destination.
+   *
+   * @throws \Behat\Mink\Exception\ElementHtmlException
+   * @throws \Behat\Mink\Exception\ElementNotFoundException
+   * @throws \Behat\Mink\Exception\ExpectationException
    */
-  protected function assertMenuBlockTitle($path = '/node/2', $page_title = 'Test page title for top level nav', $href = '/node/1') {
+  protected function assertMenuBlockTitle(string $path = '/node/2', string $page_title = 'Test page title for top level nav', string $href = '/node/1'): void {
     $this->drupalGet($path);
     $this->assertSession()->elementContains('css', 'h2#block-sidebar-nav-main-menu', $page_title);
     $xpath = $this->assertSession()
@@ -76,6 +73,8 @@ class MenuBlockTitleTest extends BrowserTestBase {
 
   /**
    * Tests that the test content has been created.
+   *
+   * @throws \Behat\Mink\Exception\ExpectationException
    */
   public function testExistenceOfTestContent() {
     $this->drupalGet('/node/3');
@@ -84,8 +83,11 @@ class MenuBlockTitleTest extends BrowserTestBase {
 
   /**
    * Tests that the sidebar block is visible.
+   *
+   * @throws \Behat\Mink\Exception\ElementHtmlException
+   * @throws \Behat\Mink\Exception\ElementNotFoundException
    */
-  public function testExistenceOfMenuBlock() {
+  public function testExistenceOfMenuBlock(): void {
     $this->drupalGet('/node/3');
     $this->assertSession()->elementContains('css', '#block-sidebar-nav-main', 'Menu item without children');
   }
@@ -95,8 +97,12 @@ class MenuBlockTitleTest extends BrowserTestBase {
    *
    * Tests that viewing a node that is a parent of menu item shows the parent
    * as a link as the title of the menu block.
+   *
+   * @throws \Behat\Mink\Exception\ElementHtmlException
+   * @throws \Behat\Mink\Exception\ElementNotFoundException
+   * @throws \Behat\Mink\Exception\ExpectationException
    */
-  public function testFirstLevel() {
+  public function testFirstLevel(): void {
     $path = '/node/1';
     $href = '/node/1';
     $page_title = 'Test page title for top level nav';
@@ -108,8 +114,12 @@ class MenuBlockTitleTest extends BrowserTestBase {
    *
    * Tests that viewing a node that is a child of menu item shows the parent
    * as a link as the title of the menu block.
+   *
+   * @throws \Behat\Mink\Exception\ElementHtmlException
+   * @throws \Behat\Mink\Exception\ElementNotFoundException
+   * @throws \Behat\Mink\Exception\ExpectationException
    */
-  public function testSecondLevel() {
+  public function testSecondLevel(): void {
     $path = '/node/2';
     $href = '/node/1';
     $page_title = 'Test page title for top level nav';
@@ -121,8 +131,12 @@ class MenuBlockTitleTest extends BrowserTestBase {
    *
    * Tests that viewing a node in the 3rd level of depth shows the top-level
    * parent as a link as the title of the menu block.
+   *
+   * @throws \Behat\Mink\Exception\ElementHtmlException
+   * @throws \Behat\Mink\Exception\ElementNotFoundException
+   * @throws \Behat\Mink\Exception\ExpectationException
    */
-  public function testThirdLevel() {
+  public function testThirdLevel(): void {
     $path = '/node/7';
     $href = '/node/5';
     $page_title = 'Test three levels';

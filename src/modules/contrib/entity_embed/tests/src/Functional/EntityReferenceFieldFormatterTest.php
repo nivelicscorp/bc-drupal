@@ -21,14 +21,14 @@ class EntityReferenceFieldFormatterTest extends EntityEmbedTestBase {
   /**
    * {@inheritdoc}
    */
-  protected function setUp() {
+  protected function setUp(): void {
     parent::setUp();
 
     // Add a new menu entity which does not has a view controller.
     $this->menu = \Drupal::entityTypeManager()
       ->getStorage('menu')
       ->create([
-        'id' => 'menu_name',
+        'id' => 'menu-name',
         'label' => 'Label',
         'description' => 'Description text',
       ]);
@@ -137,7 +137,7 @@ class EntityReferenceFieldFormatterTest extends EntityEmbedTestBase {
     $settings['body'] = [['value' => $content, 'format' => 'custom_format']];
     $node = $this->drupalCreateNode($settings);
     $this->drupalGet('node/' . $node->id());
-    $this->assertSession()->responseContains($this->node->body->value, 'Body of embedded node does not exists in page.');
+    $this->assertSession()->responseContains($this->node->body->value);
     $this->assertSession()->responseNotContains('This placeholder should not be rendered.');
   }
 

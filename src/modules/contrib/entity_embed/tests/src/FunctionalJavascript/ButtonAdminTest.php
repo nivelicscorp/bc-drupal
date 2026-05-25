@@ -39,7 +39,7 @@ class ButtonAdminTest extends WebDriverTestBase {
   /**
    * {@inheritdoc}
    */
-  protected function setUp() {
+  protected function setUp(): void {
     parent::setUp();
 
     $this->container
@@ -47,6 +47,7 @@ class ButtonAdminTest extends WebDriverTestBase {
       ->getStorage('entity_view_mode')
       ->create([
         'id' => 'media.thumb',
+        'label' => 'Thumbnail',
         'targetEntityType' => 'media',
       ])
       ->save();
@@ -115,7 +116,7 @@ class ButtonAdminTest extends WebDriverTestBase {
   /**
    * Data provider for ::testEmbedButtonAdmin().
    */
-  public function embedButtonAdminProvider() {
+  public static function embedButtonAdminProvider(): array {
     return [
       'article nodes embedded using teaser view mode' => [
         'node',

@@ -2,16 +2,27 @@
 
 namespace Drupal\simple_sitemap\Form;
 
+use Drupal\Core\DependencyInjection\AutowireTrait;
 use Drupal\Core\Entity\EntityForm;
-use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\FormStateInterface;
-use Symfony\Component\DependencyInjection\ContainerInterface;
+use Drupal\simple_sitemap\Plugin\simple_sitemap\SitemapGenerator\SitemapGeneratorManager;
+use Drupal\simple_sitemap\Plugin\simple_sitemap\UrlGenerator\UrlGeneratorManager;
 
 /**
  * Form handler for sitemap type edit forms.
  */
 class SimpleSitemapTypeEntityForm extends EntityForm {
+
+  use AutowireTrait;
+
+  /**
+   * The entity being used by this form.
+   *
+   * @var \Drupal\simple_sitemap\Entity\SimpleSitemapTypeInterface
+   */
+  protected $entity;
 
   /**
    * Entity type manager service.
@@ -21,22 +32,33 @@ class SimpleSitemapTypeEntityForm extends EntityForm {
   protected $entityTypeManager;
 
   /**
-   * {@inheritdoc}
+   * The SitemapGenerator plugin manager.
+   *
+   * @var \Drupal\simple_sitemap\Plugin\simple_sitemap\SitemapGenerator\SitemapGeneratorManager
    */
-  public static function create(ContainerInterface $container) {
-    return new static(
-      $container->get('entity_type.manager')
-    );
-  }
+  protected $sitemapGeneratorManager;
+
+  /**
+   * The UrlGenerator plugin manager.
+   *
+   * @var \Drupal\simple_sitemap\Plugin\simple_sitemap\UrlGenerator\UrlGeneratorManager
+   */
+  protected $urlGeneratorManager;
 
   /**
    * SimpleSitemapTypeEntityForm constructor.
    *
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_manager
    *   Entity type manager service.
+   * @param \Drupal\simple_sitemap\Plugin\simple_sitemap\SitemapGenerator\SitemapGeneratorManager $sitemap_generator_manager
+   *   The SitemapGenerator plugin manager.
+   * @param \Drupal\simple_sitemap\Plugin\simple_sitemap\UrlGenerator\UrlGeneratorManager $url_generator_manager
+   *   The UrlGenerator plugin manager.
    */
-  public function __construct(EntityTypeManagerInterface $entity_manager) {
+  public function __construct(EntityTypeManagerInterface $entity_manager, SitemapGeneratorManager $sitemap_generator_manager, UrlGeneratorManager $url_generator_manager) {
     $this->entityTypeManager = $entity_manager;
+    $this->sitemapGeneratorManager = $sitemap_generator_manager;
+    $this->urlGeneratorManager = $url_generator_manager;
   }
 
   /**
@@ -68,7 +90,7 @@ class SimpleSitemapTypeEntityForm extends EntityForm {
       '#title' => $this->t('Sitemap generator'),
       '#options' => array_map(function ($sitemap_generator) {
         return $sitemap_generator['label'];
-      }, \Drupal::service('plugin.manager.simple_sitemap.sitemap_generator')->getDefinitions()),
+      }, $this->sitemapGeneratorManager->getDefinitions()),
       '#default_value' => !$this->entity->isNew() ? $this->entity->get('sitemap_generator') : NULL,
       '#required' => TRUE,
       '#description' => $this->t('Sitemaps of this type will be built according to the sitemap generator plugin chosen here.'),
@@ -79,7 +101,7 @@ class SimpleSitemapTypeEntityForm extends EntityForm {
       '#title' => $this->t('URL generators'),
       '#options' => array_map(function ($url_generator) {
         return $url_generator['label'];
-      }, \Drupal::service('plugin.manager.simple_sitemap.url_generator')->getDefinitions()),
+      }, $this->urlGeneratorManager->getDefinitions()),
       '#default_value' => !$this->entity->isNew() ? $this->entity->get('url_generators') : NULL,
       '#multiple' => TRUE,
       '#required' => TRUE,
@@ -105,7 +127,9 @@ class SimpleSitemapTypeEntityForm extends EntityForm {
    * {@inheritdoc}
    */
   public function save(array $form, FormStateInterface $form_state) {
-    if ($this->entity->save() === SAVED_UPDATED) {
+    $return = $this->entity->save();
+
+    if ($return === SAVED_UPDATED) {
       $this->messenger()->addStatus($this->t('Sitemap type %label has been updated.', ['%label' => $this->entity->label()]));
     }
     else {
@@ -113,6 +137,7 @@ class SimpleSitemapTypeEntityForm extends EntityForm {
     }
 
     $form_state->setRedirectUrl($this->entity->toUrl('collection'));
+    return $return;
   }
 
 }

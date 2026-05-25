@@ -3,11 +3,11 @@
  * Provides the functionality to the social links buttons.
  */
 
-(function ($) {
+(function ($, Drupal, once) {
   'use strict';
   Drupal.behaviors.social_simple = {
     attach: function (context, settings) {
-      $('.social-buttons-links a', context).once('social-buttons-link').each(function () {
+      $(once('social-buttons-link', '.social-buttons-links a', context)).each(function () {
         if ($(window).width() > 500) {
           $(this, context).on('click', function (e) {
             var h = $(this).data("popup-height"),
@@ -40,4 +40,4 @@
     }
   }
 
-}(jQuery));
+}(jQuery, Drupal, once));

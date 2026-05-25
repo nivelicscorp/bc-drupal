@@ -14,11 +14,11 @@ use Drupal\Core\Entity\Entity\EntityViewDisplay;
 function image_class_field_formatter_third_party_settings_form(FormatterInterface $plugin) {
   $element = [];
 
-  if (in_array($plugin->getPluginId(), ['image', 'responsive_image', 'media_thumbnail'])) {
+  if (in_array($plugin->getPluginId(), ['image', 'responsive_image', 'media_thumbnail', 'media_responsive_thumbnail'])) {
     $element['class'] = [
       '#type' => 'textfield',
       '#title' => t('Class'),
-      '#description' => t('Enter space seperated classes which will be added to the %img element.', ['%img' => '<img>']),
+      '#description' => t('Enter space separated classes which will be added to the %img element.', ['%img' => '<img>']),
       '#default_value' => $plugin->getThirdPartySetting('image_class', 'class'),
     ];
   }

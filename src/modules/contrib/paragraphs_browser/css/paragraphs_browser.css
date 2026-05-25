@@ -129,6 +129,9 @@
 
 .paragraphs-browser-paragraph-type {
   cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 32px;
 }
 
 .paragraphs-browser-paragraph-type:hover {
@@ -145,4 +148,8 @@
 
 .paragraphs-browser-settings-form .draggable a.tabledrag-handle + div {
   display: inline-block;
+}
+
+.paragraphs-browser-wrapper fieldset div:first-of-type {
+  margin: auto;
 }

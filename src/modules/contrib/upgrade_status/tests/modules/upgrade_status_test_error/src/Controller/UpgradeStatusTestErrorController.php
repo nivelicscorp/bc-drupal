@@ -9,8 +9,11 @@ use Drupal\Core\Controller\ControllerBase;
  */
 class UpgradeStatusTestErrorController extends ControllerBase {
 
+  /**
+   * Display deprecation error.
+   */
   public function content() {
-    upgrade_status_test_contrib_error_function_8_to_9();
+    upgrade_status_test_contrib_error_function_9_to_10();
   }
 
 }

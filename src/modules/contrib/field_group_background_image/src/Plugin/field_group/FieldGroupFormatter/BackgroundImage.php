@@ -2,17 +2,18 @@
 
 namespace Drupal\field_group_background_image\Plugin\field_group\FieldGroupFormatter;
 
-/**
- * @file
- * Contains \Drupal\field_group_background_image\Plugin\field_group\FieldGroupFormatter\Link.
- */
-
 use Drupal\Component\Utility\Html;
+use Drupal\Core\Entity\EntityFieldManagerInterface;
+use Drupal\Core\Extension\ModuleHandlerInterface;
+use Drupal\Core\File\FileUrlGeneratorInterface;
+use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\Template\Attribute;
 use Drupal\field_group\FieldGroupFormatterBase;
 use Drupal\file\Entity\File;
 use Drupal\image\Entity\ImageStyle;
 use Drupal\media\Entity\Media;
+use Drupal\media\MediaInterface;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Plugin implementation of the 'background image' formatter.
@@ -26,13 +27,58 @@ use Drupal\media\Entity\Media;
  *   }
  * )
  */
-class BackgroundImage extends FieldGroupFormatterBase {
+class BackgroundImage extends FieldGroupFormatterBase implements ContainerFactoryPluginInterface {
+
+  /**
+   * Returns the file_url_generator service.
+   *
+   * @var \Drupal\Core\File\FileUrlGeneratorInterface
+   */
+  protected $fileUrlGenerator;
+
+  /**
+   * Returns the entity_field.manager service.
+   *
+   * @var \Drupal\Core\Entity\EntityFieldManagerInterface
+   */
+  protected $entityFieldManager;
+
+  /**
+   * Returns the module_handler service.
+   *
+   * @var \Drupal\Core\Extension\ModuleHandlerInterface
+   */
+  protected $moduleHandler;
 
   /**
    * {@inheritdoc}
    */
-  public function preRender(&$element, $renderingObject) {
+  public function __construct($configuration, $plugin_id, $plugin_definition, FileUrlGeneratorInterface $file_url_generator, EntityFieldManagerInterface $entity_field_manager, ModuleHandlerInterface $module_handler) {
+    parent::__construct($plugin_id, $plugin_definition, $configuration['group'], $configuration['settings'], $configuration['label']);
 
+    $this->fileUrlGenerator = $file_url_generator;
+    $this->entityFieldManager = $entity_field_manager;
+    $this->moduleHandler = $module_handler;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
+    return new static(
+      $configuration,
+      $plugin_id,
+      $plugin_definition,
+      $container->get('file_url_generator'),
+      $container->get('entity_field.manager'),
+      $container->get('module_handler')
+    );
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function preRender(&$element, $rendering_object) {
     $attributes = new Attribute();
 
     // Add the HTML ID.
@@ -45,8 +91,20 @@ class BackgroundImage extends FieldGroupFormatterBase {
 
     // Add the image as a background.
     $image = $this->getSetting('image');
-    $imageStyle = $this->getSetting('image_style');
-    if ($style = $this->generateStyleAttribute($renderingObject, $image, $imageStyle)) {
+    $image_style = $this->getSetting('image_style');
+    $color_field = $this->getSetting('color_field');
+
+    if ($style = $this->generateStyleAttribute($rendering_object, $image, $image_style)) {
+      // Add inline styles to the output.
+      if ($inline_styles = $this->getSetting('inline_styles')) {
+        $style .= " {$inline_styles}";
+      }
+
+      // Add background color to the output.
+      if ($background_color = $this->getBackgroundColor($rendering_object, $color_field)) {
+        $style .= " background-color: {$background_color};";
+      }
+
       $attributes['style'] = $style;
     }
     elseif ($this->getSetting('hide_if_missing')) {
@@ -61,36 +119,76 @@ class BackgroundImage extends FieldGroupFormatterBase {
   /**
    * Generates the background image style attribute.
    *
-   * @param object $renderingObject
+   * @param object $rendering_object
    *   Rendering Object.
    * @param string $image
    *   Image.
-   * @param string $imageStyle
+   * @param string $image_style
    *   Image Style.
    *
    * @return string
    *   Background Image style inline with absolute url.
    */
-  protected function generateStyleAttribute($renderingObject, $image, $imageStyle) {
+  protected function generateStyleAttribute($rendering_object, $image, $image_style) {
     $style = '';
 
-    $validImage = array_key_exists($image, $this->imageFields());
-    $validImageStyle = ($imageStyle === '') || array_key_exists($imageStyle, image_style_options(FALSE));
+    $valid_image = array_key_exists($image, $this->imageFields());
+    $valid_image_style = ($image_style === '') || array_key_exists($image_style, image_style_options(FALSE));
 
-    if ($validImage && $validImageStyle) {
-      if ($url = $this->imageUrl($renderingObject, $image, $imageStyle)) {
-        $style = strtr('background-image: url(\'@url\')', ['@url' => $url]);
-      }
+    if ($valid_image && $valid_image_style && $url = $this->imageUrl($rendering_object, $image, $image_style)) {
+      $style = strtr('background-image: url(\'@url\');', ['@url' => $url]);
     }
 
     return $style;
   }
 
   /**
-   * Gets all HTML classes, cleaned for displaying.
+   * Generates the background color.
    *
-   * @return array
-   *   Classes.
+   * @param object $rendering_object
+   *   Rendering Object.
+   * @param string $color_field
+   *   Color field.
+   *
+   * @return string
+   *   Background color.
+   */
+  protected function getBackgroundColor($rendering_object, $color_field) {
+    $background = '';
+
+    /** @var \Drupal\Core\Entity\EntityInterface $entity */
+    if (!($entity = $rendering_object['#' . $this->group->entity_type])) {
+      return $background;
+    }
+
+    if ($entity->hasField($color_field) && !$entity->get($color_field)->isEmpty()) {
+      $value = $entity->get($color_field)->getValue();
+
+      $color = $value[0]['color'];
+      if (str_starts_with($color, '#')) {
+        $color = substr($color, 1);
+      }
+
+      $hexdec = hexdec($color);
+
+      $red = (($hexdec & 0xFF0000) >> 16);
+      $green = (($hexdec & 0x00FF00) >> 8);
+      $blue = (($hexdec & 0x0000FF));
+
+      $red = max(0, min(255, $red));
+      $green = max(0, min(255, $green));
+      $blue = max(0, min(255, $blue));
+
+      $background = isset($value[0]['opacity'])
+        ? 'rgba(' . $red . ',' . $green . ',' . $blue . ',' . $value[0]['opacity'] . ')'
+        : 'rgb(' . $red . ',' . $green . ',' . $blue . ')';
+    }
+
+    return $background;
+  }
+
+  /**
+   * {@inheritdoc}
    */
   protected function getClasses() {
     $classes = parent::getClasses();
@@ -103,65 +201,71 @@ class BackgroundImage extends FieldGroupFormatterBase {
   /**
    * Returns an image URL to be used in the Field Group.
    *
-   * @param object $renderingObject
+   * @param object $rendering_object
    *   The object being rendered.
    * @param string $field
    *   Image field name.
-   * @param string $imageStyle
+   * @param string $image_style
    *   Image style name.
    *
    * @return string
    *   Image URL.
    */
-  protected function imageUrl($renderingObject, $field, $imageStyle) {
-    $imageUrl = '';
+  protected function imageUrl($rendering_object, $field, $image_style) {
+    $image_url = '';
 
-    /* @var EntityInterface $entity */
-    if (!($entity = $renderingObject['#' . $this->group->entity_type])) {
-      return $imageUrl;
+    /** @var \Drupal\Core\Entity\EntityInterface $entity */
+    if (!($entity = $rendering_object['#' . $this->group->entity_type])) {
+      return $image_url;
     }
 
-    if ($imageFieldValue = $renderingObject['#' . $this->group->entity_type]->get($field)->getValue()) {
+    if ($image_field_value = $rendering_object['#' . $this->group->entity_type]->get($field)->getValue()) {
 
       // Fid for image or entity_id.
-      if (!empty($imageFieldValue[0]['target_id'])) {
-        $entity_id = $imageFieldValue[0]['target_id'];
+      if (!empty($image_field_value[0]['target_id'])) {
+        $entity_id = $image_field_value[0]['target_id'];
 
-        $fieldDefinition = $entity->getFieldDefinition($field);
+        $field_definition = $entity->getFieldDefinition($field);
         // Get the media or file URI.
         if (
-          $fieldDefinition->getType() == 'entity_reference' &&
-          $fieldDefinition->getSetting('target_type') == 'media'
+          $field_definition->getType() == 'entity_reference' &&
+          $field_definition->getSetting('target_type') == 'media'
         ) {
 
           // Load media.
           $entity_media = Media::load($entity_id);
 
           // Loop over entity fields.
-          foreach ($entity_media->getFields() as $field_name => $field) {
+          $file_uri = '';
+          $media_fields = $entity_media instanceof MediaInterface ? $entity_media->getFields() : [];
+          foreach ($media_fields as $field_name => $media_field) {
             if (
-              $field->getFieldDefinition()->getType() === 'image' &&
-              $field->getFieldDefinition()->getName() !== 'thumbnail'
+              $media_field->getFieldDefinition()->getType() === 'image' &&
+              $media_field->getFieldDefinition()->getName() !== 'thumbnail'
             ) {
-              $fileUri = $entity_media->{$field_name}->entity->getFileUri();
+              $file_uri = method_exists($entity_media->{$field_name}->entity, 'getFileUri') ? $entity_media->{$field_name}->entity->getFileUri() : '';
             }
           }
         }
         else {
-          $fileUri = File::load($entity_id)->getFileUri();
+          $file_uri = File::load($entity_id)->getFileUri();
+        }
+
+        if (!$file_uri) {
+          return $image_url;
         }
 
         // When no image style is selected, use the original image.
-        if ($imageStyle === '') {
-          $imageUrl = file_create_url($fileUri);
+        if ($image_style === '') {
+          $image_url = $this->fileUrlGenerator->generateAbsoluteString($file_uri);
         }
         else {
-          $imageUrl = ImageStyle::load($imageStyle)->buildUrl($fileUri);
+          $image_url = ImageStyle::load($image_style)->buildUrl($file_uri);
         }
       }
     }
 
-    return file_url_transform_relative($imageUrl);
+    return $this->fileUrlGenerator->transformRelative($image_url);
   }
 
   /**
@@ -171,18 +275,35 @@ class BackgroundImage extends FieldGroupFormatterBase {
    *   Image field key value pair.
    */
   protected function imageFields() {
+    $fields = $this->entityFieldManager->getFieldDefinitions($this->group->entity_type, $this->group->bundle);
 
-    $entityFieldManager = \Drupal::service('entity_field.manager');
-    $fields = $entityFieldManager->getFieldDefinitions($this->group->entity_type, $this->group->bundle);
-
-    $imageFields = [];
+    $image_fields = [];
     foreach ($fields as $field) {
       if ($field->getType() === 'image' || ($field->getType() === 'entity_reference' && $field->getSetting('target_type') == 'media')) {
-        $imageFields[$field->get('field_name')] = $field->label();
+        $image_fields[$field->get('field_name')] = $field->label();
       }
     }
 
-    return $imageFields;
+    return $image_fields;
+  }
+
+  /**
+   * Get all color fields for the current entity and bundle.
+   *
+   * @return array
+   *   Color field key value pair.
+   */
+  protected function colorFields() {
+    $fields = $this->entityFieldManager->getFieldDefinitions($this->group->entity_type, $this->group->bundle);
+
+    $image_fields = [];
+    foreach ($fields as $field) {
+      if ($field->getType() === 'color_field_type') {
+        $image_fields[$field->get('field_name')] = $field->label();
+      }
+    }
+
+    return $image_fields;
   }
 
   /**
@@ -193,7 +314,7 @@ class BackgroundImage extends FieldGroupFormatterBase {
 
     $form['label']['#access'] = FALSE;
 
-    if ($imageFields = $this->imageFields()) {
+    if ($image_fields = $this->imageFields()) {
       $form['image'] = [
         '#title' => $this->t('Image'),
         '#type' => 'select',
@@ -203,7 +324,7 @@ class BackgroundImage extends FieldGroupFormatterBase {
         '#default_value' => $this->getSetting('image'),
         '#weight' => 1,
       ];
-      $form['image']['#options'] += $imageFields;
+      $form['image']['#options'] += $image_fields;
 
       $form['image_style'] = [
         '#title' => $this->t('Image style'),
@@ -216,12 +337,33 @@ class BackgroundImage extends FieldGroupFormatterBase {
       ];
       $form['image_style']['#options'] += image_style_options(FALSE);
 
+      $color_module = $this->moduleHandler->moduleExists('color_field');
+      $form['color_field'] = [
+        '#title' => $this->t('Background color field'),
+        '#type' => 'select',
+        '#access' => $color_module,
+        '#options' => [
+          '' => $this->t('- Select -'),
+        ],
+        '#default_value' => $color_module && $this->getSetting('color_field') ? $this->getSetting('color_field') : '',
+        '#weight' => 3,
+      ];
+      $form['color_field']['#options'] += $this->colorFields();
+
+      $form['inline_styles'] = [
+        '#title' => $this->t('Inline styles'),
+        '#type' => 'textfield',
+        '#maxlength' => 255,
+        '#default_value' => $this->getSetting('inline_styles'),
+        '#weight' => 4,
+      ];
+
       $form['hide_if_missing'] = [
         '#type' => 'checkbox',
         '#title' => $this->t('Hide if missing image'),
         '#description' => $this->t('Do not render the field group if the image is missing from the selected field.'),
         '#default_value' => $this->getSetting('hide_if_missing'),
-        '#weight' => 3,
+        '#weight' => 5,
       ];
     }
     else {
@@ -240,12 +382,16 @@ class BackgroundImage extends FieldGroupFormatterBase {
     $summary = parent::settingsSummary();
 
     if ($image = $this->getSetting('image')) {
-      $imageFields = $this->imageFields();
-      $summary[] = $this->t('Image field: @image', ['@image' => $imageFields[$image]]);
+      $image_fields = $this->imageFields();
+      $summary[] = $this->t('Image field: @image', ['@image' => $image_fields[$image]]);
     }
 
-    if ($imageStyle = $this->getSetting('image_style')) {
-      $summary[] = $this->t('Image style: @style', ['@style' => $imageStyle]);
+    if ($image_style = $this->getSetting('image_style')) {
+      $summary[] = $this->t('Image style: @style', ['@style' => $image_style]);
+    }
+
+    if ($color_field = $this->getSetting('color_field')) {
+      $summary[] = $this->t('Background color field: @color', ['@color' => $color_field]);
     }
 
     return $summary;

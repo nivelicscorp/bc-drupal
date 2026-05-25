@@ -12,7 +12,7 @@ class TestSocialSimpleTest extends TestSocialSimpleTestBase {
   /**
    * {@inheritdoc}
    */
-  protected function setUp() {
+  protected function setUp(): void {
     parent::setUp();
 
     // Create a super admin.
@@ -48,7 +48,7 @@ class TestSocialSimpleTest extends TestSocialSimpleTestBase {
     $this->getSession()->getPage()->fillField('social_simple_networks[twitter]', 'twitter');
     $this->getSession()->getPage()->fillField('social_simple_networks[googleplus]', 'googleplus');
     $this->getSession()->getPage()->fillField('social_simple_networks[facebook]', 'facebook');
-    $this->getSession()->getPage()->pressButton('Save content type');
+    $this->getSession()->getPage()->pressButton('Save');
     drupal_flush_all_caches();
 
     $this->drupalGet($bundle_path);
@@ -57,7 +57,7 @@ class TestSocialSimpleTest extends TestSocialSimpleTestBase {
     $this->setComponentViewDisplay('node.article.default', 'node', 'article', 'default', 'social_simple_buttons');
     $this->drupalGet($bundle_path . '/display');
     $this->assertSession()->pageTextContains('Social simple buttons');
-    $this->assertText('Social simple buttons');
+    $this->assertSession()->pageTextContains('Social simple buttons');
 
     $this->drupalGet('/node/' . $this->article->id());
     $this->assertSession()->pageTextContains('Share on');
@@ -69,7 +69,7 @@ class TestSocialSimpleTest extends TestSocialSimpleTestBase {
     $this->drupalGet($bundle_path);
     $this->getSession()->getPage()->fillField('social_simple_networks[linkedin]', 'linkedin');
     $this->getSession()->getPage()->fillField('social_simple_hashtags', 'field_tags');
-    $this->getSession()->getPage()->pressButton('Save content type');
+    $this->getSession()->getPage()->pressButton('Save');
     drupal_flush_all_caches();
 
     $this->drupalGet($bundle_path);

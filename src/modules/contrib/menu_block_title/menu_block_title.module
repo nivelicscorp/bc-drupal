@@ -5,10 +5,23 @@
  * Alters menu block titles to show the active menu item's parent.
  */
 
-use Drupal\Core\Block\BlockPluginInterface;
 use Drupal\block\Entity\Block;
+use Drupal\Core\Block\BlockPluginInterface;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\menu_block_title\MenuBlockTitle;
+
+/**
+ * Implements hook_help().
+ */
+function menu_block_title_help($route_name, RouteMatchInterface $route_match) {
+  // Main module help for the menu_block_title module.
+  if ($route_name == 'help.page.menu_block_title') {
+    $output = '<h3>' . t('About') . '</h3>';
+    $output .= '<p>' . t("This module simply adds an option to system menu blocks which when active will show the active menu item's parent as a link in the block's title. This makes for useful sidebar menus where the block title is a link back to the current item's menu parent") . '</p>';
+    return $output;
+  }
+}
 
 /**
  * Implements hook_block_view_alter().
@@ -16,7 +29,7 @@ use Drupal\menu_block_title\MenuBlockTitle;
  * Alters the titles of specified menu blocks to set the title to the parent
  * menu link title.
  */
-function menu_block_title_block_view_alter(array &$build, BlockPluginInterface $block) {
+function menu_block_title_block_view_alter(array &$build, BlockPluginInterface $block): void {
   if (_menu_block_title_needs_modifying($build, $block)) {
     $build['#pre_render'][] = [MenuBlockTitle::class, 'preRender'];
     $menu_name = $block->getDerivativeId();
@@ -33,7 +46,7 @@ function menu_block_title_block_view_alter(array &$build, BlockPluginInterface $
  * @return bool
  *   The boolean indicating whether this block needs modifying.
  */
-function _menu_block_title_needs_modifying($build, BlockPluginInterface $block) {
+function _menu_block_title_needs_modifying($build, BlockPluginInterface $block): bool {
   $configuration = $block->getConfiguration();
 
   if (isset($configuration['level']) && $block_config = Block::load($build['#id'])) {
@@ -48,7 +61,7 @@ function _menu_block_title_needs_modifying($build, BlockPluginInterface $block) 
 /**
  * Form alteration for the block form to add options.
  */
-function menu_block_title_form_block_form_alter(&$form, FormStateInterface $form_state, $form_id) {
+function menu_block_title_form_block_form_alter(&$form, FormStateInterface $form_state, $form_id): void {
   /** @var \Drupal\block\BlockInterface $block */
   $block = $form_state->getFormObject()->getEntity();
 

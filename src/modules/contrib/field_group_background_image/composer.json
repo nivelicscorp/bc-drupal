@@ -1,27 +1,33 @@
 {
   "name": "drupal/field_group_background_image",
+  "description": "This module creates a field group display formatter that consists in a <div> wrapper with a CSS background (using the style attribute).",
   "type": "drupal-module",
-  "description": "Field Group Background",
+  "license": "GPL-2.0-or-later",
   "keywords": ["Drupal", "Field Group"],
-  "license": "GPL-2.0+",
   "homepage": "https://www.drupal.org/project/field_group_background_image",
-  "minimum-stability": "dev",
   "authors": [
     {
       "name": "Bart Vanhoutte",
+      "homepage": "https://www.drupal.org/u/bart-vanhoutte",
       "role": "Maintainer"
     },
     {
       "name": "Pere Orga",
-      "role": "Maintainer",
-      "homepage": "http://orga.cat"
+      "homepage": "https://www.drupal.org/u/pere-orga",
+      "role": "Maintainer"
+    },
+    {
+      "name": "Viktor Holovachek (AstonVictor)",
+      "homepage": "https://www.drupal.org/u/astonvictor",
+      "role": "Maintainer"
     }
   ],
+  "minimum-stability": "dev",
   "support": {
-    "issues": "http://drupal.org/project/issues/field_group_background_image",
-    "source": "http://cgit.drupalcode.org/field_group_background_image"
+    "issues": "https://www.drupal.org/project/issues/field_group_background_image",
+    "source": "https://git.drupalcode.org/project/field_group_background_image"
   },
   "require": {
-    "drupal/field_group": "8.*"
+    "drupal/field_group": "^3.4 || ^4.0"
   }
 }

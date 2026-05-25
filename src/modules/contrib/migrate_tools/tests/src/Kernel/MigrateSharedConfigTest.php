@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Drupal\Tests\migrate_tools\Kernel;
 
@@ -52,6 +52,7 @@ final class MigrateSharedConfigTest extends KernelTestBase {
     $expected_destination_configuration = [
       'batch_size' => 2,
       'plugin' => 'entity:entity_test',
+      'my_single_file_default_configuration' => 'value',
     ];
     $this->assertEquals($expected_source_configuration, $migration->getSourceConfiguration());
     $this->assertEquals($expected_destination_configuration, $migration->getDestinationConfiguration());

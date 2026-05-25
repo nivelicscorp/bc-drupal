@@ -1,11 +1,10 @@
 name: Menu Block Title
 type: module
 description: 'Alter the title of menu blocks'
-package: Developement
-core: 8.x
-core_version_requirement: ^8 || ^9
+package: Menu
+core_version_requirement: ^10.3 || ^11
 
-# Information added by Drupal.org packaging script on 2021-09-29
-version: '8.x-1.4'
+# Information added by Drupal.org packaging script on 2025-04-09
+version: '2.0.0'
 project: 'menu_block_title'
-datestamp: 1632902626
+datestamp: 1744234184

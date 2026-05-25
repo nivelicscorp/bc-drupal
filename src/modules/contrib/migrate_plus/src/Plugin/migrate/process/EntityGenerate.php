@@ -1,9 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\migrate_plus\Plugin\migrate\process;
 
 use Drupal\Component\Utility\NestedArray;
 use Drupal\migrate\MigrateExecutableInterface;
+use Drupal\migrate\Plugin\migrate\process\Get;
+use Drupal\migrate\Plugin\MigratePluginManagerInterface;
 use Drupal\migrate\Plugin\MigrationInterface;
 use Drupal\migrate\Row;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -48,37 +52,29 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 class EntityGenerate extends EntityLookup {
 
   /**
-   * The row from the source to process.
-   *
-   * @var \Drupal\migrate\Row
+   * The row.
    */
-  protected $row;
+  protected ?Row $row = NULL;
 
   /**
    * The migrate executable.
-   *
-   * @var \Drupal\migrate\MigrateExecutableInterface
    */
-  protected $migrateExecutable;
+  protected ?MigrateExecutableInterface $migrateExecutable = NULL;
 
   /**
-   * The MigratePluginManager instance.
-   *
-   * @var \Drupal\migrate\Plugin\MigratePluginManagerInterface
+   * The migrate plugin manager.
    */
-  protected $processPluginManager;
+  protected ?MigratePluginManagerInterface $processPluginManager = NULL;
 
   /**
-   * The get process plugin instance.
-   *
-   * @var \Drupal\migrate\Plugin\migrate\process\Get
+   * The Get process plugin.
    */
-  protected $getProcessPlugin;
+  protected ?Get $getProcessPlugin = NULL;
 
   /**
    * {@inheritdoc}
    */
-  public static function create(ContainerInterface $container, array $configuration, $pluginId, $pluginDefinition, MigrationInterface $migration = NULL) {
+  public static function create(ContainerInterface $container, array $configuration, $pluginId, $pluginDefinition, ?MigrationInterface $migration = NULL): self {
     $instance = parent::create($container, $configuration, $pluginId, $pluginDefinition, $migration);
     $instance->processPluginManager = $container->get('plugin.manager.migrate.process');
     return $instance;
@@ -87,11 +83,11 @@ class EntityGenerate extends EntityLookup {
   /**
    * {@inheritdoc}
    */
-  public function transform($value, MigrateExecutableInterface $migrateExecutable, Row $row, $destinationProperty) {
+  public function transform($value, MigrateExecutableInterface $migrate_executable, Row $row, $destination_property) {
     $this->row = $row;
-    $this->migrateExecutable = $migrateExecutable;
+    $this->migrateExecutable = $migrate_executable;
     // Creates an entity if the lookup determines it doesn't exist.
-    if (!($result = parent::transform($value, $migrateExecutable, $row, $destinationProperty))) {
+    if (!($result = parent::transform($value, $migrate_executable, $row, $destination_property))) {
       $result = $this->generateEntity($value);
     }
 
@@ -104,10 +100,10 @@ class EntityGenerate extends EntityLookup {
    * @param string $value
    *   Value to use in creation of the entity.
    *
-   * @return int|string
+   * @return null|int|string
    *   The entity id of the generated entity.
    */
-  protected function generateEntity($value) {
+  protected function generateEntity($value): null|int|string {
     if (!empty($value)) {
       $entity = $this->entityTypeManager
         ->getStorage($this->lookupEntityType)
@@ -116,6 +112,8 @@ class EntityGenerate extends EntityLookup {
 
       return $entity->id();
     }
+
+    return NULL;
   }
 
   /**
@@ -127,10 +125,9 @@ class EntityGenerate extends EntityLookup {
    * @param mixed $value
    *   Primary value to use in creation of the entity.
    *
-   * @return array
    *   Entity value array.
    */
-  protected function entity($value) {
+  protected function entity($value): array {
     $entity_values = [$this->lookupValueKey => $value];
 
     if ($this->lookupBundleKey) {
@@ -139,8 +136,8 @@ class EntityGenerate extends EntityLookup {
 
     // Gather any static default values for properties/fields.
     if (isset($this->configuration['default_values']) && is_array($this->configuration['default_values'])) {
-      foreach ($this->configuration['default_values'] as $key => $value) {
-        $entity_values[$key] = $value;
+      foreach ($this->configuration['default_values'] as $key => $default_value) {
+        $entity_values[$key] = $default_value;
       }
     }
     // Gather any additional properties/fields.

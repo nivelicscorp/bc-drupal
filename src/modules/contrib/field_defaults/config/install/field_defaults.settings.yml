@@ -1,2 +1,1 @@
-field_defaults:
-  update_date: 0
+retain_changed_date: 1

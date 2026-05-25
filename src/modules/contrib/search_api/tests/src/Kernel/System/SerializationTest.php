@@ -8,12 +8,14 @@ use Drupal\search_api\Entity\Index;
 use Drupal\search_api\Entity\Server;
 use Drupal\search_api\Item\Field;
 use Drupal\search_api\Item\Item;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * Tests that various classes can be properly serialized and/or cloned.
  *
  * @group search_api
  */
+#[RunTestsInSeparateProcesses]
 class SerializationTest extends KernelTestBase {
 
   /**
@@ -166,7 +168,7 @@ class SerializationTest extends KernelTestBase {
     $query->addCondition('test1', 'bar');
     $condition_group_1 = $query->getConditionGroup()->getConditions()[1];
     $condition_group_2 = $condition_group_1->getConditions()[2];
-    $condition_group_3 = $query->createConditionGroup('AND');
+    $condition_group_3 = $query->createAndAddConditionGroup();
     $condition_group_1->addCondition('test1', 'foobar');
     $condition_group_2->addCondition('test1', 'foobar');
     $condition_group_3->addCondition('test1', 'foobar');
@@ -276,14 +278,13 @@ class SerializationTest extends KernelTestBase {
     $query->setFulltextFields(['foo', 'bar']);
 
     $query->addCondition('title', 'foo', '<>');
-    $condition_group_1 = $query->createConditionGroup('OR', ['foobar']);
+    $condition_group_1 = $query->createAndAddConditionGroup('OR', ['foobar']);
     $condition_group_1->addCondition('foo', 'bar');
-    $query->addConditionGroup($condition_group_1);
     $condition_group_1->addCondition('bar', [1, 5], 'BETWEEN');
     $condition_group_2 = $query->createConditionGroup('AND', ['baz']);
+    $condition_group_1->addConditionGroup($condition_group_2);
     $condition_group_2->addCondition('baz', 2, '>');
     $condition_group_2->addCondition('baz', NULL, '<>');
-    $condition_group_1->addConditionGroup($condition_group_2);
 
     $query->addTag('serialization_test');
 

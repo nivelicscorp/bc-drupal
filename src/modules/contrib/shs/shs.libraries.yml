@@ -4,7 +4,7 @@ shs.form:
     theme:
       css/shs.form.css: {}
   js:
-    js/shs.js: {weight: -1}
+    js/shs.js: {}
     # Models.
     js/models/AppModel.js: {}
     js/models/ContainerModel.js: {}
@@ -21,8 +21,8 @@ shs.form:
     - core/jquery
     - core/drupal
     - core/drupalSettings
-    - core/backbone
-    - core/jquery.once
+    - core/internal.backbone
+    - core/once
 
 shs.formatter:
   version: VERSION

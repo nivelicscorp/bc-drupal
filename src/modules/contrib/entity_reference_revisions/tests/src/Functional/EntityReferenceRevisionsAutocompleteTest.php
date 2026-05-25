@@ -7,12 +7,16 @@ use Drupal\Component\Utility\Html;
 use Drupal\node\Entity\Node;
 use Drupal\Tests\BrowserTestBase;
 use Drupal\Tests\field_ui\Traits\FieldUiTestTrait;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * Tests the entity_reference_revisions autocomplete.
  *
  * @group entity_reference_revisions
  */
+#[RunTestsInSeparateProcesses]
+#[Group('entity_reference_revisions')]
 class EntityReferenceRevisionsAutocompleteTest extends BrowserTestBase {
 
   use FieldUiTestTrait;
@@ -53,7 +57,7 @@ class EntityReferenceRevisionsAutocompleteTest extends BrowserTestBase {
    * referenced entity and of the entity the field is attached to are different.
    */
   public function testEntityReferenceRevisionsAutocompleteProcessing() {
-    $admin_user = $this->drupalCreateUser(array(
+    $admin_permissions = array(
       'administer site configuration',
       'administer nodes',
       'administer blocks',
@@ -63,7 +67,10 @@ class EntityReferenceRevisionsAutocompleteTest extends BrowserTestBase {
       'administer node display',
       'administer node form display',
       'edit any article content',
-    ));
+      'administer block types',
+      'administer block content',
+    );
+    $admin_user = $this->drupalCreateUser($admin_permissions);
     $this->drupalLogin($admin_user);
 
     // Create a custom block content bundle.
@@ -146,9 +153,14 @@ class EntityReferenceRevisionsAutocompleteTest extends BrowserTestBase {
       'id' => $machine_name,
       'revision' => TRUE,
     );
-    $this->drupalGet('admin/structure/block/block-content/types/add');
+    $this->drupalGet('admin/structure/block-content/add');
     $this->submitForm($edit, 'Save');
     $this->assertSession()->pageTextContains($label);
+
+    if (version_compare(\Drupal::VERSION, '11.2.99', '>')) {
+      $this->createBodyField('block_content', $machine_name);
+    }
+
   }
 
 }

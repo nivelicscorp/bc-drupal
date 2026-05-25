@@ -2,12 +2,12 @@
 
 namespace Drupal\Tests\conditional_fields\FunctionalJavascript;
 
-use Drupal\conditional_fields\ConditionalFieldsInterface;
-use Drupal\Tests\field\Traits\EntityReferenceTestTrait;
-use Drupal\taxonomy\Entity\Vocabulary;
-use Drupal\taxonomy\Entity\Term;
 use Drupal\Core\Entity\Entity\EntityFormDisplay;
 use Drupal\Tests\conditional_fields\FunctionalJavascript\TestCases\ConditionalFieldValueInterface;
+use Drupal\Tests\field\Traits\EntityReferenceFieldCreationTrait;
+use Drupal\conditional_fields\ConditionalFieldsInterface;
+use Drupal\taxonomy\Entity\Term;
+use Drupal\taxonomy\Entity\Vocabulary;
 
 /**
  * Test Conditional Fields Checkboxes Plugin.
@@ -16,7 +16,7 @@ use Drupal\Tests\conditional_fields\FunctionalJavascript\TestCases\ConditionalFi
  */
 class ConditionalFieldCheckboxesTest extends ConditionalFieldTestBase implements ConditionalFieldValueInterface {
 
-  use EntityReferenceTestTrait;
+  use EntityReferenceFieldCreationTrait;
 
   /**
    * {@inheritdoc}
@@ -40,7 +40,7 @@ class ConditionalFieldCheckboxesTest extends ConditionalFieldTestBase implements
   /**
    * {@inheritdoc}
    */
-  protected function setUp() {
+  protected function setUp(): void {
     parent::setUp();
     // Create a vocabulary with random name.
     $this->taxonomyName = $this->getRandomGenerator()->word(8);

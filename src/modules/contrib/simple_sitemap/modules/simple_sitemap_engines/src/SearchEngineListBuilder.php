@@ -8,8 +8,8 @@ use Drupal\Core\Datetime\DateFormatterInterface;
 use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\State\StateInterface;
+use Drupal\Core\Url;
 use Drupal\simple_sitemap_engines\Entity\SimpleSitemapEngine;
-use Drupal\simple_sitemap_engines\Form\FormHelper;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -52,11 +52,13 @@ class SearchEngineListBuilder extends ConfigEntityListBuilder {
    * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
    *   The config factory service.
    */
-  public function __construct(EntityTypeInterface $entity_type,
-                              EntityStorageInterface $storage,
-                              DateFormatterInterface $date_formatter,
-                              StateInterface $state,
-                              ConfigFactoryInterface $config_factory) {
+  public function __construct(
+    EntityTypeInterface $entity_type,
+    EntityStorageInterface $storage,
+    DateFormatterInterface $date_formatter,
+    StateInterface $state,
+    ConfigFactoryInterface $config_factory,
+  ) {
     parent::__construct($entity_type, $storage);
     $this->dateFormatter = $date_formatter;
     $this->state = $state;
@@ -81,17 +83,23 @@ class SearchEngineListBuilder extends ConfigEntityListBuilder {
    */
   public function render(): array {
     return [
-      'sitemap_submission_engines' => $this->renderSitemapSubmissionEngines(),
       'index_now_engines' => $this->renderIndexNowEngines(),
+      'sitemap_submission_engines' => $this->renderSitemapSubmissionEngines(),
     ];
   }
 
+  /**
+   * Render sitemap submission engines.
+   *
+   * @return array
+   *   The build array.
+   */
   protected function renderSitemapSubmissionEngines(): array {
     $enabled = (bool) $this->config->get('simple_sitemap_engines.settings')->get('enabled');
     $build = [
       '#type' => 'details',
       '#open' => $enabled,
-      '#title' => $this->t('Sitemap submission status'),
+      '#title' => $this->t('Sitemap submission status (ping protocol)'),
       'table' => [
         '#type' => 'table',
         '#header' => [
@@ -103,11 +111,13 @@ class SearchEngineListBuilder extends ConfigEntityListBuilder {
         '#rows' => [],
         '#empty' => $this->t('There are no @label yet.', ['@label' => $this->entityType->getPluralLabel()]),
       ],
-      '#description' => $this->t('Submission settings can be configured <a href="@url">here</a>.', ['@url' => $GLOBALS['base_url'] . '/admin/config/search/simplesitemap/engines/settings']),
+      '#description' => $this->t('Submission settings can be configured <a href="@url">here</a>.<br/>The ping protocol is <strong>being deprecated</strong>, use IndexNow if applicable.',
+        ['@url' => Url::fromRoute('simple_sitemap.engines.settings')->toString()]
+      ),
     ];
 
     if ($enabled) {
-      foreach (SimpleSitemapEngine::loadSitemapSubmissionEngines()  as $entity) {
+      foreach (SimpleSitemapEngine::loadSitemapSubmissionEngines() as $entity) {
         $last_submitted = $this->state->get("simple_sitemap_engines.simple_sitemap_engine.{$entity->id()}.last_submitted", -1);
         $build['table']['#rows'][$entity->id()] = [
           'label' => $entity->label(),
@@ -127,13 +137,19 @@ class SearchEngineListBuilder extends ConfigEntityListBuilder {
     return $build;
   }
 
+  /**
+   * Render IndexNow engines.
+   *
+   * @return array
+   *   The build array.
+   */
   protected function renderIndexNowEngines(): array {
     $enabled = (bool) $this->config->get('simple_sitemap_engines.settings')->get('index_now_enabled');
     $info = $this->state->get('simple_sitemap_engines.index_now.last');
     $build = [
       '#type' => 'details',
       '#open' => $enabled,
-      '#title' => $this->t('IndexNow status'),
+      '#title' => $this->t('Page submission status (IndexNow protocol)'),
       'table' => [
         '#type' => 'table',
         '#suffix' => $enabled && $info ? $this->t("The last IndexNow submission was <em>@entity</em> to @engine_label on @time", [
@@ -147,11 +163,13 @@ class SearchEngineListBuilder extends ConfigEntityListBuilder {
         ],
         '#rows' => [],
       ],
-      '#description' => $this->t('IndexNow settings can be configured <a href="@url">here</a>.', ['@url' => $GLOBALS['base_url'] . '/admin/config/search/simplesitemap/engines/settings']),
+      '#description' => $this->t('IndexNow settings can be configured <a href="@url">here</a>.',
+        ['@url' => Url::fromRoute('simple_sitemap.engines.settings')->toString()]
+      ),
     ];
 
     if ($enabled) {
-      foreach (SimpleSitemapEngine::loadIndexNowEngines()  as $engine) {
+      foreach (SimpleSitemapEngine::loadIndexNowEngines() as $engine) {
         $build['table']['#rows'][$engine->id()] = [
           'label' => $engine->label(),
           'url' => $engine->index_now_url,

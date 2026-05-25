@@ -28,4 +28,11 @@ class InlineParagraphsBrowserWidget extends InlineParagraphsWidget {
 
   use InlineParagraphsBrowserWidgetTrait;
 
+  /**
+   * Generated UUID.
+   *
+   * @var string
+   */
+  protected string $uuid;
+
 }

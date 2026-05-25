@@ -34,11 +34,14 @@ class InfoAlterTest extends KernelTestBase {
 
     // Set our flag to alter the plugin definition in
     // link_attributes_test_alterinfo module.
-    \Drupal::state()->set('link_attributes_test_alterinfo.hook_link_attributes_plugin_alter', TRUE);
+    \Drupal::state()->set('link_attributes_test_alterinfo.hook_link_attributes_plugin_alter', 'type_one');
     $linkAttributesManager->clearCachedDefinitions();
     $definition = $linkAttributesManager->getDefinitions();
     $this->assertEquals('select', $definition['class']['type'], 'After altering the plugin definition the class attribute is a select.');
     $this->assertArrayHasKey('button', $definition['class']['options']);
+    $this->assertArrayHasKey('Group', $definition['class']['options']);
+    $this->assertIsArray($definition['class']['options']['Group']);
+    $this->assertArrayHasKey('grouped', $definition['class']['options']['Group']);
   }
 
 }

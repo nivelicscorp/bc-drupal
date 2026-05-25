@@ -2,12 +2,12 @@
 
 namespace Drupal\Tests\conditional_fields\FunctionalJavascript;
 
-use Drupal\conditional_fields\ConditionalFieldsInterface;
-use Drupal\field\Entity\FieldConfig;
-use Drupal\field\Entity\FieldStorageConfig;
 use Drupal\Core\Entity\Entity\EntityFormDisplay;
 use Drupal\Tests\conditional_fields\FunctionalJavascript\TestCases\ConditionalFieldFilledEmptyInterface;
 use Drupal\Tests\conditional_fields\FunctionalJavascript\TestCases\ConditionalFieldValueInterface;
+use Drupal\conditional_fields\ConditionalFieldsInterface;
+use Drupal\field\Entity\FieldConfig;
+use Drupal\field\Entity\FieldStorageConfig;
 
 /**
  * Test Conditional Fields Text Handler.
@@ -21,7 +21,7 @@ class ConditionalFieldEmailTest extends ConditionalFieldTestBase implements Cond
    *
    * @var array
    */
-  public static $modules = [
+  protected static $modules = [
     'conditional_fields',
     'node',
   ];
@@ -76,7 +76,7 @@ class ConditionalFieldEmailTest extends ConditionalFieldTestBase implements Cond
   /**
    * {@inheritdoc}
    */
-  protected function setUp() {
+  protected function setUp(): void {
     parent::setUp();
 
     $this->fieldSelector = '[name="field_' . $this->fieldName . '[0][value]"]';

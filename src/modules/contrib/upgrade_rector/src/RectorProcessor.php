@@ -94,16 +94,7 @@ class RectorProcessor {
       return FALSE;
     }
 
-    if (function_exists('file_directory_temp')) {
-      // This is fallback code for 8.7.x and below. It's not called on later
-      // versions, so we don't nee to "fix" it.
-      // @noRector
-      // @phpstan-ignore-next-line
-      $system_temporary = file_directory_temp();
-    }
-    else {
-      $system_temporary = $this->fileSystem->getTempDirectory();
-    }
+    $system_temporary = $this->fileSystem->getTempDirectory();
     $temporary_directory = realpath($system_temporary) . '/upgrade_rector';
     $success = $this->fileSystem->prepareDirectory($temporary_directory, FileSystemInterface::CREATE_DIRECTORY | FileSystemInterface::MODIFY_PERMISSIONS);
     if (!$success) {
@@ -112,12 +103,26 @@ class RectorProcessor {
       return FALSE;
     }
 
-    $module_path = DRUPAL_ROOT . '/' . drupal_get_path('module', 'upgrade_rector');
+    if (function_exists('drupal_get_path')) {
+      // This is fallback code for versions prior to 10.0.0, specifically to
+      // support 9.3.0 and earlier where the below service is not available yet.
+      // The fallback code should be removed once support for Drupal 9 is
+      // dropped, but it does not need "fixing".
+      // @noRector
+      // @phpstan-ignore-next-line
+      $module_path = DRUPAL_ROOT . '/' . drupal_get_path('module', 'upgrade_rector');
+    }
+    else {
+      $module_path = DRUPAL_ROOT . '/' . \Drupal::service('extension.list.module')->getPath('upgrade_rector');
+    }
     $config = file_get_contents($module_path . '/rector-config-template.php');
-    $config = str_replace('$vendor_dir', "'" . $vendor_path . "'", $config);
+
+    //$config = str_replace('$vendor_dir', "'" . $vendor_path . "'", $config);
+
     // Replace backslash for Windows compatibility.
     $config = str_replace('$drupal_root', "'" . str_replace('\\', '/', DRUPAL_ROOT) . "'", $config);
     $config_path = $temporary_directory . '/rector-config.php';
+
     $success = file_put_contents($config_path, $config);
     if (!$success) {
       $this->rectorResults->set($extension->getName(), sprintf('Unable to write rector configuration to %s.', $config_path));

@@ -87,11 +87,13 @@ function bu_sections_preprocess_taxonomy_term__section_home(&$variables) {
     $args = [$section_term->id()];
     $display_id = "interleaved_block";
     $section_children_view = Views::getView('section_children');
-    $section_children_view->setArguments($args);
-    $section_children_view->setDisplay($display_id);
-    $section_children_view->preExecute();
-    $section_children_view->execute();
-    $variables['section_children_terms'] = $section_children_view->buildRenderable($display_id);
+    if ($section_children_view) {
+      $section_children_view->setArguments($args);
+      $section_children_view->setDisplay($display_id);
+      $section_children_view->preExecute();
+      $section_children_view->execute();
+      $variables['section_children_terms'] = $section_children_view->buildRenderable($display_id);
+    }
   }
 }
 
@@ -289,3 +291,11 @@ function bu_sections_theme($existing, $type, $theme, $path) {
   );
 }
 
+
+/**
+ * Helper: returns parent terms if the given term is a child, or empty array.
+ */
+function _taxonomy_term_is_children($tid) {
+  $parents = \Drupal::entityTypeManager()->getStorage('taxonomy_term')->loadParents($tid);
+  return !empty($parents) ? $parents : [];
+}

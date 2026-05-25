@@ -1,11 +1,90 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\Tests\blazy\Traits;
 
 /**
  * A Trait common for Blazy tests.
  */
 trait BlazyPropertiesTestTrait {
+
+  /**
+   * The entity storage.
+   *
+   * @var \Drupal\Core\Entity\EntityStorageInterface
+   */
+  protected $entityStorage;
+
+  /**
+   * The entity view builder.
+   *
+   * @var \Drupal\Core\Entity\EntityViewBuilderInterface
+   */
+  protected $entityViewBuilder;
+
+  /**
+   * The entity mockup.
+   *
+   * @var \Drupal\Core\Entity\EntityTypeInterface
+   */
+  protected $entityTypeMock;
+
+  /**
+   * The entity mockup.
+   *
+   * @var \Drupal\Core\Entity\EntityRepositoryInterface
+   */
+  protected $entityRepository;
+
+  /**
+   * The entity type manager.
+   *
+   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
+   */
+  protected $entityTypeManager;
+
+  /**
+   * The renderer.
+   *
+   * @var \Drupal\Core\Render\RendererInterface
+   */
+  protected $renderer;
+
+  /**
+   * The cache.
+   *
+   * @var \Drupal\Core\Cache\CacheBackendInterface
+   */
+  protected $cache;
+
+  /**
+   * The module handler.
+   *
+   * @var \Drupal\Core\Extension\ModuleHandler
+   */
+  protected $moduleHandler;
+
+  /**
+   * The language manager.
+   *
+   * @var \Drupal\Core\Language\LanguageManager
+   */
+  protected $languageManager;
+
+  /**
+   * The token.
+   *
+   * @var \Drupal\Core\Utility\Token
+   */
+  protected $token;
+
+  /**
+   * The config factory.
+   *
+   * @var \Drupal\Core\Config\ConfigFactoryInterface
+   */
+  protected $configFactory;
 
   /**
    * The blazy admin service.
@@ -22,6 +101,22 @@ trait BlazyPropertiesTestTrait {
   protected $blazyAdminFormatter;
 
   /**
+   * The blazy admin service.
+   *
+   * @var \Drupal\blazy\Form\BlazyAdminInterface
+   *
+   * @todo remove for $blazyAdminFormatter post blazy:2.17 after sub-modules.
+   */
+  protected $blazyAdminExtended;
+
+  /**
+   * The blazy formatter service.
+   *
+   * @var \Drupal\blazy\BlazyFormatterInterface
+   */
+  protected $blazyFormatter;
+
+  /**
    * The blazy manager service.
    *
    * @var \Drupal\blazy\BlazyManagerInterface
@@ -31,9 +126,16 @@ trait BlazyPropertiesTestTrait {
   /**
    * The blazy entity service.
    *
-   * @var \Drupal\blazy\BlazyEntity
+   * @var \Drupal\blazy\BlazyEntityInterface
    */
   protected $blazyEntity;
+
+  /**
+   * The blazy media service.
+   *
+   * @var \Drupal\blazy\Media\BlazyMediaInterface
+   */
+  protected $blazyMedia;
 
   /**
    * The entity manager.
@@ -41,6 +143,13 @@ trait BlazyPropertiesTestTrait {
    * @var \Drupal\Core\Entity\EntityFieldManagerInterface
    */
   protected $entityFieldManager;
+
+  /**
+   * The field type manager.
+   *
+   * @var \Drupal\Core\Field\FieldTypePluginManager
+   */
+  protected $fieldTypePluginManager;
 
   /**
    * The entity display.
@@ -59,9 +168,9 @@ trait BlazyPropertiesTestTrait {
   /**
    * The entity.
    *
-   * @var \Drupal\Core\Entity\EntityInterface
+   * @var \Drupal\Core\Entity\FieldableEntityInterface|null
    */
-  protected $entity;
+  protected $entity = NULL;
 
   /**
    * The entity.
@@ -69,6 +178,13 @@ trait BlazyPropertiesTestTrait {
    * @var \Drupal\Core\Entity\EntityInterface
    */
   protected $entities;
+
+  /**
+   * The libraries service.
+   *
+   * @var \Drupal\blazy\Asset\LibrariesInterface
+   */
+  protected $libraries;
 
   /**
    * The node entity.
@@ -85,6 +201,27 @@ trait BlazyPropertiesTestTrait {
   protected $referencedEntity;
 
   /**
+   * The referenced formatter display.
+   *
+   * @var object
+   */
+  protected $referencedDisplay;
+
+  /**
+   * The referencing formatter display.
+   *
+   * @var object
+   */
+  protected $referencingDisplay;
+
+  /**
+   * The blazy oembed service.
+   *
+   * @var \Drupal\blazy\Media\BlazyOEmbedInterface
+   */
+  protected $blazyOembed;
+
+  /**
    * The bundle name.
    *
    * @var string
@@ -92,11 +229,25 @@ trait BlazyPropertiesTestTrait {
   protected $bundle;
 
   /**
+   * The target bundle name.
+   *
+   * @var string
+   */
+  protected $targetBundle;
+
+  /**
    * The target bundle names.
    *
    * @var array
    */
   protected $targetBundles;
+
+  /**
+   * The tested entity field name.
+   *
+   * @var string
+   */
+  protected $entityFieldName;
 
   /**
    * The tested entity type.
@@ -108,9 +259,16 @@ trait BlazyPropertiesTestTrait {
   /**
    * The created item.
    *
-   * @var \Drupal\image\Plugin\Field\FieldType\ImageItem
+   * @var \Drupal\image\Plugin\Field\FieldType\ImageItem|\Drupal\Core\Field\FieldItemListInterface|null
    */
-  protected $testItem;
+  protected $testItem = NULL;
+
+  /**
+   * The created mock item.
+   *
+   * @var \PHPUnit\Framework\MockObject\MockObject|\stdClass|null
+   */
+  protected $mockItem = NULL;
 
   /**
    * The created image item.
@@ -122,9 +280,9 @@ trait BlazyPropertiesTestTrait {
   /**
    * The created items.
    *
-   * @var array
+   * @var \Drupal\Core\Field\FieldItemListInterface
    */
-  protected $testItems = [];
+  protected $testItems = NULL;
 
   /**
    * The formatter definition.
@@ -215,13 +373,97 @@ trait BlazyPropertiesTestTrait {
    *
    * @var \Drupal\filter\Entity\FilterFormat
    */
-  protected $filterFormatFull = NULL;
+  protected $filterFormatFull;
 
   /**
    * The filter format.
    *
    * @var \Drupal\filter\Entity\FilterFormat
    */
-  protected $filterFormatRestricted = NULL;
+  protected $filterFormatRestricted;
+
+  /**
+   * The file system service.
+   *
+   * @var \Drupal\Core\File\FileSystem
+   */
+  protected $fileSystem;
+
+  /**
+   * The formatter instance.
+   *
+   * @var \Drupal\Core\Field\FormatterInterface|\Drupal\blazy\BlazyFormatterInterface|null
+   */
+  protected $formatterInstance = NULL;
+
+  /**
+   * Test directory path.
+   *
+   * @var string
+   */
+  protected $testDirPath;
+
+  /**
+   * Test node type.
+   *
+   * @var string
+   */
+  protected $testNodeType;
+
+  /**
+   * Test dummy data.
+   *
+   * @var array
+   */
+  protected $dummyData;
+
+  /**
+   * Test dummy image item.
+   *
+   * @var object
+   */
+  protected $dummyItem;
+
+  /**
+   * Test dummy URI.
+   *
+   * @var string
+   */
+  protected $dummyUri;
+
+  /**
+   * Test dummy url.
+   *
+   * @var string
+   */
+  protected $dummyUrl;
+
+  /**
+   * Test script loader.
+   *
+   * @var string
+   */
+  protected $scriptLoader;
+
+  /**
+   * Test data.
+   *
+   * @var array
+   */
+  protected $data;
+
+  /**
+   * Test dummy URI.
+   *
+   * @var string
+   */
+  protected $uri;
+
+  /**
+   * Test dummy url.
+   *
+   * @var string
+   */
+  protected $url;
 
 }

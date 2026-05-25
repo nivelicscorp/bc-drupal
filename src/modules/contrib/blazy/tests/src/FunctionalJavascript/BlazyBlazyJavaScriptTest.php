@@ -4,18 +4,30 @@ namespace Drupal\Tests\blazy\FunctionalJavascript;
 
 /**
  * Tests the Blazy bLazy JavaScript using PhantomJS, or Chromedriver.
- *
- * @group blazy
  */
+/**
+ * A D12 compat, please update or ignore.
+ *
+ * @phpstan-ignore-next-line
+ */
+#[Group('blazy')]
+/**
+ * A D12 compat, please update or ignore.
+ *
+ * @phpstan-ignore-next-line
+ */
+#[RunTestsInSeparateProcesses]
 class BlazyBlazyJavaScriptTest extends BlazyJavaScriptTestBase {
 
   /**
    * Test the Blazy element from loading to loaded states.
    */
   public function testFormatterDisplay() {
-    $data['settings']['blazy'] = TRUE;
-    $data['settings']['ratio'] = '1:1';
-    $data['settings']['image_style'] = '';
+    $settings['blazy'] = TRUE;
+    $settings['ratio'] = '1:1';
+    $settings['image_style'] = '';
+
+    $data['settings'] = $settings;
 
     $this->setUpContentTypeTest($this->bundle);
     $this->setUpFormatterDisplay($this->bundle, $data);

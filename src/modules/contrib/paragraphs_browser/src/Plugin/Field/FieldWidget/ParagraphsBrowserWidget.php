@@ -31,6 +31,13 @@ class ParagraphsBrowserWidget extends ParagraphsWidget {
   use ParagraphsBrowserWidgetTrait;
 
   /**
+   * Generated UUID.
+   *
+   * @var string
+   */
+  protected string $uuid;
+
+  /**
    * {@inheritdoc}
    */
   public function form(FieldItemListInterface $items, array &$form, FormStateInterface $form_state, $get_delta = NULL) {

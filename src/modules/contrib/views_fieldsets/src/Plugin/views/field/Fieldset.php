@@ -28,6 +28,7 @@ class Fieldset extends FieldPluginBase {
       $parents[] = $parent;
       $current_field = $parent;
     }
+
     return $parents;
   }
 
@@ -76,6 +77,8 @@ class Fieldset extends FieldPluginBase {
         'fieldset' => 'fieldset',
         'div' => 'div',
       ];
+
+      \Drupal::moduleHandler()->invokeAll('views_fieldsets_wrapper_types_alter', [&$types]);
     }
     return $types;
   }
@@ -152,9 +155,8 @@ class Fieldset extends FieldPluginBase {
    * {@inheritdoc}
    */
   public function buildOptionsForm(&$form, FormStateInterface $form_state) {
-    $fake_form = [];
-    parent::buildOptionsForm($fake_form, $form_state);
-    $form['admin_label'] = $fake_form['admin_label'];
+    parent::buildOptionsForm($form, $form_state);
+
     $form['fields'] = [
       '#type' => 'value',
       '#value' => $this->options['fields'],
@@ -177,7 +179,7 @@ class Fieldset extends FieldPluginBase {
       '#type' => 'textfield',
       '#title' => $this->t('Wrapper classes'),
       '#default_value' => $this->options['classes'],
-      '#description' => $help_token . ' ' . $this->t('Separate classes with DOUBLE SPACES. Single spaces and much else will be converted to valid class name.'),
+      '#description' => $help_token . ' ' . $this->t('Separate classes with a comma (,).'),
     ];
     $form['collapsible'] = [
       '#type' => 'checkbox',
@@ -230,6 +232,9 @@ class Fieldset extends FieldPluginBase {
    * Override default unneeded method to avoid PHP notices.
    */
   public function submitOptionsForm(&$form, FormStateInterface $form_state) {
+    parent::submitOptionsForm($form, $form_state);
+    $form_state->setValue('collapsible', (bool) $form_state->getValue('collapsible'));
+    $form_state->setValue('collapsed', (bool) $form_state->getValue('collapsed'));
   }
 
 }

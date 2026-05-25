@@ -1,5 +1,7 @@
 <?php
 
+use Drupal\Core\Field\BaseFieldDefinition;
+
 /**
  * @file
  * Contains form for addtocalendar module.
@@ -8,10 +10,8 @@
 /**
  * Creates Settings form.
  *
- * @param $settings
- *   Third party Settings array.
- * @param $field_definition
- *   Field Definition of current field.
+ * @param $settings   Third party Settings array.
+ * @param $field_definition   Field Definition of current field.
  *
  * @return array
  */
@@ -87,7 +87,7 @@ function _addtocalendar_build_form($settings, $field_definition) {
     ],
   ];
 
-  if ($field_definition instanceof Drupal\Core\Field\BaseFieldDefinition) {
+  if ($field_definition instanceof BaseFieldDefinition) {
     $field_definition = $field_definition->getConfig($field_definition->getTargetBundle());
   }
 
@@ -135,7 +135,7 @@ function _addtocalendar_build_form($settings, $field_definition) {
       'public' => t('Public'),
       'private' => t('Private'),
     ],
-    '#description' => t('Use public for free access to event information from any places. User private if the event is closed to public access.'),
+    '#description' => t('Use "Public" for free access to event information from any places. Use "Private" if the event is closed to public access.'),
     '#default_value' => !empty($settings['addtocalendar_settings']['atc_privacy']) ? $settings['addtocalendar_settings']['atc_privacy'] : 'public',
   ];
   $element['addtocalendar_settings']['data_secure'] = [

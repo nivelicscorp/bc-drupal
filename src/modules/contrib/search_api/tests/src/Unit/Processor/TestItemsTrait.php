@@ -12,7 +12,9 @@ use Drupal\search_api\Utility\FieldsHelper;
 use Drupal\search_api\Item\Item;
 use Drupal\search_api\Query\Query;
 use Drupal\search_api\Utility\QueryHelperInterface;
+use Drupal\search_api\Utility\ThemeSwitcherInterface;
 use Drupal\search_api\Utility\Utility;
+use Psr\Log\LoggerInterface;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 /**
@@ -43,7 +45,7 @@ trait TestItemsTrait {
    *   The field type to set for the field.
    * @param mixed $fieldValue
    *   A field value to add to the field.
-   * @param \Drupal\search_api\Item\FieldInterface $field
+   * @param \Drupal\search_api\Item\FieldInterface|null $field
    *   (optional) A variable, passed by reference, into which the created field
    *   will be saved.
    * @param string $fieldId
@@ -52,8 +54,9 @@ trait TestItemsTrait {
    * @return \Drupal\search_api\Item\ItemInterface[]
    *   An array containing a single item with the specified field.
    */
-  public function createSingleFieldItem(IndexInterface $index, $fieldType, $fieldValue, FieldInterface &$field = NULL, $fieldId = 'field_test') {
-    $this->itemIds[0] = $itemId = Utility::createCombinedId('entity:node', '1:en');
+  public function createSingleFieldItem(IndexInterface $index, $fieldType, $fieldValue, ?FieldInterface &$field = NULL, $fieldId = 'field_test') {
+    $id = count($this->itemIds) + 1;
+    $this->itemIds[] = $itemId = Utility::createCombinedId('entity:node', "$id:en");
     $item = new Item($index, $itemId);
     $field = new Field($index, $fieldId);
     $field->setType($fieldType);
@@ -83,7 +86,7 @@ trait TestItemsTrait {
    * @return \Drupal\search_api\Item\ItemInterface[]
    *   An array containing the requested test items.
    */
-  public function createItems(IndexInterface $index, $count, array $fields, ComplexDataInterface $object = NULL, array $datasource_ids = ['entity:node']) {
+  public function createItems(IndexInterface $index, $count, array $fields, ?ComplexDataInterface $object = NULL, array $datasource_ids = ['entity:node']) {
     $datasource_count = count($datasource_ids);
     $items = [];
     for ($i = 0; $i < $count; ++$i) {
@@ -94,7 +97,7 @@ trait TestItemsTrait {
         $item->setOriginalObject($object);
       }
       foreach ($fields as $combined_property_path => $field_info) {
-        list($field_info['datasource_id'], $field_info['property_path']) = Utility::splitCombinedId($combined_property_path);
+        [$field_info['datasource_id'], $field_info['property_path']] = Utility::splitCombinedId($combined_property_path);
         // Only add fields of the right datasource.
         if (!in_array($field_info['datasource_id'], [NULL, $datasource_id], TRUE)) {
           continue;
@@ -120,7 +123,7 @@ trait TestItemsTrait {
       ->disableOriginalConstructor()
       ->getMock();
     $dataTypeManager->method('getInstances')
-      ->will($this->returnValue([]));
+      ->willReturn([]);
 
     $moduleHandler = $this->getMockBuilder('Drupal\Core\Extension\ModuleHandlerInterface')
       ->disableOriginalConstructor()
@@ -138,7 +141,14 @@ trait TestItemsTrait {
     $entityBundleInfo = $this->getMockBuilder('Drupal\Core\Entity\EntityTypeBundleInfoInterface')
       ->disableOriginalConstructor()
       ->getMock();
-    $fieldsHelper = new FieldsHelper($entityTypeManager, $entityFieldManager, $entityBundleInfo, $dataTypeHelper);
+    $themeSwitcher = $this->createMock(ThemeSwitcherInterface::class);
+    $fieldsHelper = new FieldsHelper(
+      $entityTypeManager,
+      $entityFieldManager,
+      $entityBundleInfo,
+      $dataTypeHelper,
+      $themeSwitcher
+    );
 
     $queryHelper = $this->createMock(QueryHelperInterface::class);
     $queryHelper->method('createQuery')
@@ -146,13 +156,17 @@ trait TestItemsTrait {
         return Query::create($index, $options);
       });
     $queryHelper->method('getResults')
-      ->will($this->returnValue([]));
+      ->willReturn([]);
+
+    // Add logger service for classes using LoggerTrait.
+    $logger = $this->createMock(LoggerInterface::class);
 
     $this->container = new ContainerBuilder();
     $this->container->set('plugin.manager.search_api.data_type', $dataTypeManager);
     $this->container->set('search_api.data_type_helper', $dataTypeHelper);
     $this->container->set('search_api.fields_helper', $fieldsHelper);
     $this->container->set('search_api.query_helper', $queryHelper);
+    $this->container->set('logger.channel.search_api', $logger);
     \Drupal::setContainer($this->container);
   }
 

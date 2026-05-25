@@ -14,7 +14,7 @@ display:
         type: none
         options: {  }
       cache:
-        type: none
+        type: search_api_none
         options: {  }
       query:
         type: search_api_query
@@ -58,8 +58,7 @@ display:
         options:
           view_modes:
             'entity:entity_test_mulrev_changed':
-              article: default
-              page: default
+              ':default': default
       filters:
         search_api_fulltext:
           id: search_api_fulltext
@@ -599,6 +598,7 @@ display:
       defaults:
         use_ajax: false
       use_ajax: true
+      block_description: 'Test view test block 1'
   rest_export_1:
     display_plugin: rest_export
     id: rest_export_1

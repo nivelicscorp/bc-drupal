@@ -2,18 +2,23 @@
 
 namespace Drupal\Tests\paragraphs_type_permissions\Functional;
 
+use Drupal\image\Entity\ImageStyle;
 use Drupal\language\Entity\ConfigurableLanguage;
 use Drupal\Tests\BrowserTestBase;
 use Drupal\Tests\field_ui\Traits\FieldUiTestTrait;
 use Drupal\Tests\paragraphs\FunctionalJavascript\ParagraphsTestBaseTrait;
 use Drupal\Tests\paragraphs\Traits\ParagraphsCoreVersionUiTestTrait;
 use Drupal\user\Entity\Role;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * Tests the paragraphs type permissions.
  *
  * @group paragraphs
  */
+#[RunTestsInSeparateProcesses]
+#[Group('paragraphs')]
 class ParagraphsTypePermissionsTest extends BrowserTestBase {
 
   use FieldUiTestTrait, ParagraphsCoreVersionUiTestTrait, ParagraphsTestBaseTrait;
@@ -43,6 +48,7 @@ class ParagraphsTypePermissionsTest extends BrowserTestBase {
   protected function setUp(): void {
     parent::setUp();
     $this->drupalPlaceBlock('system_breadcrumb_block');
+    $this->drupalPlaceBlock('local_actions_block');
     ConfigurableLanguage::create(['id' => 'de', 'label' => '1German'])->save();
     ConfigurableLanguage::create(['id' => 'fr', 'label' => '2French'])->save();
     $this->addParagraphedContentType('paragraphed_content_demo', 'field_paragraphs_demo');
@@ -164,9 +170,12 @@ class ParagraphsTypePermissionsTest extends BrowserTestBase {
     // Get the node to edit it later.
     $node = $this->drupalGetNodeByTitle($edit['title[0][value]']);
 
+    /** @var \Drupal\Core\File\FileUrlGeneratorInterface $file_url_generator */
+    $file_url_generator = \Drupal::service('file_url_generator');
+
     // Get the images data to check for their presence.
-    $image_text_tag = '/files/styles/large/public/' . date('Y-m') . '/image-test.png?itok=';
-    $images_tag = '/files/styles/medium/public/' . date('Y-m') . '/image-test_0.png?itok=';
+    $image_text_tag = $file_url_generator->transformRelative(ImageStyle::load('large')->buildUrl('public://' . date('Y-m') . '/image-test.png'));
+    $images_tag = $file_url_generator->transformRelative(ImageStyle::load('medium')->buildUrl('public://' . date('Y-m') . '/image-test_0.png'));
 
     // Check that all paragraphs are shown for admin user.
     $this->assertSession()->responseContains($image_text_tag);

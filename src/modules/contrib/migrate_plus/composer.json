@@ -29,5 +29,12 @@
     "prefer-stable": true,
     "config": {
         "preferred-install": "dist"
+    },
+    "require": {
+        "php": ">=8.2",
+        "drupal/core": "^10.3 || ^11"
+    },
+    "require-dev": {
+        "sainsburys/guzzle-oauth2-plugin": "^3"
     }
 }

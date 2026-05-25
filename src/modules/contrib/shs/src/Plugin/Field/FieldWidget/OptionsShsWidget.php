@@ -4,11 +4,14 @@ namespace Drupal\shs\Plugin\Field\FieldWidget;
 
 use Drupal\Component\Utility\Html;
 use Drupal\Component\Utility\NestedArray;
+use Drupal\Core\Entity\FieldableEntityInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Field\Plugin\Field\FieldWidget\OptionsSelectWidget;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
+use Drupal\Core\Render\BubbleableMetadata;
+use Drupal\Core\Url;
 use Drupal\shs\StringTranslationTrait;
 use Drupal\shs\WidgetDefaults;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -98,7 +101,6 @@ class OptionsShsWidget extends OptionsSelectWidget implements ContainerFactoryPl
       '#title' => $this->t('Allow creating new items'),
       '#default_value' => $this->getSetting('create_new_items'),
       '#description' => $this->t('Allow users to create new items of the source bundle.'),
-      '#disabled' => TRUE,
     ];
     $element['create_new_levels'] = [
       '#type' => 'checkbox',
@@ -110,7 +112,6 @@ class OptionsShsWidget extends OptionsSelectWidget implements ContainerFactoryPl
           ':input[name="fields[' . $field_name . '][settings_edit_form][settings][create_new_items]"]' => ['checked' => TRUE],
         ],
       ],
-      '#disabled' => TRUE,
     ];
     $element['force_deepest'] = [
       '#type' => 'checkbox',
@@ -129,6 +130,7 @@ class OptionsShsWidget extends OptionsSelectWidget implements ContainerFactoryPl
     $summary = parent::settingsSummary();
 
     if ($this->getSetting('create_new_items')) {
+
       $summary[] = $this->t('Allow creation of new items');
       if ($this->getSetting('create_new_levels')) {
         $summary[] = $this->t('Allow creation of new levels');
@@ -208,11 +210,23 @@ class OptionsShsWidget extends OptionsSelectWidget implements ContainerFactoryPl
       $parents = $this->widgetDefaults->getParentDefaults($default_value, $settings_additional['anyValue'], $this->fieldDefinition->getItemDefinition()->getSetting('target_type'), $cardinality);
     }
 
+    // Generate a token for our ajax url.
+    // We need to run this through a render function because Drupal.url generates
+    // a placeholder token.
+    $urlBubbleable = Url::fromRoute('shs.create_term')->toString(TRUE);
+    $urlRender = [
+      '#markup' => $urlBubbleable->getGeneratedUrl(),
+    ];
+    BubbleableMetadata::createFromRenderArray($urlRender)
+      ->merge($urlBubbleable)->applyTo($urlRender);
+    $url = (string) \Drupal::service('renderer')->renderPlain($urlRender);
+
     $settings_shs = [
       'settings' => $this->getSettings() + $settings_additional,
       'bundle' => $bundle,
       'bundleLabel' => $vocabulary->label(),
       'baseUrl' => 'shs-term-data',
+      'createUrl' => $url,
       'cardinality' => $cardinality,
       'parents' => $parents,
       'defaultValue' => $default_value,
@@ -240,6 +254,8 @@ class OptionsShsWidget extends OptionsSelectWidget implements ContainerFactoryPl
     $element['#attached'] = array_merge($element['#attached'], [
       'library' => ['shs/shs.form'],
     ]);
+    $form['#attached']['drupalSettings']['show_shs_add_input'] = $this->getSetting('create_new_items');
+
     return $element;
   }
 
@@ -268,13 +284,8 @@ class OptionsShsWidget extends OptionsSelectWidget implements ContainerFactoryPl
       'classes' => shs_get_class_definitions($element['#field_name'], $context),
     ];
     $element['#attached'] = $element['#attached'] ?: [];
-    $element['#attached'] = array_merge($element['#attached'], [
-      'drupalSettings' => [
-        'shs' => [
-          $element_key => $element['#shs'],
-        ],
-      ],
-    ]);
+    $element['#attached']['drupalSettings']['shs'] = [$element_key => $element['#shs']];
+    unset($element['#maxlength']);
 
     return $element;
   }
@@ -295,8 +306,7 @@ class OptionsShsWidget extends OptionsSelectWidget implements ContainerFactoryPl
    */
   public function massageFormValues(array $values, array $form, FormStateInterface $form_state) {
     if (!isset($values[0]['target_id']) || ($values[0]['target_id'] === '')) {
-      // Return original values.
-      return $values;
+      return NULL;
     }
 
     $exploded_values = [];
@@ -342,11 +352,12 @@ class OptionsShsWidget extends OptionsSelectWidget implements ContainerFactoryPl
     if (!is_array($value)) {
       $value = [$value];
     }
-    if ($element['#shs']['settings']['anyValue'] === reset($value)) {
+    $first_value = reset($value);
+    if ($element['#shs']['settings']['anyValue'] === $first_value || empty($first_value)) {
       if (!$element['#required']) {
         return;
       }
-      elseif (count($element['#options']) > 1) {
+      elseif (!isset($element['#options']) || count($element['#options']) > 1) {
         $form_state->setError($element, t('You need to select a term from the deepest level in field @name.', ['@name' => $element['#title']]));
         return;
       }
@@ -387,6 +398,38 @@ class OptionsShsWidget extends OptionsSelectWidget implements ContainerFactoryPl
       return $value;
     }
     return $options[$value];
+  }
+
+  /**
+   * Returns the array of options for the widget.
+   *
+   * @param \Drupal\Core\Entity\FieldableEntityInterface $entity
+   *   The entity for which to return options.
+   *
+   * @return array
+   *   The array of options for the widget.
+   */
+  protected function getOptions(FieldableEntityInterface $entity) {
+    if (!isset($this->options)) {
+      $options = parent::getOptions($entity);
+
+      // Add a create option if the widget needs one.
+      $new_label = $this->getCreateLabel();
+      if ($new_label) {
+        $options['_create'] = $new_label;
+      }
+
+      $this->options = $options;
+    }
+    return $this->options;
+  }
+
+  /**
+   * Returns the label for creating a new term.
+   * @return string
+   */
+  public function getCreateLabel() {
+    return (string) t('Create...');
   }
 
 }

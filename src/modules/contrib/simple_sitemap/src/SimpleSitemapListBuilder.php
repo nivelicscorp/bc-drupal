@@ -7,7 +7,6 @@ use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Url;
 use Drupal\simple_sitemap\Entity\SimpleSitemap;
-use Drupal\simple_sitemap\Form\FormHelper;
 use Drupal\simple_sitemap\Form\StatusForm;
 
 /**
@@ -36,6 +35,9 @@ class SimpleSitemapListBuilder extends DraggableListBuilder {
 
   /**
    * {@inheritdoc}
+   *
+   * @param \Drupal\simple_sitemap\Entity\SimpleSitemapInterface $entity
+   *   The entity for this row of the list.
    */
   public function buildRow(EntityInterface $entity) {
     $row['name']['#markup'] = '<span title="' . $entity->get('description') . '">' . $entity->label() . '</span>';

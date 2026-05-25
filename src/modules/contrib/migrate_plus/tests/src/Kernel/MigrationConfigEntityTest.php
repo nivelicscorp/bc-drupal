@@ -1,10 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\Tests\migrate_plus\Kernel;
 
 use Drupal\Component\Plugin\Exception\PluginNotFoundException;
 use Drupal\migrate\MigrateExecutable;
+use Drupal\migrate\Plugin\migrate\id_map\Sql;
 use Drupal\migrate_plus\Entity\Migration;
+use Drupal\migrate_plus_test\Plugin\migrate\id_map\TestSqlIdMap;
 use Drupal\Tests\migrate\Kernel\MigrateTestBase;
 
 /**
@@ -12,7 +16,7 @@ use Drupal\Tests\migrate\Kernel\MigrateTestBase;
  *
  * @group migrate_plus
  */
-class MigrationConfigEntityTest extends MigrateTestBase {
+final class MigrationConfigEntityTest extends MigrateTestBase {
 
   /**
    * {@inheritdoc}
@@ -61,11 +65,6 @@ class MigrationConfigEntityTest extends MigrateTestBase {
 
     $this->assertNotEmpty($this->pluginManager->getDefinition('test'));
     $this->assertSame('Label A', $this->pluginManager->getDefinition('test')['label']);
-
-    // Clear static cache in the plugin manager, the cache tag take care of the
-    // persistent cache.
-    $this->pluginManager->useCaches(FALSE);
-    $this->pluginManager->useCaches(TRUE);
 
     $config->set('label', 'Label B');
     $config->save();
@@ -122,6 +121,28 @@ class MigrationConfigEntityTest extends MigrateTestBase {
     $executable = new MigrateExecutable($migration, $this);
     $executable->import();
     $this->assertSame(3, $id_map->importedCount());
+  }
+
+  /**
+   * Tests id_map override from configuration - new plugin.
+   */
+  public function testIdMapOverride(): void {
+    $this->installConfig('migrate_plus_test');
+    /** @var \Drupal\migrate\Plugin\MigrationInterface $migration */
+    $migration = $this->pluginManager->createInstance('fruit_terms');
+    $id_map = $migration->getIdMap();
+    $this->assertInstanceOf(TestSqlIdMap::class, $id_map);
+  }
+
+  /**
+   * Tests id_map override from configuration - default plugin.
+   */
+  public function testIdMapDefault(): void {
+    $this->installConfig('migrate_plus_test');
+    /** @var \Drupal\migrate\Plugin\MigrationInterface $migration */
+    $migration = $this->pluginManager->createInstance('dummy');
+    $id_map = $migration->getIdMap();
+    $this->assertInstanceOf(Sql::class, $id_map);
   }
 
 }

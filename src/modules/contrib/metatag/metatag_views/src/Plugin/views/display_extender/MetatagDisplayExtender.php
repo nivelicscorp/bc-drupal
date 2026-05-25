@@ -3,12 +3,12 @@
 namespace Drupal\metatag_views\Plugin\views\display_extender;
 
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\views\Plugin\views\display_extender\DisplayExtenderPluginBase;
 use Drupal\views\Plugin\views\style\StylePluginBase;
 use Drupal\views\ViewExecutable;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\StringTranslation\StringTranslationTrait;
-use Drupal\Core\StringTranslation\TranslatableMarkup;
 
 /**
  * Metatag display extender plugin.
@@ -102,7 +102,11 @@ class MetatagDisplayExtender extends DisplayExtenderPluginBase {
       $metatags = $form_state->cleanValues()->getValues();
       $this->options['tokenize'] = $metatags['tokenize'] ?? FALSE;
       unset($metatags['tokenize']);
+      $available_tags = array_keys($this->metatagTagManager->getDefinitions());
       foreach ($metatags as $tag_id => $tag_value) {
+        if (!in_array($tag_id, $available_tags)) {
+          continue;
+        }
         // Some plugins need to process form input before storing it.
         // Hence, we set it and then get it.
         $tag = $this->metatagTagManager->createInstance($tag_id);
@@ -235,8 +239,8 @@ class MetatagDisplayExtender extends DisplayExtenderPluginBase {
     }
 
     if ($this->options['tokenize'] && !$raw) {
-      if (self::$firstRowTokens) {
-        self::setFirstRowTokensOnStylePlugin($view, self::$firstRowTokens);
+      if (!empty(self::$firstRowTokens[$view->current_display])) {
+        self::setFirstRowTokensOnStylePlugin($view, self::$firstRowTokens[$view->current_display]);
       }
       // This is copied from TokenizeAreaPluginBase::tokenizeValue().
       $style = $view->getStyle();
@@ -266,7 +270,7 @@ class MetatagDisplayExtender extends DisplayExtenderPluginBase {
    * avoid rebuilding and re-rendering it, preserve the first row tokens.
    */
   public function setFirstRowTokens(array $first_row_tokens) {
-    self::$firstRowTokens = $first_row_tokens;
+    self::$firstRowTokens[$this->view->current_display] = $first_row_tokens;
   }
 
   /**

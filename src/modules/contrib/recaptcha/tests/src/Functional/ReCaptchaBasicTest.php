@@ -2,10 +2,10 @@
 
 namespace Drupal\Tests\recaptcha\Functional;
 
-use Drupal\Core\Url;
 use Drupal\Component\Utility\Html;
-use Drupal\Tests\BrowserTestBase;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Drupal\Core\Url;
+use Drupal\Tests\BrowserTestBase;
 
 /**
  * Test basic functionality of reCAPTCHA module.
@@ -99,14 +99,12 @@ class ReCaptchaBasicTest extends BrowserTestBase {
     // Save form with valid values.
     $edit['recaptcha_site_key'] = $site_key;
     $edit['recaptcha_secret_key'] = $secret_key;
-    $edit['recaptcha_tabindex'] = 0;
     $this->drupalGet('admin/config/people/captcha/recaptcha');
     $this->submitForm($edit, $this->t('Save configuration'));
     $this->assertSession()->responseContains($this->t('The configuration options have been saved.'));
 
     $this->assertSession()->responseNotContains($this->t('Site key field is required.'));
     $this->assertSession()->responseNotContains($this->t('Secret key field is required.'));
-    $this->assertSession()->responseNotContains($this->t('The tabindex must be an integer.'));
 
     $this->drupalLogout();
   }
@@ -117,20 +115,22 @@ class ReCaptchaBasicTest extends BrowserTestBase {
   public function testReCaptchaOnLoginForm() {
     $site_key = $this->randomMachineName(40);
     $secret_key = $this->randomMachineName(40);
-    $grecaptcha = '<div class="g-recaptcha" data-sitekey="' . $site_key . '" data-theme="light" data-type="image"></div>';
+    $grecaptchaSelector = "div.g-recaptcha[data-sitekey=$site_key][data-theme=light][data-type=image]";
 
     // Test if login works.
     $this->drupalLogin($this->normalUser);
     $this->drupalLogout();
 
     $this->drupalGet('user/login');
-    $this->assertSession()->responseNotContains($grecaptcha);
+    // reCAPTCHA is not shown on form.
+    $this->assertSession()->elementNotExists('css', $grecaptchaSelector);
 
     // Enable 'captcha/Math' CAPTCHA on login form.
     captcha_set_form_id_setting('user_login_form', 'captcha/Math');
 
     $this->drupalGet('user/login');
-    $this->assertSession()->responseNotContains($grecaptcha);
+    // reCAPTCHA is not shown on form.
+    $this->assertSession()->elementNotExists('css', $grecaptchaSelector);
 
     // Enable 'recaptcha/reCAPTCHA' on login form.
     captcha_set_form_id_setting('user_login_form', 'recaptcha/reCAPTCHA');
@@ -150,15 +150,26 @@ class ReCaptchaBasicTest extends BrowserTestBase {
 
     // Check if there is a reCAPTCHA on the login form.
     $this->drupalGet('user/login');
-    $this->assertSession()->responseContains($grecaptcha);
-    $this->assertSession()->responseContains('<script src="' . Url::fromUri('https://www.google.com/recaptcha/api.js', ['query' => ['hl' => \Drupal::service('language_manager')->getCurrentLanguage()->getId()], 'absolute' => TRUE])->toString() . '" async defer></script>');
-    $this->assertSession()->responseNotContains($grecaptcha . '<noscript>');
+    // reCAPTCHA is shown on form.
+    $this->assertSession()->elementExists('css', $grecaptchaSelector);
+    $options = [
+      'query' => [
+        'hl' => \Drupal::service('language_manager')->getCurrentLanguage()->getId(),
+        'render' => 'explicit',
+        'onload' => 'drupalRecaptchaOnload',
+      ],
+      'absolute' => TRUE,
+    ];
+    $this->assertSession()->responseContains(Html::escape(Url::fromUri('https://www.google.com/recaptcha/api.js', $options)->toString()));
+    // NoScript code is not enabled for the reCAPTCHA.
+    $this->assertSession()->elementNotExists('css', "$grecaptchaSelector + noscript");
 
     // Test if the fall back url is properly build and noscript code added.
     $this->config('recaptcha.settings')->set('widget.noscript', 1)->save();
 
     $this->drupalGet('user/login');
-    $this->assertSession()->responseContains($grecaptcha . "\n" . '<noscript>');
+    // NoScript for reCAPTCHA is shown on form.
+    $this->assertSession()->elementExists('css', "$grecaptchaSelector + noscript");
     $options = [
       'query' => [
         'k' => $site_key,
@@ -171,32 +182,37 @@ class ReCaptchaBasicTest extends BrowserTestBase {
     // Check if there is a reCAPTCHA with global url on the login form.
     $this->config('recaptcha.settings')->set('use_globally', TRUE)->save();
     $this->drupalGet('user/login');
-    $this->assertSession()->responseContains('<script src="' . Url::fromUri('https://www.recaptcha.net/recaptcha/api.js', ['query' => ['hl' => \Drupal::service('language_manager')->getCurrentLanguage()->getId()], 'absolute' => TRUE])->toString() . '" async defer></script>');
+    $options = [
+      'query' => [
+        'hl' => \Drupal::service('language_manager')->getCurrentLanguage()->getId(),
+        'render' => 'explicit',
+        'onload' => 'drupalRecaptchaOnload',
+      ],
+      'absolute' => TRUE,
+    ];
+    $this->assertSession()->responseContains(Html::escape(Url::fromUri('https://www.recaptcha.net/recaptcha/api.js', $options)->toString()), '[testReCaptchaOnLoginForm]: Global reCAPTCHA is shown on form.');
+    $options = [
+      'query' => [
+        'k' => $site_key,
+        'hl' => \Drupal::service('language_manager')->getCurrentLanguage()->getId(),
+      ],
+      'absolute' => TRUE,
+    ];
     $this->assertSession()->responseContains(Html::escape(Url::fromUri('https://www.recaptcha.net/recaptcha/api/fallback', $options)->toString()));
 
     // Check that data-size attribute does not exists.
     $this->config('recaptcha.settings')->set('widget.size', '')->save();
     $this->drupalGet('user/login');
-    $element = $this->xpath('//div[@class=:class and @data-size=:size]', [':class' => 'g-recaptcha', ':size' => 'small']);
+    $args = [':class' => 'g-recaptcha', ':size' => 'small'];
+    $element = $this->xpath('//div[@class=:class and @data-size=:size]', $args);
     $this->assertEmpty($element, 'Tag contains no data-size attribute.');
 
     // Check that data-size attribute exists.
     $this->config('recaptcha.settings')->set('widget.size', 'small')->save();
     $this->drupalGet('user/login');
-    $element = $this->xpath('//div[@class=:class and @data-size=:size]', [':class' => 'g-recaptcha', ':size' => 'small']);
+    $args = [':class' => 'g-recaptcha', ':size' => 'small'];
+    $element = $this->xpath('//div[@class=:class and @data-size=:size]', $args);
     $this->assertNotEmpty($element, 'Tag contains data-size attribute and value.');
-
-    // Check that data-tabindex attribute does not exists.
-    $this->config('recaptcha.settings')->set('widget.tabindex', 0)->save();
-    $this->drupalGet('user/login');
-    $element = $this->xpath('//div[@class=:class and @data-tabindex=:index]', [':class' => 'g-recaptcha', ':index' => 0]);
-    $this->assertEmpty($element, 'Tag contains no data-tabindex attribute.');
-
-    // Check that data-tabindex attribute exists.
-    $this->config('recaptcha.settings')->set('widget.tabindex', 5)->save();
-    $this->drupalGet('user/login');
-    $element = $this->xpath('//div[@class=:class and @data-tabindex=:index]', [':class' => 'g-recaptcha', ':index' => 5]);
-    $this->assertNotEmpty($element, 'Tag contains data-tabindex attribute and value.');
 
     // Try to log in, which should fail.
     $edit['name'] = $this->normalUser->getAccountName();

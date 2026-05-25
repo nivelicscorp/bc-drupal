@@ -7,7 +7,8 @@ as you can in Configuration page and settings page.
 
 Event subscriber
 
-Module provides an event so that others can develop an event subscriber to modify.
+Module provides an event so that others can develop an event subscriber to
+modify.
 This are the event Subscriber name :-
 
   social_media.add_more_social_media

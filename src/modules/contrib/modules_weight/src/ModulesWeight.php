@@ -4,9 +4,10 @@ namespace Drupal\modules_weight;
 
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Extension\ModuleExtensionList;
+use Drupal\modules_weight\Utility\SortArray;
 
 /**
- * Class ModulesWeight.
+ * Class Modules Weight.
  *
  * @package Drupal\modules_weight
  */
@@ -60,7 +61,7 @@ class ModulesWeight implements ModulesWeightInterface {
       }
     }
     // Sorting all modules by their weight.
-    uasort($modules, ['Drupal\modules_weight\Utility\SortArray', 'sortByWeightAndName']);
+    uasort($modules, [SortArray::class, 'sortByWeightAndName']);
 
     return $modules;
   }

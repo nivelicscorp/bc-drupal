@@ -4,7 +4,8 @@
  * @file
  * Install, update and uninstall functions for svg_image_field module.
  */
-declare(strict_types = 1);
+
+declare(strict_types=1);
 
 /**
  * Implements hook_requirements().

@@ -47,9 +47,11 @@
       var element = this;
 
       // Remove buttons created earlier.
+      // cspell:disable-next-line addnew
       $('.shs-addnew-container', element.app.container).remove();
 
       // Set default classes and clear content.
+      // cspell:disable-next-line addnew
       element.$el.addClass('shs-addnew-container')
               .html('');
 
@@ -59,6 +61,10 @@
 
       if ((cardinality === 1) || (cardinality === itemCount)) {
         // Only 1 item is allowed or we reached the maximum number of items.
+        return;
+      }
+
+      if (this.app.getSetting('hideAddAnotherButton')) {
         return;
       }
 

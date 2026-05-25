@@ -2,13 +2,13 @@
 
 namespace Drupal\Tests\conditional_fields\FunctionalJavascript;
 
-use Drupal\conditional_fields\ConditionalFieldsInterface;
 use Drupal\Core\Entity\Entity\EntityFormDisplay;
+use Drupal\Tests\conditional_fields\FunctionalJavascript\TestCases\ConditionalFieldFilledEmptyInterface;
+use Drupal\Tests\conditional_fields\FunctionalJavascript\TestCases\ConditionalFieldValueInterface;
+use Drupal\conditional_fields\ConditionalFieldsInterface;
 use Drupal\field\Entity\FieldConfig;
 use Drupal\field\Entity\FieldStorageConfig;
 use Drupal\link\LinkItemInterface;
-use Drupal\Tests\conditional_fields\FunctionalJavascript\TestCases\ConditionalFieldFilledEmptyInterface;
-use Drupal\Tests\conditional_fields\FunctionalJavascript\TestCases\ConditionalFieldValueInterface;
 
 /**
  * Test Conditional Fields Link field plugin.
@@ -16,8 +16,8 @@ use Drupal\Tests\conditional_fields\FunctionalJavascript\TestCases\ConditionalFi
  * @group conditional_fields
  */
 class ConditionalFieldLinkFieldTest extends ConditionalFieldTestBase implements
-    ConditionalFieldValueInterface,
-    ConditionalFieldFilledEmptyInterface {
+  ConditionalFieldValueInterface,
+  ConditionalFieldFilledEmptyInterface {
 
   /**
    * {@inheritdoc}
@@ -29,7 +29,7 @@ class ConditionalFieldLinkFieldTest extends ConditionalFieldTestBase implements
    *
    * @var array
    */
-  public static $modules = [
+  protected static $modules = [
     'conditional_fields',
     'node',
     'link',
@@ -73,7 +73,7 @@ class ConditionalFieldLinkFieldTest extends ConditionalFieldTestBase implements
   /**
    * {@inheritdoc}
    */
-  protected function setUp() {
+  protected function setUp(): void {
     parent::setUp();
 
     $this->fieldSelector = '[name="' . $this->fieldName . '[0][uri]"]';

@@ -39,6 +39,17 @@
     var $modal = $(e.target);
     var modal = $modal.data('bs.modal');
 
+    // Check if there are any CKEditor 5 instances
+    var $ckeditor = $modal.find('[data-ckeditor5-id]');
+    if ($ckeditor.length) {
+
+      // Move the overlay wrapper inside the modal so it can be interacted with
+      $('.ck-body-wrapper').appendTo($modal);
+      $('.ck-body-wrapper .ck-body>div').each(function() {
+        $(this).css('margin-top', -window.scrollY + 'px');
+      })
+    }
+
     // Focus the first input element found.
     if (modal && modal.options.focusInput) {
       var $focusable = Bootstrap.modalFindFocusableElement(modal);

@@ -3,6 +3,8 @@
 namespace Drupal\Tests\captcha\Functional;
 
 use Drupal\Core\Database\Database;
+use Drupal\captcha\Constants\CaptchaConstants;
+use Drupal\image_captcha\Constants\ImageCaptchaConstants;
 
 /**
  * Tests CAPTCHA caching on various pages.
@@ -35,7 +37,6 @@ class CaptchaCacheTest extends CaptchaWebTestBase {
    * Test the cache tags.
    */
   public function testCacheTags() {
-    global $base_path;
     // Check caching without captcha as anonymous user.
     $this->drupalGet('');
     $this->assertEquals($this->getSession()->getResponseHeader('x-drupal-cache'), 'MISS');
@@ -43,10 +44,19 @@ class CaptchaCacheTest extends CaptchaWebTestBase {
     $this->assertEquals($this->getSession()->getResponseHeader('x-drupal-cache'), 'HIT');
 
     // Enable captcha on login block and test caching.
-    captcha_set_form_id_setting('user_login_form', 'captcha/Math');
+    captcha_set_form_id_setting('user_login_form', CaptchaConstants::CAPTCHA_MATH_CAPTCHA_TYPE);
     $this->drupalGet('');
     $sid = $this->getCaptchaSidFromForm();
-    $this->assertNull($this->getSession()->getResponseHeader('x-drupal-cache'), 'Cache is disabled');
+    $header = $this->getSession()->getResponseHeader('x-drupal-cache');
+    // @see https://www.drupal.org/node/2958442
+    // This is to support "phpunit (previous minor)"
+    $pre_headers_changed = $header === NULL;
+    if ($pre_headers_changed) {
+      $this->assertNull($this->getSession()->getResponseHeader('x-drupal-cache'), 'Cache is disabled');
+    }
+    else {
+      $this->assertEquals($this->getSession()->getResponseHeader('x-drupal-cache'), 'UNCACHEABLE (response policy)', 'Cache is disabled');
+    }
     $this->drupalGet('');
     $this->assertNotEquals($sid, $this->getCaptchaSidFromForm());
 
@@ -54,15 +64,25 @@ class CaptchaCacheTest extends CaptchaWebTestBase {
     captcha_set_form_id_setting('user_login_form', 'captcha/Test');
     $this->drupalGet('');
     $sid = $this->getCaptchaSidFromForm();
-    $this->assertNull($this->getSession()->getResponseHeader('x-drupal-cache'), 'Cache is disabled');
+    if ($pre_headers_changed) {
+      $this->assertNull($this->getSession()->getResponseHeader('x-drupal-cache'), 'Cache is disabled');
+    }
+    else {
+      $this->assertEquals($this->getSession()->getResponseHeader('x-drupal-cache'), 'UNCACHEABLE (response policy)', 'Cache is disabled');
+    }
     $this->drupalGet('');
     $this->assertNotEquals($sid, $this->getCaptchaSidFromForm());
 
     // Switch challenge to image_captcha/Image, check the captcha isn't cached.
-    captcha_set_form_id_setting('user_login_form', 'image_captcha/Image');
+    captcha_set_form_id_setting('user_login_form', ImageCaptchaConstants::IMAGE_CAPTCHA_CAPTCHA_TYPE);
     $this->drupalGet('');
     $image_path = $this->getSession()->getPage()->find('css', '.captcha img')->getAttribute('src');
-    $this->assertNull($this->getSession()->getResponseHeader('x-drupal-cache'), 'Cache disabled');
+    if ($pre_headers_changed) {
+      $this->assertNull($this->getSession()->getResponseHeader('x-drupal-cache'), 'Cache is disabled');
+    }
+    else {
+      $this->assertEquals($this->getSession()->getResponseHeader('x-drupal-cache'), 'UNCACHEABLE (response policy)', 'Cache is disabled');
+    }
     // Check that we get a new image when vising the page again.
     $this->drupalGet('');
     $this->assertNotEquals($image_path, $this->getSession()->getPage()->find('css', '.captcha img')->getAttribute('src'));

@@ -2,16 +2,15 @@
 
 namespace Drupal\simple_sitemap\Form;
 
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Core\Config\TypedConfigManagerInterface;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\simple_sitemap\Entity\EntityHelper;
 use Drupal\simple_sitemap\Manager\EntityManager;
 use Drupal\simple_sitemap\Manager\Generator;
-use Drupal\simple_sitemap\Entity\SimpleSitemap;
-use Drupal\simple_sitemap\Entity\EntityHelper;
 use Drupal\simple_sitemap\Settings;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
  * Provides form to manage entity bundles settings.
@@ -44,6 +43,8 @@ class EntityBundlesForm extends SimpleSitemapFormBase {
    *
    * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
    *   The config factory service.
+   * @param \Drupal\Core\Config\TypedConfigManagerInterface $typedConfigManager
+   *   The typed config manager.
    * @param \Drupal\simple_sitemap\Manager\Generator $generator
    *   The sitemap generator service.
    * @param \Drupal\simple_sitemap\Settings $settings
@@ -59,15 +60,17 @@ class EntityBundlesForm extends SimpleSitemapFormBase {
    */
   public function __construct(
     ConfigFactoryInterface $config_factory,
+    TypedConfigManagerInterface $typedConfigManager,
     Generator $generator,
     Settings $settings,
     FormHelper $form_helper,
     EntityHelper $entity_helper,
     EntityManager $entity_manager,
-    EntityTypeManagerInterface $entity_type_manager
+    EntityTypeManagerInterface $entity_type_manager,
   ) {
     parent::__construct(
       $config_factory,
+      $typedConfigManager,
       $generator,
       $settings,
       $form_helper
@@ -75,21 +78,6 @@ class EntityBundlesForm extends SimpleSitemapFormBase {
     $this->entityHelper = $entity_helper;
     $this->entityManager = $entity_manager;
     $this->entityTypeManager = $entity_type_manager;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public static function create(ContainerInterface $container) {
-    return new static(
-      $container->get('config.factory'),
-      $container->get('simple_sitemap.generator'),
-      $container->get('simple_sitemap.settings'),
-      $container->get('simple_sitemap.form_helper'),
-      $container->get('simple_sitemap.entity_helper'),
-      $container->get('simple_sitemap.entity_manager'),
-      $container->get('entity_type.manager')
-    );
   }
 
   /**
@@ -155,9 +143,8 @@ class EntityBundlesForm extends SimpleSitemapFormBase {
     $entity_type_id = $form_state->getValue('entity_type_id');
     $bundles = $form_state->getValue('bundles');
 
-    // @todo No need to load all sitemaps here.
-    foreach (SimpleSitemap::loadMultiple() as $variant => $sitemap) {
-      $this->entityManager->setVariants($variant);
+    foreach ($this->entityManager->getSitemaps() as $variant => $sitemap) {
+      $this->entityManager->setSitemaps($sitemap);
 
       foreach ($bundles as $bundle_name => $settings) {
         if (isset($settings[$variant])) {

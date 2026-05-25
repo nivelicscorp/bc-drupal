@@ -1,11 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\migrate_plus\Plugin\migrate\process;
 
+use Drupal\Core\File\FileExists;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\migrate\MigrateExecutableInterface;
-use Drupal\migrate\MigrateSkipProcessException;
 use Drupal\migrate\ProcessPluginBase;
 use Drupal\migrate\Row;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -74,11 +76,9 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 class FileBlob extends ProcessPluginBase implements ContainerFactoryPluginInterface {
 
   /**
-   * The file system service.
-   *
-   * @var \Drupal\Core\File\FileSystemInterface
+   * The filesystem service.
    */
-  protected $fileSystem;
+  protected FileSystemInterface $fileSystem;
 
   /**
    * Constructs a file_blob process plugin.
@@ -103,7 +103,7 @@ class FileBlob extends ProcessPluginBase implements ContainerFactoryPluginInterf
   /**
    * {@inheritdoc}
    */
-  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
+  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition): self {
     return new static(
       $configuration,
       $plugin_id,
@@ -126,21 +126,19 @@ class FileBlob extends ProcessPluginBase implements ContainerFactoryPluginInterf
     // Determine if we're going to overwrite existing files or not touch them.
     $replace = $this->getOverwriteMode();
 
-    // Attempt to save the file to avoid calling file_prepare_directory() any
-    // more than absolutely necessary.
-    if ($this->putFile($destination, $blob, $replace)) {
-      return $destination;
-    }
+    // Create the directory or modify permissions if necessary.
     $dir = $this->getDirectory($destination);
     $success = $this->fileSystem->prepareDirectory($dir, FileSystemInterface::CREATE_DIRECTORY | FileSystemInterface::MODIFY_PERMISSIONS);
     if (!$success) {
-      throw new MigrateSkipProcessException("Could not create directory '$dir'");
+      $this->stopPipeline();
     }
 
-    if ($this->putFile($destination, $blob, $replace)) {
-      return $destination;
+    // Attempt to save the file.
+    if (!$this->putFile($destination, $blob, $replace)) {
+      $this->stopPipeline();
     }
-    throw new MigrateSkipProcessException("Blob data could not be copied to $destination.");
+
+    return $destination;
   }
 
   /**
@@ -150,14 +148,14 @@ class FileBlob extends ProcessPluginBase implements ContainerFactoryPluginInterf
    *   The destination path or URI.
    * @param string $blob
    *   The base64 encoded file contents.
-   * @param int $replace
-   *   (optional) either FileSystemInterface::EXISTS_REPLACE; (default) or
-   *   FileSystemInterface::EXISTS_ERROR, depending on the configuration.
+   * @param \Drupal\Core\File\FileExists $replace
+   *   (optional) either FileExists::Replace (default) or
+   *   FileExists::Error, depending on the configuration.
    *
    * @return bool|string
    *   File path on success, FALSE on failure.
    */
-  protected function putFile($destination, $blob, $replace = FileSystemInterface::EXISTS_REPLACE) {
+  protected function putFile(string $destination, string $blob, FileExists $replace = FileExists::Replace) {
     $path = $this->fileSystem->getDestinationFilename($destination, $replace);
     if ($path) {
       if (file_put_contents($path, $blob)) {
@@ -175,15 +173,14 @@ class FileBlob extends ProcessPluginBase implements ContainerFactoryPluginInterf
   /**
    * Determines how to handle file conflicts.
    *
-   * @return int
-   *   Either FileSystemInterface::EXISTS_REPLACE; (default) or
-   *   FileSystemInterface::EXISTS_ERROR, depending on the configuration.
+   *   Either FileExists::Replace (default) or
+   *   FileExists::Error, depending on the configuration.
    */
-  protected function getOverwriteMode() {
+  protected function getOverwriteMode(): FileExists {
     if (isset($this->configuration['reuse']) && !empty($this->configuration['reuse'])) {
-      return FileSystemInterface::EXISTS_ERROR;
+      return FileExists::Error;
     }
-    return FileSystemInterface::EXISTS_REPLACE;
+    return FileExists::Replace;
   }
 
   /**
@@ -200,9 +197,9 @@ class FileBlob extends ProcessPluginBase implements ContainerFactoryPluginInterf
    *   The directory component of the path or URI, or FALSE if it could not
    *   be determined.
    */
-  protected function getDirectory($uri) {
+  protected function getDirectory(string $uri) {
     $dir = $this->fileSystem->dirname($uri);
-    if (substr($dir, -3) == '://') {
+    if (substr($dir, -3) === '://') {
       return $this->fileSystem->realpath($dir);
     }
     return $dir;

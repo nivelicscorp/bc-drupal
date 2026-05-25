@@ -2,14 +2,14 @@
 
 namespace Drupal\upgrade_status;
 
-use Composer\Semver\VersionParser;
 use Composer\Semver\Constraint\Constraint;
+use Composer\Semver\VersionParser;
 use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Core\Extension\Exception\UnknownExtensionException;
 use Drupal\Core\Extension\ModuleExtensionList;
 use Drupal\Core\Extension\ProfileExtensionList;
 use Drupal\Core\Extension\ThemeExtensionList;
-use Drupal\Core\Extension\Exception\UnknownExtensionException;
-use Drupal\Core\KeyValueStore\KeyValueExpirableFactory;
+use Drupal\Core\KeyValueStore\KeyValueExpirableFactoryInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 
 /**
@@ -150,7 +150,7 @@ class ProjectCollector {
    *   The theme extension handler service.
    * @param \Drupal\Core\Extension\ProfileExtensionList $profile_extension_list
    *   The profile extension handler service.
-   * @param \Drupal\Core\KeyValueStore\KeyValueExpirableFactory $key_value_expirable
+   * @param \Drupal\Core\KeyValueStore\KeyValueExpirableFactoryInterface $key_value_expirable
    *   The expirable key/value storage.
    * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
    *   The configuration factory.
@@ -161,9 +161,9 @@ class ProjectCollector {
     ModuleExtensionList $module_extension_list,
     ThemeExtensionList $theme_extension_list,
     ProfileExtensionList $profile_extension_list,
-    KeyValueExpirableFactory $key_value_expirable,
+    KeyValueExpirableFactoryInterface $key_value_expirable,
     ConfigFactoryInterface $config_factory,
-    $install_profile
+    $install_profile,
   ) {
     $this->moduleExtensionList = $module_extension_list;
     $this->themeExtensionList = $theme_extension_list;
@@ -208,12 +208,11 @@ class ProjectCollector {
       }
 
       // If the project is already specified in this extension, use that.
-      $project = isset($extension->info['project']) ? $extension->info['project'] : '';
+      $project = $extension->info['project'] ?? '';
       if (isset($projects[$project])) {
         // If we already have a representative of this project in the list,
         // don't add this extension.
         // @todo Make sure to use the extension with the shortest file path.
-
         // If the existing project was already Drupal 9 compatible, consider
         // this subcomponent as well. If this component was enabled, it would
         // affect how we consider the Drupal 9 compatibility.
@@ -283,7 +282,8 @@ class ProjectCollector {
 
       // Add available update information to contrib projects found.
       if ($extension->info['upgrade_status_type'] == self::TYPE_CONTRIB) {
-        // Look up by drupal.org project info not $name because the two may be different.
+        // Look up by drupal.org project info not $name
+        // because the two may be different.
         $project_update = $this->availableUpdates->get($extension->info['project']);
         if (!isset($project_update['releases']) || is_null($project_update['releases'])) {
           // Releases were either not checked or not available.
@@ -330,15 +330,18 @@ class ProjectCollector {
         $extension->info['upgrade_status_next'] = self::NEXT_UPDATE;
       }
       elseif ($extension->info['upgrade_status_type'] == self::TYPE_CONTRIB) {
-        // For installed contributed modules that do not have compatile updates, collaborate.
+        // For installed contributed modules that do not have
+        // compatible updates, collaborate.
         $extension->info['upgrade_status_next'] = self::NEXT_COLLABORATE;
       }
       else {
-        // If there was no scanning result yet, next step is to scan this project.
+        // If there was no scanning result yet, next step is to
+        // scan this project.
         if (empty($scan_result) || empty($scan_result['data']['totals']['upgrade_status_next'])) {
           $extension->info['upgrade_status_next'] = self::NEXT_SCAN;
         }
-        // If there were scanning results, carry over the next step suggestion from there.
+        // If there were scanning results, carry over the next step
+        // suggestion from there.
         else {
           $extension->info['upgrade_status_next'] = $scan_result['data']['totals']['upgrade_status_next'];
         }
@@ -363,7 +366,17 @@ class ProjectCollector {
 
     /** @var \Drupal\Core\Extension\Extension $extension */
     foreach ($extensions as $key => $extension) {
-      if (!empty($extension->status) && $extension->origin === 'core' && !empty($extension->info['lifecycle']) && in_array($extension->info['lifecycle'], ['deprecated', 'obsolete'])) {
+      if (!empty($extension->status)
+      && $extension->origin === 'core'
+      && !empty($extension->info['lifecycle'])
+      && in_array(
+          $extension->info['lifecycle'],
+          [
+            'deprecated',
+            'obsolete',
+          ]
+      )
+      ) {
         $prefix = '';
         $suffix = '';
         if (isset($extension->info['lifecycle_link'])) {
@@ -455,41 +468,8 @@ class ProjectCollector {
     // Always use a fresh service. An injected service could get stale results
     // because scan result saving happens in different HTTP requests for most
     // cases (when analysis was successful).
+    // @phpstan-ignore globalDrupalDependencyInjection.useDependencyInjection
     return \Drupal::service('keyvalue')->get('upgrade_status_scan_results')->get($project_machine_name) ?: NULL;
-  }
-
-  /**
-   * Get the Drupal 10 plan for a project, either explicitly fetched or cached.
-   *
-   * @param string $project_machine_name
-   *   Machine name for project.
-   *
-   * @return NULL|string
-   *   Either NULL or the Drupal 10 plan for the project.
-   */
-  public function getPlan(string $project_machine_name) {
-    // Drupal 9 plans are discontinued, return NULL on Drupal 8.
-    if ($this->getDrupalCoreMajorVersion() < 9) {
-      return NULL;
-    }
-
-    // Return explicitly fetched Drupal 10 plan if available.
-    $result = $this->getResults($project_machine_name);
-    if (!empty($result) && !empty($result['plans'])) {
-      return $result['plans'];
-    }
-
-    // Read our shipped snapshot of Drupal 10 plans to find this one.
-    $file = fopen(drupal_get_path('module', 'upgrade_status') . '/project_plans.csv', 'r');
-    while ($line = fgetcsv($file, 0, ";")) {
-      if ($line[0] == $project_machine_name) {
-        fclose($file);
-        // Replace drupal.org link formatting with actual links.
-        return preg_replace('!\[#(\d+)\]!', '<a href="https://drupal.org/node/\1">[#\1]</a>', $line[1]);
-      }
-    }
-    fclose($file);
-    return NULL;
   }
 
   /**
@@ -505,36 +485,43 @@ class ProjectCollector {
         $this->t('Remove'),
         $this->t('The likely best action is to remove projects that are uninstalled. Why invest in updating them to be compatible if you are not using them?'),
         ProjectCollector::SUMMARY_ACT,
+        'color-warning ' . ProjectCollector::NEXT_REMOVE,
       ],
       ProjectCollector::NEXT_UPDATE => [
         $this->t('Update'),
         $this->t('There is an update available. Even if that is not fully compatible with the next major Drupal core, it may be more compatible than what you have, so best to start with updating first.'),
         ProjectCollector::SUMMARY_ACT,
+        'color-warning ' . ProjectCollector::NEXT_REMOVE,
       ],
       ProjectCollector::NEXT_SCAN => [
         $this->t('Scan'),
         $this->t('Status of this project cannot be determined without scanning the source code here. Use this form to run a scan on these.'),
         ProjectCollector::SUMMARY_ANALYZE,
+        'color-warning ' . ProjectCollector::NEXT_REMOVE,
       ],
       ProjectCollector::NEXT_COLLABORATE => [
         $this->t('Collaborate with maintainers'),
         $this->t('There may be Drupal.org issues by contributors or even <a href=":drupal-bot">the Project Update Bot</a>. Work with the maintainer to get them committed, provide feedback if they worked.', [':drupal-bot' => 'https://www.drupal.org/u/project-update-bot']),
         ProjectCollector::SUMMARY_ACT,
+        'color-warning ' . ProjectCollector::NEXT_REMOVE,
       ],
       ProjectCollector::NEXT_RECTOR => [
         $this->t('Fix with rector'),
         $this->t('Some or all problems found can be fixed automatically with <a href=":drupal-rector">drupal-rector</a>. Make the machine do the work.', [':drupal-rector' => 'https://www.drupal.org/project/rector']),
         ProjectCollector::SUMMARY_ACT,
+        'color-error ' . ProjectCollector::NEXT_REMOVE,
       ],
       ProjectCollector::NEXT_MANUAL => [
         $this->t('Fix manually'),
         $this->t('It looks like there is no automated fixes for either problems found. Check the report for pointers on how to fix.'),
         ProjectCollector::SUMMARY_ACT,
+        'color-error ' . ProjectCollector::NEXT_REMOVE,
       ],
       ProjectCollector::NEXT_RELAX => [
         $this->t('Compatible with next major Drupal core version'),
-        $this->t('Well done. Congrats! Let\'s get everything else here!'),
+        $this->t("Well done. Congrats! Let's get everything else here!"),
         ProjectCollector::SUMMARY_RELAX,
+        'color-success ' . ProjectCollector::NEXT_REMOVE,
       ],
     ];
   }
@@ -545,11 +532,13 @@ class ProjectCollector {
    * A customized version of Semver::satisfies(), since that only works for
    * a == condition.
    *
-   * @paran string $constraints
+   * @param string $constraints
    *   Composer compatible constraints from core_version_requirement or
    *   drupal/core requirement.
    *
    * @return bool
+   *   Returns TRUE if the constraints are compatible with the next major
+   *   version of Drupal, otherwise FALSE.
    */
   public static function isCompatibleWithNextMajorDrupal(string $constraints) {
     $version_parser = new VersionParser();
@@ -559,19 +548,23 @@ class ProjectCollector {
   }
 
   /**
-   * Checks constraint compatibility with PHP 8.
+   * Checks constraint compatibility with a PHP version.
    *
    * A customized version of Semver::satisfies(), since that only works for
    * a == condition.
    *
-   * @paran string $constraints
+   * @param string $constraints
    *   Composer compatible constraints from a PHP version requirement.
+   * @param string $php
+   *   Optional PHP version number. Defaults to 8.0.0.
    *
    * @return bool
+   *   Returns TRUE if the PHP version satisfies the given constraints,
+   *   otherwise FALSE.
    */
-  public static function isCompatibleWithPHP8(string $constraints) {
+  public static function isCompatibleWithPhp(string $constraints, string $php = '8.0.0') {
     $version_parser = new VersionParser();
-    $provider = new Constraint('>=', $version_parser->normalize('8.0.0'));
+    $provider = new Constraint('>=', $version_parser->normalize($php));
     $parsed_constraints = $version_parser->parseConstraints($constraints);
     return $parsed_constraints->matches($provider);
   }
@@ -585,10 +578,14 @@ class ProjectCollector {
   public static function getOldestSupportedMinor(): string {
     $major = (int) \Drupal::VERSION;
     switch ($major) {
-      case 8:
-        return '8.9';
       case 9:
-        return '9.2';
+        return '9.5';
+
+      case 10:
+        return '10.2';
+
+      case 11:
+        return '11.0';
     }
     return '';
   }

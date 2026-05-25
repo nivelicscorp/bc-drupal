@@ -2,15 +2,12 @@
 
 namespace Drupal\entity_reference_revisions\Plugin\views\display;
 
-use Drupal\Core\Database\Query\Condition;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\views\Attribute\ViewsDisplay;
 use Drupal\views\Plugin\views\display\DisplayPluginBase;
 
 /**
  * The plugin that handles an EntityReferenceRevisions display.
- *
- * "entity_reference_revisions_display" is a custom property, used with
- * \Drupal\views\Views::getApplicableViews() to retrieve all views with a
- * 'Entity Reference Revisions' display.
  *
  * @ingroup views_display_plugins
  *
@@ -25,6 +22,15 @@ use Drupal\views\Plugin\views\display\DisplayPluginBase;
  *   entity_reference_revisions_display = TRUE
  * )
  */
+#[ViewsDisplay(
+  id: 'entity_reference_revisions',
+  title: new TranslatableMarkup('Entity Reference Revisions'),
+  admin: new TranslatableMarkup('Entity Reference Revisions Source'),
+  help: new TranslatableMarkup('Selects referenceable entities for an entity reference revisions field.'),
+  uses_menu_links: FALSE,
+  theme: 'views_view',
+  register_theme: FALSE,
+)]
 class EntityReferenceRevisions extends DisplayPluginBase {
 
   /**
@@ -41,6 +47,12 @@ class EntityReferenceRevisions extends DisplayPluginBase {
    * Overrides \Drupal\views\Plugin\views\display\DisplayPluginBase::$usesAttachments.
    */
   protected $usesAttachments = FALSE;
+
+  /**
+   * The id field alias.
+   */
+  // phpcs:ignore Drupal.NamingConventions.ValidVariableName.LowerCamelName
+  public string $id_field_alias;
 
   /**
    * Overrides \Drupal\views\Plugin\views\display\DisplayPluginBase::defineOptions().
@@ -122,15 +134,16 @@ class EntityReferenceRevisions extends DisplayPluginBase {
     $options = $this->getOption('entity_reference_revisions_options');
 
     // Restrict the autocomplete options based on what's been typed already.
+    $db = \Drupal::database();
     if (isset($options['match'])) {
       $style_options = $this->getOption('style');
-      $value = \Drupal::database()->escapeLike($options['match']) . '%';
+      $value = $db->escapeLike($options['match']) . '%';
       if ($options['match_operator'] != 'STARTS_WITH') {
         $value = '%' . $value;
       }
 
       // Multiple search fields are OR'd together.
-      $conditions = new Condition('OR');
+      $conditions = $db->condition('OR');
 
       // Build the condition using the selected search fields.
       foreach ($style_options['options']['search_fields'] as $field_alias) {

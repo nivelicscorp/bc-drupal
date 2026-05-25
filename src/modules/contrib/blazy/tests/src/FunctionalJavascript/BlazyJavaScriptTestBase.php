@@ -1,19 +1,30 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\Tests\blazy\FunctionalJavascript;
 
 use Drupal\FunctionalJavascriptTests\DrupalSelenium2Driver;
 use Drupal\FunctionalJavascriptTests\WebDriverTestBase;
-use Drupal\Tests\blazy\Traits\BlazyUnitTestTrait;
 use Drupal\Tests\blazy\Traits\BlazyCreationTestTrait;
-use Drupal\blazy\Blazy;
+use Drupal\Tests\blazy\Traits\BlazyUnitTestTrait;
 use Drupal\blazy\BlazyDefault;
 
 /**
  * Tests the Blazy JavaScript using PhantomJS, or Chromedriver.
- *
- * @group blazy
  */
+/**
+ * A D12 compat, please update or ignore.
+ *
+ * @phpstan-ignore-next-line
+ */
+#[Group('blazy')]
+/**
+ * A D12 compat, please update or ignore.
+ *
+ * @phpstan-ignore-next-line
+ */
+#[RunTestsInSeparateProcesses]
 abstract class BlazyJavaScriptTestBase extends WebDriverTestBase {
 
   use BlazyUnitTestTrait;
@@ -31,14 +42,19 @@ abstract class BlazyJavaScriptTestBase extends WebDriverTestBase {
 
   /**
    * {@inheritdoc}
+   *
+   * @var array<string>
    */
   protected static $modules = [
     'field',
     'filter',
+    'file',
     'image',
-    'node',
+    'media',
     'text',
+    'node',
     'blazy',
+    'blazy_ui',
     'blazy_test',
   ];
 
@@ -50,14 +66,15 @@ abstract class BlazyJavaScriptTestBase extends WebDriverTestBase {
 
     $this->setUpVariables();
 
-    $this->root                   = Blazy::root($this->container);
-    $this->fileSystem             = $this->container->get('file_system');
-    $this->entityFieldManager     = $this->container->get('entity_field.manager');
-    $this->formatterPluginManager = $this->container->get('plugin.manager.field.formatter');
-    $this->blazyAdmin             = $this->container->get('blazy.admin');
-    $this->blazyManager           = $this->container->get('blazy.manager');
-    $this->scriptLoader           = 'blazy';
-    $this->maxParagraphs          = 180;
+    $this->root                    = $this->container->getParameter('app.root');
+    $this->fileSystem              = $this->container->get('file_system');
+    $this->entityFieldManager      = $this->container->get('entity_field.manager');
+    $this->formatterPluginManager  = $this->container->get('plugin.manager.field.formatter');
+    $this->blazyAdmin              = $this->container->get('blazy.admin');
+    $this->blazyManager            = $this->container->get('blazy.manager');
+    $this->entityDisplayRepository = $this->container->get('entity_display.repository');
+    $this->scriptLoader            = 'blazy';
+    $this->maxParagraphs           = 180;
 
     // Disable `No JavaScript` options by default till required.
     $config = $this->container->get('config.factory');
@@ -86,9 +103,10 @@ abstract class BlazyJavaScriptTestBase extends WebDriverTestBase {
     $this->createScreenshot($image_path . '/' . $this->scriptLoader . '_2_loading.png');
 
     // Wait a moment.
-    $this->getSession()->wait(3000);
+    $this->getSession()->wait(6000);
 
     // Verifies that one of the images is there once loaded.
+    /** @phpstan-ignore-next-line */
     $this->assertNotEmpty($this->assertSession()->waitForElement('css', '.b-loaded'));
 
     // Capture the loaded moment.

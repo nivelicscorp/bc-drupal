@@ -15,11 +15,16 @@ use libphonenumber\PhoneNumberFormat;
 class FieldFormatterTest extends BrowserTestBase {
 
   /**
+   * {@inheritdoc}
+   */
+  protected $defaultTheme = 'stark';
+
+  /**
    * Modules to enable.
    *
    * @var array
    */
-  public static $modules = [
+  protected static $modules = [
     'field',
     'node',
     'telephone',
@@ -36,7 +41,7 @@ class FieldFormatterTest extends BrowserTestBase {
   /**
    * {@inheritdoc}
    */
-  protected function setUp() {
+  protected function setUp(): void {
     parent::setUp();
 
     $this->drupalCreateContentType(['type' => 'page']);
@@ -50,7 +55,7 @@ class FieldFormatterTest extends BrowserTestBase {
    * @dataProvider telephoneDataProvider
    *   Test different scenarios.
    */
-  public function testTelephoneFieldFallback($format, $link, $default_country, $expected, $value) {
+  public function testTelephoneFieldFallback($format, $link, $default_country, $expected, $value): void {
     $this->generateTelephoneField([
       'format' => $format,
       'link' => $link,
@@ -64,7 +69,7 @@ class FieldFormatterTest extends BrowserTestBase {
   /**
    * Helper method for telephone field generation.
    */
-  protected function generateTelephoneField($settings = []) {
+  protected function generateTelephoneField($settings = []): void {
     // Add the telephone field to the article content type.
     FieldStorageConfig::create([
       'field_name' => 'field_telephone',
@@ -96,7 +101,7 @@ class FieldFormatterTest extends BrowserTestBase {
   /**
    * Different test scenarios for Telephone formatter.
    */
-  public function telephoneDataProvider() {
+  static public function telephoneDataProvider() {
     return [
       [
         'format' => PhoneNumberFormat::INTERNATIONAL,

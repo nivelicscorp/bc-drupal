@@ -2,15 +2,17 @@
 
 namespace Drupal\svg_image_field\Plugin\Field\FieldFormatter;
 
+use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Field\FormatterBase;
+use Drupal\Core\File\FileUrlGeneratorInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
-use Drupal\Core\Url;
-use Symfony\Component\DependencyInjection\ContainerInterface;
 use enshrined\svgSanitize\Sanitizer;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Plugin implementation of the 'svg_formatter' formatter.
@@ -30,6 +32,27 @@ class SvgImageFieldFormatter extends FormatterBase implements ContainerFactoryPl
    * @var \Drupal\Core\Logger\LoggerChannelInterface
    */
   public $logger;
+
+  /**
+   * The module handler service.
+   *
+   * @var \Drupal\Core\Extension\ModuleHandlerInterface
+   */
+  protected $moduleHandler;
+
+  /**
+   * The file URL generator.
+   *
+   * @var \Drupal\Core\File\FileUrlGeneratorInterface
+   */
+  protected $fileUrlGenerator;
+
+  /**
+   * The config factory.
+   *
+   * @var \Drupal\Core\Config\ConfigFactoryInterface
+   */
+  protected $configFactory;
 
   /**
    * {@inheritdoc}
@@ -82,11 +105,6 @@ class SvgImageFieldFormatter extends FormatterBase implements ContainerFactoryPl
       '#type' => 'checkbox',
       '#title' => $this->t('Apply dimensions.'),
       '#default_value' => $this->getSetting('apply_dimensions'),
-      '#states' => [
-        'visible' => [
-          ':input[name$="' . $inline_name . '"]' => ['checked' => TRUE],
-        ],
-      ],
     ];
     $dimensions_name = '[settings_edit_form][settings][apply_dimensions]';
     $form['width'] = [
@@ -95,7 +113,6 @@ class SvgImageFieldFormatter extends FormatterBase implements ContainerFactoryPl
       '#default_value' => $this->getSetting('width'),
       '#states' => [
         'visible' => [
-          ':input[name$="' . $inline_name . '"]' => ['checked' => TRUE],
           ':input[name$="' . $dimensions_name . '"]' => ['checked' => TRUE],
         ],
       ],
@@ -106,7 +123,6 @@ class SvgImageFieldFormatter extends FormatterBase implements ContainerFactoryPl
       '#default_value' => $this->getSetting('height'),
       '#states' => [
         'visible' => [
-          ':input[name$="' . $inline_name . '"]' => ['checked' => TRUE],
           ':input[name$="' . $dimensions_name . '"]' => ['checked' => TRUE],
         ],
       ],
@@ -163,10 +179,6 @@ class SvgImageFieldFormatter extends FormatterBase implements ContainerFactoryPl
       '#title' => $this->t('Enable title attribute.'),
       '#default_value' => $this->getSetting('enable_title'),
     ];
-    $form['notice'] = [
-      '#type' => 'markup',
-      '#markup' => '<div><small>' . $this->t('Alt and title attributes will be created from an image filename by removing file extension and replacing eventual underscores and dashes with spaces.') . '</small></div>',
-    ];
 
     return $form;
   }
@@ -218,6 +230,9 @@ class SvgImageFieldFormatter extends FormatterBase implements ContainerFactoryPl
     // Check if the formatter involves a link.
     if ($image_link_setting == 'content') {
       $entity = $items->getEntity();
+      if ($langcode && $entity->hasTranslation($langcode)) {
+        $entity = $entity->getTranslation($langcode);
+      }
       if (!$entity->isNew()) {
         $url = $entity->toUrl();
       }
@@ -228,48 +243,19 @@ class SvgImageFieldFormatter extends FormatterBase implements ContainerFactoryPl
         continue;
       }
       $uri = $item->entity->getFileUri();
-      if (file_exists($uri) === FALSE) {
-        $this->logger->error('The specified file %file could not be displayed by image formatter due file not exists.', ['%file' => $uri]);
+      if (!is_file($uri) && !$this->isStageFileProxyConfigured()) {
+        $this->logger->error('File %file could not be displayed by image formatter because it does not exist on server.', ['%file' => $uri]);
         continue;
       }
-      $filename = $item->entity->getFilename();
-      $alt = !empty($item->alt) ? $item->alt : $this->generateAltAttribute($filename);
       if ($this->getSetting('enable_alt')) {
-        if ($alt == '""') {
+        $alt = $item->alt;
+        if ($alt == '""' || empty($alt)) {
           $alt = '';
         }
         $attributes['alt'] = $alt;
       }
       if ($this->getSetting('enable_title') && !empty($item->title)) {
         $attributes['title'] = $item->title;
-      }
-      $svg_data = NULL;
-
-      if ($this->getSetting('inline')) {
-        $svg_file = file_get_contents($uri);
-        $dom = new \DOMDocument();
-        libxml_use_internal_errors(TRUE);
-        $dom->loadXML($svg_file);
-        if ($this->getSetting('force_fill')) {
-          $dom->documentElement->setAttribute('fill', 'currentColor');
-        }
-        if (isset($dom->documentElement)) {
-          if ($this->getSetting('apply_dimensions')) {
-            $dom->documentElement->setAttribute('height', $attributes['height']);
-            $dom->documentElement->setAttribute('width', $attributes['width']);
-          }
-          $svg_data = $dom->saveXML($dom->documentElement);
-        }
-        else {
-          $svg_data = $dom->saveXML();
-        }
-        if ($this->getSetting('sanitize')) {
-          $svgSanitizer = new Sanitizer();
-          if ($this->getSetting('sanitize_remote')) {
-            $svgSanitizer->removeRemoteReferences(TRUE);
-          }
-          $svg_data = $svgSanitizer->sanitize($svg_data);
-        }
       }
 
       $cache_contexts = [];
@@ -279,34 +265,109 @@ class SvgImageFieldFormatter extends FormatterBase implements ContainerFactoryPl
         // context to ensure different file URLs are generated for different
         // sites in a multisite setup, including HTTP and HTTPS versions of the
         // same site. Fix in https://www.drupal.org/node/2646744.
-        $url = Url::fromUri(file_create_url($uri));
+        $url = $this->fileUrlGenerator->generate($uri);
         $cache_contexts[] = 'url.site';
       }
 
-      $elements[$delta] = [
+      $element = [
         '#theme' => 'svg_image_field_formatter',
-        '#inline' => $this->getSetting('inline') ? TRUE : FALSE,
         '#attributes' => $attributes,
-        '#uri' => $this->getSetting('inline') ? NULL : $uri,
-        '#svg_data' => $svg_data,
         '#link_url' => $url,
         '#cache' => [
           'tags' => $item->entity->getCacheTags(),
           'contexts' => $cache_contexts,
         ],
+        '#uri' => $uri,
+        '#inline' => FALSE,
       ];
+
+      // Set properties based on if the SVG is displayed inline or not.
+      if (
+        $this->getSetting('inline') &&
+        $svg_data = $this->loadInlineSvgData($uri, $attributes)
+      ) {
+        $element['#inline'] = TRUE;
+        $element['#svg_data'] = $svg_data;
+      }
+
+      $elements[$delta] = $element;
     }
 
     return $elements;
   }
 
   /**
-   * Generate alt attribute from an image filename.
+   * Determine if the Stage File Proxy module is enabled and configured.
+   *
+   * @return bool
+   *   True if Stage File Proxy module is enabled and configured.
    */
-  private function generateAltAttribute($filename) {
-    $alt = str_replace(['.svg', '-', '_'], ['', ' ', ' '], $filename);
-    $alt = ucfirst($alt);
-    return $alt;
+  protected function isStageFileProxyConfigured() {
+    return (
+      $this->moduleHandler->moduleExists('stage_file_proxy') &&
+      $this->configFactory->get('stage_file_proxy.settings')->get('origin')
+    );
+  }
+
+  /**
+   * Load SVG file data for inline display.
+   *
+   * @param string $uri
+   *   The uri to the SVG file.
+   * @param array $attributes
+   *   Attributes to set for the SVG html tag.
+   *
+   * @return string|null
+   *   The loaded SVG XML, or null if the file is missing or empty.
+   */
+  protected function loadInlineSvgData(string $uri, array $attributes): ?string {
+    // If the file is missing or has empty contents, temporarily disable
+    // inline SVG and instead render an <img> tag containing the URL to the
+    // SVG in the src attribute. This approach allows Stage File Proxy to
+    // intercept the request and obtain the original SVG file from the origin
+    // server. And as long as the Stage File Proxy 'hotlink' option is not
+    // enabled, subsequent page loads will render the SVG inline again.
+    if (!is_file($uri) || !$svg_file = @file_get_contents($uri)) {
+      $this->logger->warning('Inline file %file is missing or empty. Inline display will be disabled and an image tag used instead.', ['%file' => $uri]);
+      return NULL;
+    }
+
+    $dom = new \DOMDocument();
+    libxml_use_internal_errors(TRUE);
+    $dom->loadXML($svg_file);
+
+    $element = NULL;
+    if (isset($dom->documentElement)) {
+      if ($this->getSetting('force_fill')) {
+        $dom->documentElement->setAttribute('fill', 'currentColor');
+      }
+      if ($this->getSetting('apply_dimensions')) {
+        if ($attributes['height']) {
+          $dom->documentElement->setAttribute('height', $attributes['height']);
+        }
+        if ($attributes['width']) {
+          $dom->documentElement->setAttribute('width', $attributes['width']);
+        }
+      }
+      $element = $dom->documentElement;
+    }
+    $svg_data = $dom->saveXML($element);
+
+    if ($this->getSetting('sanitize')) {
+      $svgSanitizer = new Sanitizer();
+      if ($this->getSetting('sanitize_remote')) {
+        $svgSanitizer->removeRemoteReferences(TRUE);
+      }
+      $svg_data = $svgSanitizer->sanitize($svg_data);
+    }
+
+    // Remove the XML declaration.
+    $lines = explode("\n", $svg_data, 2);
+    if (preg_match('/\<\?xml/', $lines[0])) {
+      $svg_data = $lines[1];
+    }
+
+    return $svg_data;
   }
 
   /**
@@ -328,6 +389,12 @@ class SvgImageFieldFormatter extends FormatterBase implements ContainerFactoryPl
    *   Any third party settings.
    * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $logger
    *   Logger.
+   * @param \Drupal\Core\Extension\ModuleHandlerInterface $module_handler
+   *   The module handler service.
+   * @param \Drupal\Core\File\FileUrlGeneratorInterface $file_url_generator
+   *   The file URL generator.
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
+   *   The config factory.
    */
   public function __construct(
     $plugin_id,
@@ -337,9 +404,15 @@ class SvgImageFieldFormatter extends FormatterBase implements ContainerFactoryPl
     $label,
     $view_mode,
     array $third_party_settings,
-    LoggerChannelFactoryInterface $logger
+    LoggerChannelFactoryInterface $logger,
+    ModuleHandlerInterface $module_handler,
+    FileUrlGeneratorInterface $file_url_generator,
+    ConfigFactoryInterface $config_factory,
   ) {
     $this->logger = $logger->get('svg_image_field');
+    $this->moduleHandler = $module_handler;
+    $this->fileUrlGenerator = $file_url_generator;
+    $this->configFactory = $config_factory;
     parent::__construct($plugin_id, $plugin_definition, $field_definition,
       $settings, $label, $view_mode, $third_party_settings);
   }
@@ -351,7 +424,7 @@ class SvgImageFieldFormatter extends FormatterBase implements ContainerFactoryPl
     ContainerInterface $container,
     array $configuration,
     $plugin_id,
-    $plugin_definition
+    $plugin_definition,
   ) {
     return new static(
       $plugin_id,
@@ -361,7 +434,10 @@ class SvgImageFieldFormatter extends FormatterBase implements ContainerFactoryPl
       $configuration['label'],
       $configuration['view_mode'],
       $configuration['third_party_settings'],
-      $container->get('logger.factory')
+      $container->get('logger.factory'),
+      $container->get('module_handler'),
+      $container->get('file_url_generator'),
+      $container->get('config.factory'),
     );
   }
 

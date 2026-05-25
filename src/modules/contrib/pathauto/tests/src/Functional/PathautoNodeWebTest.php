@@ -2,12 +2,11 @@
 
 namespace Drupal\Tests\pathauto\Functional;
 
-use Drupal\pathauto\Entity\PathautoPattern;
+use Drupal\Component\Render\FormattableMarkup;
 use Drupal\node\Entity\Node;
+use Drupal\pathauto\Entity\PathautoPattern;
 use Drupal\pathauto\PathautoState;
 use Drupal\Tests\BrowserTestBase;
-use Drupal\Component\Render\FormattableMarkup;
-
 
 /**
  * Tests pathauto node UI integration.
@@ -21,7 +20,7 @@ class PathautoNodeWebTest extends BrowserTestBase {
   /**
    * {@inheritdoc}
    */
-  protected $defaultTheme = 'stable';
+  protected $defaultTheme = 'stark';
 
   /**
    * Modules to enable.
@@ -50,6 +49,8 @@ class PathautoNodeWebTest extends BrowserTestBase {
     $permissions = [
       'administer pathauto',
       'administer url aliases',
+      'bulk delete aliases',
+      'bulk update aliases',
       'create url aliases',
       'bypass node access',
       'access content overview',
@@ -118,7 +119,7 @@ class PathautoNodeWebTest extends BrowserTestBase {
       'path[0][alias]' => '/should-not-get-created',
     ];
     $this->drupalGet('node/add/page');
-    $this->submitForm( $edit, 'Save');
+    $this->submitForm($edit, 'Save');
     $this->assertNoAliasExists(['alias' => 'should-not-get-created']);
     $node = $this->drupalGetNodeByTitle($title);
     $this->assertEntityAlias($node, '/content/automatic-title');
@@ -181,6 +182,8 @@ class PathautoNodeWebTest extends BrowserTestBase {
   }
 
   /**
+   * Tests the handling of node path alias state and pathauto integration.
+   *
    * @todo Merge this with existing node test methods?
    */
   public function testNodeState() {
@@ -206,7 +209,8 @@ class PathautoNodeWebTest extends BrowserTestBase {
     $node = Node::load($node->id());
     $this->assertSame(PathautoState::SKIP, $node->path->pathauto);
 
-    // Ensure that the manual path alias was saved and an automatic alias was not generated.
+    // Ensure that the manual path alias was saved and an automatic alias was
+    // not generated.
     $this->assertEntityAlias($node, '/test-alias');
     $this->assertNoEntityAliasExists($node, '/content/node-version-one');
 
@@ -223,7 +227,8 @@ class PathautoNodeWebTest extends BrowserTestBase {
     $this->assertNoEntityAliasExists($node, '/content/node-version-one');
     $this->assertNoEntityAliasExists($node, '/content/node-version-two');
 
-    // Load the edit node page and check that the Pathauto checkbox is unchecked.
+    // Load the edit node page and check that the Pathauto checkbox is
+    // unchecked.
     $this->drupalLogin($nodeAliasUser);
     $this->drupalGet('node/' . $node->id() . '/edit');
     $this->assertSession()->checkboxNotChecked('edit-path-0-pathauto');
@@ -242,7 +247,7 @@ class PathautoNodeWebTest extends BrowserTestBase {
     $this->assertNoEntityAliasExists($node, '/content/node-version-two');
     $this->assertNoEntityAliasExists($node, '/content/node-version-three');
 
-    // Programatically save the node with an automatic alias.
+    // Programmatically save the node with an automatic alias.
     \Drupal::entityTypeManager()->getStorage('node')->resetCache();
     $node = Node::load($node->id());
     $node->path->pathauto = PathautoState::CREATE;
@@ -262,7 +267,6 @@ class PathautoNodeWebTest extends BrowserTestBase {
     $node->delete();
     $this->assertNull(\Drupal::keyValue('pathauto_state.node')->get($node->id()), 'Pathauto state was deleted');
   }
-
 
   /**
    * Tests that nodes without a Pathauto pattern can set custom aliases.
@@ -289,7 +293,11 @@ class PathautoNodeWebTest extends BrowserTestBase {
     $this->assertSession()->statusCodeEquals(200);
 
     // Now create a node through the API.
-    $node = Node::create(['type' => 'article', 'title' => 'Sample article API', 'path' => ['alias' => '/sample-article-api']]);
+    $node = Node::create([
+      'type' => 'article',
+      'title' => 'Sample article API',
+      'path' => ['alias' => '/sample-article-api'],
+    ]);
     $node->save();
 
     // Test the alias.

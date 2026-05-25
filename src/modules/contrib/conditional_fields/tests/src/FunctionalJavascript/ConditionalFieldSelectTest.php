@@ -2,11 +2,11 @@
 
 namespace Drupal\Tests\conditional_fields\FunctionalJavascript;
 
-use Drupal\conditional_fields\ConditionalFieldsInterface;
 use Drupal\Core\Entity\Entity\EntityFormDisplay;
+use Drupal\Tests\conditional_fields\FunctionalJavascript\TestCases\ConditionalFieldValueInterface;
+use Drupal\conditional_fields\ConditionalFieldsInterface;
 use Drupal\field\Entity\FieldConfig;
 use Drupal\field\Entity\FieldStorageConfig;
-use Drupal\Tests\conditional_fields\FunctionalJavascript\TestCases\ConditionalFieldValueInterface;
 
 /**
  * Test Conditional Fields Select Plugin.
@@ -20,7 +20,7 @@ class ConditionalFieldSelectTest extends ConditionalFieldTestBase implements Con
    *
    * @var array
    */
-  public static $modules = [
+  protected static $modules = [
     'conditional_fields',
     'node',
     'options',
@@ -74,7 +74,7 @@ class ConditionalFieldSelectTest extends ConditionalFieldTestBase implements Con
   /**
    * {@inheritdoc}
    */
-  protected function setUp() {
+  protected function setUp(): void {
     parent::setUp();
 
     foreach ($this->fieldNames as $fieldName) {

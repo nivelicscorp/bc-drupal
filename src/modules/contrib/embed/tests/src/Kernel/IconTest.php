@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\Tests\embed\Kernel;
 
 use Drupal\embed\EmbedButtonInterface;
@@ -17,7 +19,7 @@ class IconTest extends KernelTestBase {
   /**
    * {@inheritdoc}
    */
-  public static $modules = [
+  protected static $modules = [
     'system',
     'embed',
     'embed_test',
@@ -46,7 +48,7 @@ class IconTest extends KernelTestBase {
       'type_id' => 'embed_test_default',
     ]);
     $this->assertEmpty($button->icon);
-    $this->assertIconUrl('/default.png', $button);
+    $this->assertIconUrl($this->container->get('extension.list.module')->getPath('embed_test') . '/default.png', $button);
 
     $uri = 'public://button.png';
     $image_contents = file_get_contents('core/misc/favicon.ico');
@@ -77,7 +79,7 @@ class IconTest extends KernelTestBase {
    * Test a button's icon URL.
    *
    * @param string $uri
-   *   The exepcted URI to the icon file.
+   *   The expected URI to the icon file.
    * @param \Drupal\embed\EmbedButtonInterface $button
    *   The embed button.
    * @param string $message

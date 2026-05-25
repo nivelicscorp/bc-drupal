@@ -15,5 +15,5 @@ checkbox at the bottom of the page with the following label: "Block title as
 menu link parent"
 
 Check this option and make sure the block title is not hidden and save the
-block. When you visit the page with this block placed on it you should see the
+block. When you visit the page with this block placed on it, you should see the
 title of the block is now the parent item of the menu.

@@ -6,3 +6,10 @@ shs.term_data:
     entity_id: null
   requirements:
     _permission: 'access content'
+shs.create_term:
+  path: '/shs-create-term'
+  defaults:
+    _controller: '\Drupal\shs\Controller\ShsController::createTerm'
+  requirements:
+    _csrf_token: 'TRUE'
+    _custom_access:  '\Drupal\shs\Controller\ShsController::createTermAccess'

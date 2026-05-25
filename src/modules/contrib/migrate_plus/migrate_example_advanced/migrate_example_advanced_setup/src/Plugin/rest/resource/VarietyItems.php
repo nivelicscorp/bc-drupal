@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\migrate_example_advanced_setup\Plugin\rest\resource;
 
 use Drupal\rest\Plugin\ResourceBase;
@@ -16,40 +18,39 @@ use Drupal\rest\ResourceResponse;
  *   }
  * )
  */
-class VarietyItems extends ResourceBase {
+final class VarietyItems extends ResourceBase {
 
   /**
    * Responds to GET requests.
    *
-   * @param string $variety
+   * @param string|null $variety
    *   Machine name of the variety to retrieve.
    *
-   * @return \Drupal\rest\ResourceResponse
    *   The response containing the requested variety data.
    */
-  public function get($variety = NULL) {
+  public function get(?string $variety = NULL): ResourceResponse {
     $varieties = [
       'retsina' => [
         'name' => 'Retsina',
-        // The categoryid for 'white'.
+        // The categoryId for 'white'.
         'parent' => 1,
         'details' => 'Greek',
       ],
       'trebbiano' => [
         'name' => 'Trebbiano',
-        // The categoryid for 'white'.
+        // The categoryId for 'white'.
         'parent' => 1,
         'details' => 'Italian',
       ],
       'valpolicella' => [
         'name' => 'Valpolicella',
-        // The categoryid for 'red'.
+        // The categoryId for 'red'.
         'parent' => 3,
         'details' => 'Italian Venoto region',
       ],
       'bardolino' => [
         'name' => 'Bardolino',
-        // The categoryid for 'red'.
+        // The categoryId for 'red'.
         'parent' => 3,
         'details' => 'Italian Venoto region',
       ],
@@ -61,14 +62,13 @@ class VarietyItems extends ResourceBase {
       $data = [];
     }
 
-    $response = new ResourceResponse($data, 200);
-    return $response;
+    return new ResourceResponse($data, 200);
   }
 
   /**
    * {@inheritdoc}
    */
-  public function permissions() {
+  public function permissions(): array {
     // Remove permissions so the resource is available to all.
     return [];
   }

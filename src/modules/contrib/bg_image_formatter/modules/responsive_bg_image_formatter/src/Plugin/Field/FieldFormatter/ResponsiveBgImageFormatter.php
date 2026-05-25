@@ -4,7 +4,6 @@ declare(strict_types = 1);
 
 namespace Drupal\responsive_bg_image_formatter\Plugin\Field\FieldFormatter;
 
-use Drupal;
 use Drupal\bg_image_formatter\Plugin\Field\FieldFormatter\BgImageFormatter;
 use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Form\FormStateInterface;
@@ -82,12 +81,12 @@ class ResponsiveBgImageFormatter extends BgImageFormatter {
 
     // Prepare token data in bg image css selector.
     $token_data = [
-      'user' => Drupal::currentUser(),
+      'user' => \Drupal::currentUser(),
       $items->getEntity()->getEntityTypeId() => $items->getEntity(),
     ];
 
     foreach ($selectors as &$selector) {
-      $selector = Drupal::token()->replace($selector, $token_data);
+      $selector = \Drupal::token()->replace($selector, $token_data);
     }
 
     // Need an empty element so views renderer will see something to render.
@@ -97,11 +96,16 @@ class ResponsiveBgImageFormatter extends BgImageFormatter {
     foreach ($files as $delta => $file) {
       // Use specified selectors in round-robin order.
       $selector = $selectors[$index % \count($selectors)];
-
+      $uri = $file->getFileUri();
       $vars = [
         'uri' => $file->getFileUri(),
         'responsive_image_style_id' => $settings['image_style'],
+        'width' => 1,
+        'height' => 1,
       ];
+      if (file_exists($uri)) {
+        [$vars['width'], $vars['height']] = getimagesize($uri);
+      }
       template_preprocess_responsive_image($vars);
 
       if (empty($vars['sources'])) {
@@ -115,9 +119,9 @@ class ResponsiveBgImageFormatter extends BgImageFormatter {
         $srcset = explode(', ', $attr['srcset']);
 
         foreach ($srcset as $src_i => $src) {
-          list($src, $res) = explode(' ', $src);
+          [$src, $res] = explode(' ', $src);
 
-          $media = isset($attr['media']) ? $attr['media'] : '';
+          $media = $attr['media'] ?? '';
 
           // Add "retina" to media query if this is a 2x image.
           if ($res && $res === '2x') {

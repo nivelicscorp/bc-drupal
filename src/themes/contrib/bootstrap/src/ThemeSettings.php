@@ -223,7 +223,7 @@ class ThemeSettings extends Config {
     else {
       $parts = explode('.', $key);
       if (count($parts) == 1) {
-        return isset($original_data[$key]) ? $original_data[$key] : NULL;
+        return $original_data[$key] ?? NULL;
       }
       else {
         $value = NestedArray::getValue($original_data, $parts, $key_exists);
@@ -297,7 +297,7 @@ class ThemeSettings extends Config {
       }
       else {
         $favicon_path = $config->get('favicon.path');
-        if (file_exists($favicon_path)) {
+        if ($favicon_path && file_exists($favicon_path)) {
           $config->set('favicon.url', $file_url_generator->generateString($favicon_path));
         }
       }
@@ -318,8 +318,8 @@ class ThemeSettings extends Config {
 
     foreach ($all_complex_settings as $key) {
       $arrays = [];
-      $arrays[] = isset($this->defaults[$key]) ? $this->defaults[$key] : [];
-      $arrays[] = isset($data[$key]) ? $data[$key] : [];
+      $arrays[] = $this->defaults[$key] ?? [];
+      $arrays[] = $data[$key] ?? [];
       $diff[$key] = NestedArray::mergeDeepArray($arrays, TRUE);
     }
 

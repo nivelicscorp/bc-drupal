@@ -2,16 +2,13 @@
 
 namespace Drupal\Tests\blazy\Unit\Form;
 
-use Drupal\blazy\Form\BlazyAdmin;
 use Drupal\Tests\UnitTestCase;
 use Drupal\Tests\blazy\Traits\BlazyUnitTestTrait;
+use Drupal\blazy\Form\BlazyAdmin;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Tests the Blazy admin form.
- *
- * @coversDefaultClass \Drupal\blazy\Form\BlazyAdmin
- * @group blazy
  */
 class BlazyAdminUnitTest extends UnitTestCase {
 
@@ -26,17 +23,11 @@ class BlazyAdminUnitTest extends UnitTestCase {
     $this->entityDisplayRepository = $this->createMock('\Drupal\Core\Entity\EntityDisplayRepositoryInterface');
     $this->typedConfig = $this->createMock('\Drupal\Core\Config\TypedConfigManagerInterface');
     $this->blazyManager = $this->createMock('\Drupal\blazy\BlazyManagerInterface');
-    $this->dateFormatter = $this->getMockBuilder('Drupal\Core\Datetime\DateFormatter')
-      ->disableOriginalConstructor()
-      ->getMock();
+    $this->dateFormatter = $this->createMock('\Drupal\Core\Datetime\DateFormatter');
   }
 
   /**
-   * @covers ::create
-   * @covers ::__construct
-   * @covers ::getEntityDisplayRepository
-   * @covers ::getTypedConfig
-   * @covers ::blazyManager
+   * Test Blazy admin constructor.
    */
   public function testBlazyAdminCreate() {
     $container = $this->createMock(ContainerInterface::class);

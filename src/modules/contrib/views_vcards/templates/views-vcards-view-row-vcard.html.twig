@@ -37,7 +37,8 @@
 BEGIN:VCARD
 VERSION:4.0
 FN:{{ full_name }}
-N:{{ last_name }};{{ first_name }};{{ middle_name }};{{ title }};
+{% if (last_name is not empty) or (first_name is not empty) or (middle_name is not empty) or (title is not empty) %}
+N:{{ last_name }};{{ first_name }};{{ middle_name }};{{ title }};{{ "\n" }}{% endif %}
 {% if (home_address is not empty) or (home_city is not empty) or (home_state is not empty) or (home_zip is not empty) or (home_country is not empty) %}
 ADR;TYPE=home:;;{{ home_address }};{{ home_city }};{{ home_state }};{{ home_zip }};{{ home_country }}{{ "\n" }}{% endif %}
 {% if (work_address is not empty) or (work_city is not empty) or (work_state is not empty) or (work_zip is not empty) or (work_country is not empty) %}

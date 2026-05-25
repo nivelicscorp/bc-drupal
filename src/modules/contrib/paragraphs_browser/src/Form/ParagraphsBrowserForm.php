@@ -12,6 +12,7 @@ use Drupal\Core\Ajax\AjaxResponse;
 use Drupal\Core\Ajax\CloseModalDialogCommand;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
+use Drupal\Core\File\FileUrlGeneratorInterface;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\field\Entity\FieldConfig;
@@ -59,6 +60,13 @@ class ParagraphsBrowserForm extends FormBase {
   protected $currentUser;
 
   /**
+   * The file URL generator.
+   *
+   * @var \Drupal\Core\File\FileUrlGeneratorInterface
+   */
+  protected $fileUrlGenerator;
+
+  /**
    * Constructs a new ParagraphsTypeDeleteConfirm object.
    *
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
@@ -70,11 +78,12 @@ class ParagraphsBrowserForm extends FormBase {
    * @param \Drupal\Core\Session\AccountInterface $current_user
    *   The current user.
    */
-  public function __construct(EntityTypeManagerInterface $entity_type_manager, EntityTypeBundleInfoInterface $entity_type_bundle_info, ModuleHandlerInterface $module_handler, AccountInterface $current_user) {
+  public function __construct(EntityTypeManagerInterface $entity_type_manager, EntityTypeBundleInfoInterface $entity_type_bundle_info, ModuleHandlerInterface $module_handler, AccountInterface $current_user, FileUrlGeneratorInterface $file_url_generator = NULL) {
     $this->entityTypeManager = $entity_type_manager;
     $this->entityTypeBundleInfo = $entity_type_bundle_info;
     $this->moduleHandler = $module_handler;
     $this->currentUser = $current_user;
+    $this->fileUrlGenerator = $file_url_generator;
   }
 
   /**
@@ -85,7 +94,8 @@ class ParagraphsBrowserForm extends FormBase {
       $container->get('entity_type.manager'),
       $container->get('entity_type.bundle.info'),
       $container->get('module_handler'),
-      $container->get('current_user')
+      $container->get('current_user'),
+      $container->get('file_url_generator')
     );
   }
 
@@ -213,7 +223,7 @@ class ParagraphsBrowserForm extends FormBase {
 
         if($image_path = $paragraph_type->getThirdPartySetting('paragraphs_browser', 'image_path', $default = NULL)) {
           // If there is a paragraphs browser image, use it
-          $src = file_create_url($image_path);
+          $src = $this->fileUrlGenerator->generateAbsoluteString($image_path);
         } else {
           // Otherwise, default to paragraphs icon
           $src = $paragraph_type->getIconUrl();

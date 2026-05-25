@@ -1,5 +1,4 @@
 webform_toggles.element:
-  version: VERSION
   css:
     component:
       css/webform_toggles.element.css: {}
@@ -8,7 +7,8 @@ webform_toggles.element:
   dependencies:
     - core/drupal
     - webform_toggles/libraries.jquery.toggles
-    - core/jquery.once
+    - core/jquery
+    - core/once
 
 # External libraries.
 

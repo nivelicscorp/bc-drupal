@@ -1,8 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\migrate_plus\Plugin\migrate\process;
 
-use Drupal\Core\Config\Entity\ConfigEntityInterface;
+use Drupal\Core\Entity\EntityFieldManagerInterface;
+use Drupal\Core\Entity\EntityReferenceSelection\SelectionPluginManagerInterface;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Entity\Query\QueryInterface;
+use Drupal\Core\Field\FieldItemList;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\migrate\MigrateException;
 use Drupal\migrate\MigrateExecutableInterface;
@@ -73,6 +79,15 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  *     operator: STARTS_WITH
  * @endcode
  *
+ * While many entity types can work with minimal settings, some have specific
+ * requirements in order for them to work correctly.
+ *
+ * entity_type: taxonomy_term
+ * - In order to match the vocabulary both the "bundle" and "bundle_key" values
+ *   must be defined, per the example above; if the "bundle_key" value is not
+ *   defined it will ignore the vocabulary/bundle and just pick the first term
+ *   that matches based on the name.
+ *
  * @codingStandardsIgnoreEnd
  *
  * @see \Drupal\Core\Entity\Query\QueryInterface::condition()
@@ -86,92 +101,68 @@ class EntityLookup extends ProcessPluginBase implements ContainerFactoryPluginIn
 
   /**
    * The entity type manager.
-   *
-   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
    */
-  protected $entityTypeManager;
+  protected ?EntityTypeManagerInterface $entityTypeManager;
 
   /**
    * The field manager.
-   *
-   * @var \Drupal\Core\Entity\EntityFieldManagerInterface
    */
-  protected $entityFieldManager;
+  protected EntityFieldManagerInterface $entityFieldManager;
 
   /**
    * The migration.
-   *
-   * @var \Drupal\migrate\Plugin\MigrationInterface
    */
-  protected $migration;
+  protected MigrationInterface $migration;
 
   /**
-   * The selection plugin.
-   *
-   * @var \Drupal\Core\Entity\EntityReferenceSelection\SelectionPluginManagerInterface
+   * The selection plugin manager.
    */
-  protected $selectionPluginManager;
+  protected SelectionPluginManagerInterface $selectionPluginManager;
 
   /**
-   * The destination type.
-   *
-   * @var string
+   * The destination entity type.
    */
-  protected $destinationEntityType;
+  protected ?string $destinationEntityType;
 
   /**
-   * The destination bundle.
-   *
-   * @var string|bool
+   * The destination bundle key.
    */
-  protected $destinationBundleKey;
+  protected ?string $destinationBundleKey = NULL;
 
   /**
-   * The lookup value's key.
-   *
-   * @var string
+   * The lookup value.
    */
-  protected $lookupValueKey;
+  protected ?string $lookupValueKey = NULL;
 
   /**
-   * The lookup bundle's key.
-   *
-   * @var string
+   * The bundle key.
    */
-  protected $lookupBundleKey;
+  protected ?string $lookupBundleKey = NULL;
 
   /**
    * The lookup bundle.
-   *
-   * @var string
    */
-  protected $lookupBundle;
+  protected string|array $lookupBundle = [];
 
   /**
    * The lookup entity type.
-   *
-   * @var string
    */
-  protected $lookupEntityType;
+  protected ?string $lookupEntityType = NULL;
 
   /**
-   * The destination property or field.
-   *
-   * @var string
+   * The destination property.
    */
-  protected $destinationProperty;
+  protected ?string $destinationProperty;
 
   /**
-   * The access check flag.
-   *
-   * @var string
+   * Is access check required.
    */
-  protected $accessCheck = TRUE;
+  protected bool $accessCheck = TRUE;
 
   /**
    * {@inheritdoc}
    */
-  public static function create(ContainerInterface $container, array $configuration, $pluginId, $pluginDefinition, MigrationInterface $migration = NULL) {
+  public static function create(ContainerInterface $container, array $configuration, $pluginId, $pluginDefinition, ?MigrationInterface $migration = NULL) {
     $instance = new static(
       $configuration,
       $pluginId,
@@ -190,7 +181,7 @@ class EntityLookup extends ProcessPluginBase implements ContainerFactoryPluginIn
   /**
    * {@inheritdoc}
    */
-  public function transform($value, MigrateExecutableInterface $migrateExecutable, Row $row, $destinationProperty) {
+  public function transform($value, MigrateExecutableInterface $migrate_executable, Row $row, $destination_property) {
     // If the source data is an empty array, return the same.
     if (gettype($value) === 'array' && count($value) === 0) {
       return [];
@@ -198,11 +189,11 @@ class EntityLookup extends ProcessPluginBase implements ContainerFactoryPluginIn
 
     // In case of subfields ('field_reference/target_id'), extract the field
     // name only.
-    $parts = explode('/', $destinationProperty);
-    $destinationProperty = reset($parts);
-    $this->determineLookupProperties($destinationProperty);
+    $parts = explode('/', $destination_property);
+    $destination_property = reset($parts);
+    $this->determineLookupProperties($destination_property);
 
-    $this->destinationProperty = isset($this->configuration['destination_field']) ? $this->configuration['destination_field'] : NULL;
+    $this->destinationProperty = $this->configuration['destination_field'] ?? NULL;
 
     return $this->query($value);
   }
@@ -214,9 +205,9 @@ class EntityLookup extends ProcessPluginBase implements ContainerFactoryPluginIn
    *   The destination property currently worked on. This is only used together
    *   with the $row above.
    */
-  protected function determineLookupProperties($destinationProperty) {
+  protected function determineLookupProperties(string $destinationProperty): void {
     if (isset($this->configuration['access_check'])) {
-      $this->accessCheck = $this->configuration['access_check'];
+      $this->accessCheck = (bool) $this->configuration['access_check'];
     }
     if (!empty($this->configuration['value_key'])) {
       $this->lookupValueKey = $this->configuration['value_key'];
@@ -240,7 +231,7 @@ class EntityLookup extends ProcessPluginBase implements ContainerFactoryPluginIn
           case 'entity_reference':
             if (empty($this->lookupBundle)) {
               $handlerSettings = $fieldConfig->getSetting('handler_settings');
-              $bundles = array_filter((array) $handlerSettings['target_bundles']);
+              $bundles = array_filter((array) ($handlerSettings['target_bundles'] ?? []));
               if (count($bundles) == 1) {
                 $this->lookupBundle = reset($bundles);
               }
@@ -266,7 +257,9 @@ class EntityLookup extends ProcessPluginBase implements ContainerFactoryPluginIn
             break;
 
           default:
-            throw new MigrateException(sprintf('Destination field type %s is not a recognized reference type.', $fieldConfig->getType()));
+            if (empty($this->lookupValueKey) || empty($this->lookupEntityType)) {
+              throw new MigrateException(sprintf('Destination field type %s is not a recognized reference type.', $fieldConfig->getType()));
+            }
         }
       }
     }
@@ -293,11 +286,14 @@ class EntityLookup extends ProcessPluginBase implements ContainerFactoryPluginIn
    *   Entity id if the queried entity exists. Otherwise NULL.
    */
   protected function query($value) {
-    // Entity queries typically are case-insensitive. Therefore, we need to
-    // handle case-sensitive filtering as a post-query step. By default, it
-    // filters case-insensitive. Change to true if that is not the desired
-    // outcome.
-    $ignoreCase = !empty($this->configuration['ignore_case']) ?: FALSE;
+    $query = $this->doGetQuery($value);
+    return $this->processResults($query->execute(), $value);
+  }
+
+  /**
+   * Actually get the query.
+   */
+  private function doGetQuery($value): QueryInterface {
     $operator = !empty($this->configuration['operator']) ? $this->configuration['operator'] : '=';
     $multiple = is_array($value);
 
@@ -319,31 +315,60 @@ class EntityLookup extends ProcessPluginBase implements ContainerFactoryPluginIn
     if ($this->lookupBundleKey) {
       $query->condition($this->lookupBundleKey, (array) $this->lookupBundle, 'IN');
     }
-    $results = $query->execute();
+    return $query;
+  }
 
+  /**
+   * Process results.
+   */
+  private function processResults($results, $original_value) {
     if (empty($results)) {
       return NULL;
     }
+
+    // Entity queries typically are case-insensitive. Therefore, we need to
+    // handle case-sensitive filtering as a post-query step. By default, it
+    // filters case-insensitive. Change to true if that is not the desired
+    // outcome.
+    $ignoreCase = !empty($this->configuration['ignore_case']) ?: FALSE;
+    $operator = !empty($this->configuration['operator']) ? $this->configuration['operator'] : '=';
+    $multiple = is_array($original_value);
 
     // Do a case-sensitive comparison only for strict operators.
     if (!$ignoreCase && in_array($operator, ['=', 'IN'], TRUE)) {
       // Returns the entity's identifier.
       foreach ($results as $k => $identifier) {
         $entity = $this->entityTypeManager->getStorage($this->lookupEntityType)->load($identifier);
-        $result_value = $entity instanceof ConfigEntityInterface ? $entity->get($this->lookupValueKey) : $entity->get($this->lookupValueKey)->value;
-        if (($multiple && !in_array($result_value, $value, TRUE)) || (!$multiple && $result_value !== $value)) {
+        $result_value = $entity->get($this->lookupValueKey);
+        // If the value is a non-empty field, extract its first value's main
+        // property (most of the time "value" but sometimes "target_id" or
+        // anything declared by the field item).
+        if ($result_value instanceof FieldItemList && !$result_value->isEmpty()) {
+          $property = $result_value->first()->mainPropertyName();
+          $result_value = $result_value->{$property};
+        }
+
+        if (($multiple && !in_array($result_value, $original_value, TRUE)) || (!$multiple && $result_value !== $original_value)) {
           unset($results[$k]);
         }
       }
     }
 
     if ($multiple && !empty($this->destinationProperty)) {
-      array_walk($results, function (&$value) {
+      array_walk($results, function (&$value): void {
         $value = [$this->destinationProperty => $value];
       });
     }
 
-    return $multiple ? array_values($results) : reset($results);
+    if ($multiple) {
+      return array_values($results);
+    }
+
+    if (empty($results)) {
+      return NULL;
+    }
+
+    return reset($results);
   }
 
 }

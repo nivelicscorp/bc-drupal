@@ -66,9 +66,6 @@ class MetatagViewsBasicsTest extends BrowserTestBase {
     $this->drupalGet('<front>');
     $this->assertSession()->statusCodeEquals(200);
 
-    // With nothing else configured the front page just has a login form.
-    $this->assertSession()->pageTextContains('Enter your Drupal username.');
-
     // Log in as user 1.
     $this->loginUser1();
 
@@ -87,7 +84,7 @@ class MetatagViewsBasicsTest extends BrowserTestBase {
     // Confirm what the page title looks like by default.
     $this->assertSession()->titleEquals('Monthly archive | Drupal');
 
-    // Load the Arcive view.
+    // Load the Archive view.
     $this->drupalGet('/admin/structure/views/view/archive');
     $this->assertSession()->statusCodeEquals(200);
 

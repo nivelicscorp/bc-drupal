@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\migrate_plus\Plugin\migrate\process;
 
+use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
@@ -49,38 +52,28 @@ class EntityValue extends ProcessPluginBase implements ContainerFactoryPluginInt
 
   /**
    * The entity type manager.
-   *
-   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
    */
-  protected $entityTypeManager;
+  protected EntityTypeManagerInterface $entityTypeManager;
 
   /**
-   * The Field Name.
-   *
-   * @var string
+   * The field name.
    */
-  protected $fieldName;
+  protected string $fieldName;
 
   /**
-   * The langcode reference. False if not configured.
-   *
-   * @var string
+   * The language code reference.
    */
-  protected $langCodeRef;
+  protected ?string $langCodeRef;
 
   /**
-   * The storage for the configured entity type.
-   *
-   * @var \Drupal\Core\Entity\EntityStorageInterface|\Drupal\Core\Entity\RevisionableStorageInterface
+   * Entity storage.
    */
-  protected $entityStorage;
+  protected EntityStorageInterface $entityStorage;
 
   /**
    * Flag indicating whether there are multiple values.
-   *
-   * @var bool
    */
-  protected $multiple;
+  protected ?bool $multiple = NULL;
 
   /**
    * Creates a EntityValue instance.
@@ -102,7 +95,7 @@ class EntityValue extends ProcessPluginBase implements ContainerFactoryPluginInt
     array $configuration,
     $plugin_id,
     $plugin_definition,
-    EntityTypeManagerInterface $entity_type_manager
+    EntityTypeManagerInterface $entity_type_manager,
   ) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
 
@@ -115,7 +108,7 @@ class EntityValue extends ProcessPluginBase implements ContainerFactoryPluginInt
     $entity_type = $this->configuration['entity_type'];
     $this->entityStorage = $this->entityTypeManager->getStorage($entity_type);
 
-    $this->langCodeRef = isset($this->configuration['langcode']) ? $this->configuration['langcode'] : NULL;
+    $this->langCodeRef = $this->configuration['langcode'] ?? NULL;
 
     if (empty($this->configuration['field_name'])) {
       throw new \InvalidArgumentException("'field_name' configuration must be specified for migrate_plus_entity_value process plugin.");
@@ -127,7 +120,7 @@ class EntityValue extends ProcessPluginBase implements ContainerFactoryPluginInt
   /**
    * {@inheritdoc}
    */
-  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
+  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition): self {
     return new static(
       $configuration,
       $plugin_id,
@@ -139,7 +132,7 @@ class EntityValue extends ProcessPluginBase implements ContainerFactoryPluginInt
   /**
    * {@inheritdoc}
    */
-  public function transform($value, MigrateExecutableInterface $migrateExecutable, Row $row, $destinationProperty) {
+  public function transform($value, MigrateExecutableInterface $migrate_executable, Row $row, $destination_property) {
     $this->multiple = is_array($value);
     if (!isset($value)) {
       return [];
@@ -157,10 +150,8 @@ class EntityValue extends ProcessPluginBase implements ContainerFactoryPluginInt
           $entity = $entity->getUntranslated();
         }
       }
-      else {
-        if ($langcode) {
-          throw new MigrateException('Langcode can only be used with content entities currently.');
-        }
+      elseif ($langcode) {
+        throw new MigrateException('Langcode can only be used with content entities currently.');
       }
       try {
         return $entity->get($this->fieldName)->getValue();
@@ -171,15 +162,13 @@ class EntityValue extends ProcessPluginBase implements ContainerFactoryPluginInt
       }
     }, $entities);
 
-    $return = $this->multiple ? array_values($arrays) : ($arrays ? reset($arrays) : []);
-
-    return $return;
+    return $this->multiple ? array_values($arrays) : ($arrays ? reset($arrays) : []);
   }
 
   /**
    * {@inheritdoc}
    */
-  public function multiple() {
+  public function multiple(): bool {
     return $this->multiple;
   }
 
@@ -192,7 +181,7 @@ class EntityValue extends ProcessPluginBase implements ContainerFactoryPluginInt
    * @return \Drupal\Core\Entity\EntityInterface[]
    *   The entities.
    */
-  protected function loadEntities(array $ids) {
+  protected function loadEntities(array $ids): array {
     $entities = $this->entityStorage->loadMultiple($ids);
     return $entities;
   }

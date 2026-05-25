@@ -1,6 +1,11 @@
 <?php
 
 /**
+ * @file
+ * Install, update, and uninstall hooks for social media.
+ */
+
+/**
  * Remove google plus configuration.
  */
 function social_media_update_8001() {

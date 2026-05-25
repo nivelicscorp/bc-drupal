@@ -1,0 +1,6 @@
+{
+    "name": "drupal/bg_image_formatter",
+    "description": "Background Images Formatter provides an image formatter to display images in background with CSS.",
+    "type": "drupal-module",
+    "license": "GPL-2.0-or-later"
+}

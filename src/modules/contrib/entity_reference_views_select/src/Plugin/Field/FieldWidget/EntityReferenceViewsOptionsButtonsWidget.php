@@ -83,8 +83,17 @@ class EntityReferenceViewsOptionsButtonsWidget extends OptionsWidgetBase impleme
     $selected = $this->getSelectedOptions($items);
     if ($this->getFieldSettings()['handler'] == 'views') {
       $view = $this->viewFactory->get($this->viewLoader->load($this->getFieldSettings()['handler_settings']['view']['view_name']));
+      $entity_reference_options = [
+        'match' => NULL,
+        'match_operator' => 'CONTAINS',
+        'limit' => 0,
+        'ids' => NULL,
+      ];
+      $view->initDisplay();
+      $display_name = $this->getFieldSettings()['handler_settings']['view']['display_name'];
+      $view->displayHandlers->get($display_name)->setOption('entity_reference_options', $entity_reference_options);
       $view->setArguments($this->getFieldSettings()['handler_settings']['view']['arguments']);
-      $view->execute($this->getFieldSettings()['handler_settings']['view']['display_name']);
+      $view->execute($display_name);
       $filter_options = [];
       foreach ($view->result as $row) {
         $row_output = $view->style_plugin->view->rowPlugin->render($row);
@@ -124,7 +133,7 @@ class EntityReferenceViewsOptionsButtonsWidget extends OptionsWidgetBase impleme
    */
   protected function getEmptyLabel() {
     if (!$this->required && !$this->multiple) {
-      return t('N/A');
+      return $this->t('N/A');
     }
   }
 

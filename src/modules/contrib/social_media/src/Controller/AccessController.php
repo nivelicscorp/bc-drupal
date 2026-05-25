@@ -6,7 +6,7 @@ use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Controller\ControllerBase;
 
 /**
- * Class AccessController.
+ * Controller for access through email.
  *
  * @package Drupal\social_media\Controller
  */

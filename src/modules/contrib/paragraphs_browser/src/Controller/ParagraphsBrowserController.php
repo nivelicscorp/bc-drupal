@@ -28,7 +28,8 @@ class ParagraphsBrowserController extends ControllerBase {
 
     $form['#attached']['library'][] = 'paragraphs_browser/modal';
     $title = $this->t('Browse');
-    $response = AjaxResponse::create()->addCommand(new OpenModalDialogCommand($title, $form, ['modal' => TRUE, 'width' => $this->modal_width, 'height' => $this->modal_height]));
+    $response = new AjaxResponse();
+    $response->addCommand(new OpenModalDialogCommand($title, $form, ['modal' => TRUE, 'width' => $this->modal_width, 'height' => $this->modal_height]));
     return $response;
   }
 

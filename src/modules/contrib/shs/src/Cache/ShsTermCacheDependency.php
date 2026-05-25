@@ -11,6 +11,27 @@ use Drupal\Core\Cache\CacheableDependencyInterface;
 class ShsTermCacheDependency implements CacheableDependencyInterface {
 
   /**
+   * An array of cache contexts.
+   *
+   * @var array
+   */
+  protected $contexts;
+
+  /**
+   * An array of cache tags.
+   *
+   * @var array
+   */
+  protected $tags;
+
+  /**
+   * The cache item maximum age ('max-age' property).
+   *
+   * @var int
+   */
+  protected $maxAge;
+
+  /**
    * {@inheritdoc}
    */
   public function __construct($tags = []) {

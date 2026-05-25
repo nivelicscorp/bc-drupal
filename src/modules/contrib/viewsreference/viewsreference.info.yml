@@ -1,10 +1,13 @@
 name: 'Views Reference Field'
 description: 'Defines the viewsreference field type to embed views in an entity reference field.'
-core_version_requirement: ^9.3 || ^10
+core_version_requirement: ^10 || ^11 || ^12
 package: Views
 type: module
 
-# Information added by Drupal.org packaging script on 2022-10-03
-version: '8.x-2.0-beta4'
+test_dependencies:
+  - views_ajax_history:views_ajax_history
+
+# Information added by Drupal.org packaging script on 2026-04-21
+version: '8.x-2.0-beta12'
 project: 'viewsreference'
-datestamp: 1664821612
+datestamp: 1776760484

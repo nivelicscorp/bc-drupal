@@ -3,10 +3,10 @@
 namespace Drupal\Tests\conditional_fields\FunctionalJavascript\Entity;
 
 use Drupal\Core\Entity\Display\EntityDisplayInterface;
+use Drupal\Core\Entity\Entity\EntityFormDisplay;
+use Drupal\Tests\conditional_fields\FunctionalJavascript\ConditionalFieldTestBase;
 use Drupal\field\Entity\FieldConfig;
 use Drupal\field\Entity\FieldStorageConfig;
-use Drupal\Tests\conditional_fields\FunctionalJavascript\ConditionalFieldTestBase;
-use Drupal\Core\Entity\Entity\EntityFormDisplay;
 
 /**
  * Test Conditional Fields check User entity.
@@ -32,7 +32,7 @@ class ConditionalFieldsUserTest extends ConditionalFieldTestBase {
   /**
    * {@inheritdoc}
    */
-  public static $modules = [
+  protected static $modules = [
     'conditional_fields',
     'field_ui',
   ];
@@ -45,7 +45,7 @@ class ConditionalFieldsUserTest extends ConditionalFieldTestBase {
   /**
    * {@inheritdoc}
    */
-  public function setUp() {
+  protected function setUp(): void {
     parent::setUp();
     $this->addField($this->dependee, 'boolean', 'boolean_checkbox');
     $this->addField($this->dependent, 'text', 'text_textfield');

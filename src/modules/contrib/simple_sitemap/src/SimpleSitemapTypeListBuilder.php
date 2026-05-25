@@ -5,7 +5,6 @@ namespace Drupal\simple_sitemap;
 use Drupal\Core\Config\Entity\ConfigEntityListBuilder;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Url;
-use Drupal\simple_sitemap\Form\FormHelper;
 
 /**
  * Defines a class to build a listing of sitemap type entities.
@@ -26,6 +25,9 @@ class SimpleSitemapTypeListBuilder extends ConfigEntityListBuilder {
 
   /**
    * {@inheritdoc}
+   *
+   * @param \Drupal\simple_sitemap\Entity\SimpleSitemapTypeInterface $entity
+   *   The entity for this row of the list.
    */
   public function buildRow(EntityInterface $entity) {
     $row['label'] = $entity->label();

@@ -210,7 +210,7 @@ function metatag_views_overview_config_edit_form_submit($form, &$form_state) {
 
   // Return confirmation.
   $label = metatag_config_instance_label($form['instance']['#value']);
-  drupal_set_message(t('The meta tag defaults for @label have been saved.', array('@label' => $label)));
+  \Drupal::messenger()->addMessage(t('The meta tag defaults for @label have been saved.', array('@label' => $label)));
 
   $form_state['redirect'] = 'admin/config/search/metatags';
 }

@@ -2,11 +2,13 @@
 
 namespace Drupal\addtocalendar\Plugin\Field\FieldFormatter;
 
+use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Field\FieldItemInterface;
 use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Field\FormatterBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\addtocalendar\AddToCalendarApiWidget;
+use Drupal\Core\Render\RendererInterface;
 use Drupal\Core\Utility\Token;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
@@ -25,7 +27,6 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  */
 class AddToCalendar extends FormatterBase implements ContainerFactoryPluginInterface {
 
-
   /**
    * The entity manager service.
    *
@@ -41,6 +42,20 @@ class AddToCalendar extends FormatterBase implements ContainerFactoryPluginInter
   protected $token;
 
   /**
+   * The ModuleHandler service.
+   *
+   * @var \Drupal\Core\Extension\ModuleHandlerInterface
+   */
+  protected $moduleHandler;
+
+  /**
+   * The renderer service.
+   *
+   * @var \Drupal\Core\Render\RendererInterface
+   */
+  protected $renderer;
+
+  /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
@@ -53,7 +68,9 @@ class AddToCalendar extends FormatterBase implements ContainerFactoryPluginInter
       $configuration['view_mode'],
       $configuration['third_party_settings'],
       $container->get('addtocalendar.apiwidget'),
-      $container->get('token')
+      $container->get('token'),
+      $container->get('renderer'),
+      $container->get('module_handler')
     );
   }
 
@@ -78,11 +95,29 @@ class AddToCalendar extends FormatterBase implements ContainerFactoryPluginInter
    *   AddToCalendarApi Widget service.
    * @param \Drupal\Core\Utility\Token $token
    *   Token service.
+   * @param \Drupal\Core\Render\RendererInterface|null $renderer
+   *   The renderer service.
+   * @param \Drupal\Core\Extension\ModuleHandlerInterface $module_handler
+   *   ModuleHandler service.
    */
-  public function __construct($plugin_id, $plugin_definition, FieldDefinitionInterface $field_definition, array $settings, $label, $view_mode, array $third_party_settings, AddToCalendarApiWidget $add_to_calendar_api_widget, Token $token) {
+  public function __construct($plugin_id, $plugin_definition, FieldDefinitionInterface $field_definition, array $settings, $label, $view_mode, array $third_party_settings, AddToCalendarApiWidget $add_to_calendar_api_widget, Token $token, RendererInterface $renderer = NULL, ModuleHandlerInterface $module_handler = NULL) {
     parent::__construct($plugin_id, $plugin_definition, $field_definition, $settings, $label, $view_mode, $third_party_settings);
     $this->addToCalendarApiWidget = $add_to_calendar_api_widget;
     $this->token = $token;
+    if (is_null($renderer)) {
+      @trigger_error('Calling AddToCalendar::_construct() without the $renderer argument is deprecated and the argument will be required in a future release.', E_USER_DEPRECATED);
+      $this->renderer = \Drupal::service('renderer');
+    }
+    else {
+      $this->renderer = $renderer;
+    }
+    if (is_null($module_handler)) {
+      @trigger_error('Calling AddToCalendar::_construct() without the $module_handler argument is deprecated and the argument will be required in a future release.', E_USER_DEPRECATED);
+      $this->moduleHandler = \Drupal::service('module_handler');
+    }
+    else {
+      $this->moduleHandler = $module_handler;
+    }
   }
 
   /**
@@ -146,13 +181,13 @@ class AddToCalendar extends FormatterBase implements ContainerFactoryPluginInter
       $config_values = [
         'atcStyle' => $settings['addtocalendar_settings']['style'],
         'atcDisplayText' => $this->fieldDefinition->getSetting('on_label'),
-        'atcTitle' => $this->getProperValue($settings['addtocalendar_settings']['atc_title'], $entity),
-        'atcDescription' => $this->getProperValue($settings['addtocalendar_settings']['atc_description'], $entity),
-        'atcLocation' => $this->getProperValue($settings['addtocalendar_settings']['atc_location'], $entity),
-        'atcDateStart' => $this->getProperValue($settings['addtocalendar_settings']['atc_date_start'], $entity, ['use_raw_value' => TRUE]),
-        'atcDateEnd' => $this->getProperValue($settings['addtocalendar_settings']['atc_date_end'], $entity, ['use_raw_value' => TRUE, 'end_date' => TRUE]),
-        'atcOrganizer' => $this->getProperValue($settings['addtocalendar_settings']['atc_organizer'], $entity),
-        'atcOrganizerEmail' => $this->getProperValue($settings['addtocalendar_settings']['atc_organizer_email'], $entity),
+        'atcTitle' => $this->getProperValue($settings['addtocalendar_settings']['atc_title'], $entity, [], 'title'),
+        'atcDescription' => $this->getProperValue($settings['addtocalendar_settings']['atc_description'], $entity, [], 'description'),
+        'atcLocation' => $this->getProperValue($settings['addtocalendar_settings']['atc_location'], $entity, [], 'location'),
+        'atcDateStart' => $this->getProperValue($settings['addtocalendar_settings']['atc_date_start'], $entity, ['use_raw_value' => TRUE], 'date_start'),
+        'atcDateEnd' => $this->getProperValue($settings['addtocalendar_settings']['atc_date_end'], $entity, ['use_raw_value' => TRUE, 'end_date' => TRUE], 'date_end'),
+        'atcOrganizer' => $this->getProperValue($settings['addtocalendar_settings']['atc_organizer'], $entity, [], 'organizer'),
+        'atcOrganizerEmail' => $this->getProperValue($settings['addtocalendar_settings']['atc_organizer_email'], $entity, [], 'organizer_email'),
         'atcPrivacy' => $settings['addtocalendar_settings']['atc_privacy'],
         'atcDataSecure' => $settings['addtocalendar_settings']['data_secure'],
       ];
@@ -168,7 +203,7 @@ class AddToCalendar extends FormatterBase implements ContainerFactoryPluginInter
 
       $service->setWidgetValues($config_values);
       $build = $service->generateWidget();
-      $return = render($build);
+      $return = $this->renderer->render($build);
     }
     else {
       $return = $this->fieldDefinition->getSetting('off_label');
@@ -187,11 +222,13 @@ class AddToCalendar extends FormatterBase implements ContainerFactoryPluginInter
    *   Provide various options usable to override the data value being return
    *   use 'use_raw_value' to return stored value in database.
    *   use 'end_date' in case of date range fields.
+   * @param string $field_setting_name
+   *   The field name.
    *
    * @return string
    *   The textual output generated.
    */
-  public function getProperValue(array $field_setting, $entity, array $options = []) {
+  public function getProperValue(array $field_setting, $entity, array $options = [], string $field_setting_name = '') {
     $entity_type = $entity->getEntityTypeId();
     // Create token service.
     $token_service = $this->token;
@@ -214,19 +251,29 @@ class AddToCalendar extends FormatterBase implements ContainerFactoryPluginInter
       default:
         $field = $field_setting['field'];
         if (isset($options['use_raw_value']) && $options['use_raw_value']) {
-          $value = strip_tags($entity->{$field}->value);
-          if (isset($options['end_date']) && strip_tags($entity->{$field}->getFieldDefinition()->getType()) == 'daterange') {
-            $value = strip_tags($entity->{$field}->end_value);
+          $value = strip_tags($entity->{$field}->value ?? '');
+          if (isset($options['end_date']) && strip_tags($entity->{$field}->getFieldDefinition()->getType() ?? '') == 'daterange') {
+            $value = strip_tags($entity->{$field}->end_value ?? '');
           }
         }
         else {
           $value = $entity->get($field)->view(['label' => 'hidden']);
-          $value = strip_tags(render($value));
+          $value = strip_tags($this->renderer->render($value) ?? '');
         }
         break;
     }
-    return $value;
 
+    // Alter a value of the field using hook_addtocalendar_field_alter()
+    // and/or hook_addtocalendar_field_FIELD_NAME_alter() hook.
+    // @see addtocalendar.api.php
+    $variables = [
+      'entity' => $entity,
+      'setting_name' => $field_setting_name,
+    ];
+    $this->moduleHandler->alter('addtocalendar_field_' . $field_setting['field'], $value, $variables);
+    $this->moduleHandler->alter('addtocalendar_field', $value, $variables, $field_setting['field']);
+
+    return $value;
   }
 
 }

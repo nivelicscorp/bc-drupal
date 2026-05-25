@@ -10,9 +10,9 @@
  */
 #}
 {% if children %}
-    {% spaceless %}
+    {% apply spaceless %}
         <div class="paragraphs-browser-wrapper">
             {{ children }}
         </div>
-    {% endspaceless %}
+    {% endapply %}
 {% endif %}

@@ -6,14 +6,16 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Render\RendererInterface;
 use Drupal\Core\Routing\RouteProviderInterface;
 use Drupal\Core\State\StateInterface;
+use Drupal\views\Plugin\views\display\PathPluginBase;
+use Drupal\views\Plugin\views\display\ResponseDisplayPluginInterface;
 use Drupal\views\ViewExecutable;
 use Drupal\views\Views;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use Drupal\views\Plugin\views\display\PathPluginBase;
-use Drupal\views\Plugin\views\display\ResponseDisplayPluginInterface;
+use ZipStream\CompressionMethod;
+use ZipStream\OperationMode;
 use ZipStream\ZipStream;
 
 /**
@@ -158,6 +160,11 @@ class ViewsVcardsDisplayPluginVcard extends PathPluginBase implements ResponseDi
       /** @var \Drupal\Component\Transliteration\TransliterationInterface $transliteration */
       $transliteration = \Drupal::service('transliteration');
       $phpzip = new ZipStream();
+      // If we are on ZipStream v3+ the archive has to be created differently.
+      if (version_compare(PHP_VERSION, '8.1.0', '>=')) {
+        // We not want to send the HTTP headers from ZipStream-PHP.
+        $phpzip = new ZipStream(OperationMode::NORMAL, '', NULL, CompressionMethod::STORE, 6, TRUE, TRUE, FALSE);
+      }
 
       // Store all names in a keyed array for quick lookup of names.
       $rows = [];
@@ -166,7 +173,7 @@ class ViewsVcardsDisplayPluginVcard extends PathPluginBase implements ResponseDi
         $rendered_item = $view->rowPlugin->render($item);
 
         $person_name = $rendered_item['#row']->full_name;
-        $person_name = $drupal_renderer->renderPlain($person_name);
+        $person_name = $drupal_renderer->renderInIsolation($person_name);
         $person_name = $unique_person_name = $transliteration->transliterate($person_name, $langcode);
 
         $iterator = 2;
@@ -175,7 +182,7 @@ class ViewsVcardsDisplayPluginVcard extends PathPluginBase implements ResponseDi
           $unique_person_name = $person_name . '_' . $iterator;
           $iterator++;
         }
-        $rows[$unique_person_name] = $drupal_renderer->renderPlain($rendered_item);
+        $rows[$unique_person_name] = $drupal_renderer->renderInIsolation($rendered_item);
 
         $phpzip->addFile($unique_person_name . '.vcf', $rows[$unique_person_name]);
       }
@@ -202,13 +209,13 @@ class ViewsVcardsDisplayPluginVcard extends PathPluginBase implements ResponseDi
     $transliteration = \Drupal::service('transliteration');
 
     // This should be only one.
-    foreach ($view->result as $row_index => $item) {
+    foreach ($view->result as $item) {
       $view->row_index = $item->index;
       $build = $view->rowPlugin->render($item);
     }
 
     $person_name = $build['#row']->full_name;
-    $person_name = $drupal_renderer->renderPlain($person_name);
+    $person_name = $drupal_renderer->renderInIsolation($person_name);
 
     $filename = $transliteration->transliterate($person_name, $langcode);
     $filename = (!empty($filename) ? $filename : 'vcard') . '.vcf';
@@ -220,7 +227,7 @@ class ViewsVcardsDisplayPluginVcard extends PathPluginBase implements ResponseDi
     ]);
 
     $build['#response'] = $response;
-    $output = (string) $drupal_renderer->renderPlain($build);
+    $output = (string) $drupal_renderer->renderInIsolation($build);
 
     if (empty($output)) {
       throw new NotFoundHttpException();
@@ -326,7 +333,7 @@ class ViewsVcardsDisplayPluginVcard extends PathPluginBase implements ResponseDi
     // Since we're childing off the 'path' type, we'll still *call* our
     // category 'page' but let's override it so it says vCard settings.
     $categories['page'] = [
-      'title' => t('vCard settings'),
+      'title' => $this->t('vCard settings'),
       'column' => 'second',
       'build' => [
         '#weight' => -10,

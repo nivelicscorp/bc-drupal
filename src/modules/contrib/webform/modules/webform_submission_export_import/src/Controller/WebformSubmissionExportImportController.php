@@ -92,12 +92,12 @@ class WebformSubmissionExportImportController extends ControllerBase implements 
       $handle = fopen('php://output', 'r+');
 
       $header = $this->importer->exportHeader();
-      fputcsv($handle, $header);
+      fputcsv($handle, $header, escape: '\\');
 
       for ($i = 1; $i <= 3; $i++) {
         $webform_submission = $this->generateSubmission($i);
         $record = $this->importer->exportSubmission($webform_submission);
-        fputcsv($handle, $record);
+        fputcsv($handle, $record, escape: '\\');
       }
 
       fclose($handle);
@@ -121,7 +121,7 @@ class WebformSubmissionExportImportController extends ControllerBase implements 
     $webform = $this->requestHandler->getCurrentWebform();
     $source_entity = $this->requestHandler->getCurrentSourceEntity();
 
-    $users = $this->getEntityStorage('user')->getQuery()->execute();
+    $users = $this->getEntityStorage('user')->getQuery()->accessCheck(TRUE)->execute();
     $uid = array_rand($users);
 
     $url = $webform->toUrl();

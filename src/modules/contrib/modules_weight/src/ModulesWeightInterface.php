@@ -3,7 +3,7 @@
 namespace Drupal\modules_weight;
 
 /**
- * Interface ModulesWeightInterface.
+ * Interface Modules Weight Interface.
  *
  * @package Drupal\modules_weight
  */

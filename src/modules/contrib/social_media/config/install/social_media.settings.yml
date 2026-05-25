@@ -2,7 +2,7 @@ social_media:
   facebook_share:
     enable: 1
     text: "Facebook"
-    api_url: "http://www.facebook.com/share.php?u=[current-page:url]&title=[current-page:title]"
+    api_url: "https://www.facebook.com/share.php?u=[current-page:url]&title=[current-page:title]"
     api_event : "href"
     default_img: 1
     weight: 1
@@ -19,7 +19,7 @@ social_media:
     attributes : "target|_blank\nclass|facebook-msg\nrel|noopener noreferrer"
   linkedin:
     enable: 1
-    api_url: "http://www.linkedin.com/shareArticle?mini=true&url=[current-page:url]&title=[current-page:title]&source=[current-page:url]"
+    api_url: "https://www.linkedin.com/shareArticle?mini=true&url=[current-page:url]&title=[current-page:title]&source=[current-page:url]"
     api_event : "href"
     text: "Linkedin"
     default_img: 1

@@ -90,9 +90,9 @@ class EntityReferenceViewsOptionsSelectWidget extends OptionsWidgetBase implemen
   public function settingsForm(array $form, FormStateInterface $form_state) {
     $element['empty_value'] = [
       '#type' => 'textfield',
-      '#title' => t('Empty Value'),
+      '#title' => $this->t('Empty Value'),
       '#default_value' => $this->getSetting('empty_value'),
-      '#description' => t('Text that will be shown in the no selection field. Defaults to "- None -".'),
+      '#description' => $this->t('Text that will be shown in the no selection field. Defaults to "- None -".'),
     ];
 
     return $element;
@@ -155,7 +155,7 @@ class EntityReferenceViewsOptionsSelectWidget extends OptionsWidgetBase implemen
     if ($this->multiple) {
       // Multiple select: add a 'none' option for non-required fields.
       if (!$this->required) {
-        return $this->getSetting('empty_value') ?? t('- None -');
+        return $this->getSetting('empty_value') ?? $this->t('- None -');
       }
     }
     else {
@@ -163,10 +163,10 @@ class EntityReferenceViewsOptionsSelectWidget extends OptionsWidgetBase implemen
       // and a 'select a value' option for required fields that do not come
       // with a value selected.
       if (!$this->required) {
-        return $this->getSetting('empty_value') ?? t('- None -');
+        return $this->getSetting('empty_value') ?? $this->t('- None -');
       }
       if (!$this->has_value) {
-        return $this->getSetting('empty_value') ?? t('- Select a value -');
+        return $this->getSetting('empty_value') ?? $this->t('- Select a value -');
       }
     }
   }

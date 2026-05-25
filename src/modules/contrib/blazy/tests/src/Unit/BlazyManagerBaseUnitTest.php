@@ -2,17 +2,14 @@
 
 namespace Drupal\Tests\blazy\Unit;
 
-use Drupal\blazy\BlazyManager;
 use Drupal\Tests\UnitTestCase;
-use Drupal\Tests\blazy\Traits\BlazyUnitTestTrait;
 use Drupal\Tests\blazy\Traits\BlazyManagerUnitTestTrait;
+use Drupal\Tests\blazy\Traits\BlazyUnitTestTrait;
+use Drupal\blazy\BlazyManager;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Tests the Blazy manager base.
- *
- * @coversDefaultClass \Drupal\blazy\BlazyManagerBase
- * @group blazy
  */
 class BlazyManagerBaseUnitTest extends UnitTestCase {
 
@@ -29,20 +26,18 @@ class BlazyManagerBaseUnitTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::create
-   * @covers ::__construct
+   * Test Blazy manager constructor.
    */
   public function testBlazyManagerCreate() {
     $container = $this->createMock(ContainerInterface::class);
     $exception = ContainerInterface::EXCEPTION_ON_INVALID_REFERENCE;
 
     $map = [
+      ['blazy.libraries', $exception, $this->libraries],
       ['entity.repository', $exception, $this->entityRepository],
       ['entity_type.manager', $exception, $this->entityTypeManager],
-      ['module_handler', $exception, $this->moduleHandler],
       ['renderer', $exception, $this->renderer],
-      ['config.factory', $exception, $this->configFactory],
-      ['cache.default', $exception, $this->cache],
+      ['language_manager', $exception, $this->languageManager],
     ];
 
     $container->expects($this->any())

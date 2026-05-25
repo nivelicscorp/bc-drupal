@@ -1,12 +1,11 @@
 name: 'Views field formatter'
 description: 'Use the result of a view to display a field.'
-core: 8.x
-core_version_requirement: ^8 || ^9
+core_version_requirement: ^10 || ^11
 dependencies:
   - drupal:views
 type: module
 
-# Information added by Drupal.org packaging script on 2021-01-11
-version: '8.x-1.13'
+# Information added by Drupal.org packaging script on 2025-05-20
+version: '4.1.1'
 project: 'views_field_formatter'
-datestamp: 1610390053
+datestamp: 1747749353

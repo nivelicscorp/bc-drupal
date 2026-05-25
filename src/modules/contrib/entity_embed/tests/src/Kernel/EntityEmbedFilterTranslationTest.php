@@ -22,7 +22,7 @@ class EntityEmbedFilterTranslationTest extends EntityEmbedFilterTestBase {
   /**
    * {@inheritdoc}
    */
-  protected function setUp() {
+  protected function setUp(): void {
     parent::setUp();
 
     ConfigurableLanguage::createFromLangcode('pt-br')->save();
@@ -69,7 +69,7 @@ class EntityEmbedFilterTranslationTest extends EntityEmbedFilterTestBase {
   /**
    * Data provider for testTranslationSelection().
    */
-  public function providerTranslationSituations() {
+  public static function providerTranslationSituations(): \Generator {
     $embedded_entity_translation_languages = ['en', 'pt-br'];
 
     foreach (['en', 'pt-br', 'nl'] as $text_langcode) {

@@ -15,20 +15,19 @@ class EntityEmbedFilterDisabledIntegrationsTest extends EntityEmbedFilterTestBas
    */
   protected static $modules = [
     'contextual',
-    'quickedit',
   ];
 
   /**
    * {@inheritdoc}
    */
-  protected function setUp() {
+  protected function setUp(): void {
     parent::setUp();
 
     $this->installConfig('system');
     $this->container->get('current_user')
+      ->getAccount()
       ->addRole($this->drupalCreateRole([
         'access contextual links',
-        'access in-place editing',
       ]));
   }
 
@@ -51,14 +50,11 @@ class EntityEmbedFilterDisabledIntegrationsTest extends EntityEmbedFilterTestBas
   /**
    * Data provider for testDisabledIntegrations().
    */
-  public function providerDisabledIntegrations() {
+  public static function providerDisabledIntegrations(): array {
     return [
       'contextual' => [
         'div.embedded-entity > .contextual-region',
-      ],
-      'quickedit' => [
-        'div.embedded-entity > [data-quickedit-entity-id]',
-      ],
+      ]
     ];
   }
 

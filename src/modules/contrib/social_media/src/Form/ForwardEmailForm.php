@@ -2,17 +2,12 @@
 
 namespace Drupal\social_media\Form;
 
-use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Symfony\Component\HttpFoundation\RequestStack;
-use Drupal\Core\Mail\MailManagerInterface;
-use Drupal\Core\Language\LanguageManagerInterface;
-use Psr\Log\LoggerInterface;
 
 /**
- * Class ForwardEmailForm.
+ * The class to forward emails.
  */
 class ForwardEmailForm extends FormBase {
 
@@ -37,7 +32,6 @@ class ForwardEmailForm extends FormBase {
    */
   protected $mailManager;
 
-
   /**
    * The language manager.
    *
@@ -53,38 +47,16 @@ class ForwardEmailForm extends FormBase {
   protected $logger;
 
   /**
-   * Constructs a \Drupal\system\ConfigFormBase object.
-   *
-   * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
-   *   The factory for configuration objects.
-   * @param \Symfony\Component\HttpFoundation\RequestStack $request_stack
-   *   The request stack object.
-   * @param \Drupal\Core\Mail\MailManagerInterface $mail_manager
-   *   The mail manager.
-   * @param \Drupal\Core\Language\LanguageManagerInterface $language_manager
-   *   The language manager.
-   * @param \Psr\Log\LoggerInterface $logger
-   *   A logger instance.
-   */
-  public function __construct(ConfigFactoryInterface $config_factory, RequestStack $request_stack, MailManagerInterface $mail_manager, LanguageManagerInterface $language_manager, LoggerInterface $logger) {
-    $this->configFactory = $config_factory;
-    $this->requestStack = $request_stack;
-    $this->mailManager = $mail_manager;
-    $this->languageManager = $language_manager;
-    $this->logger = $logger;
-  }
-
-  /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container) {
-    return new static(
-      $container->get('config.factory'),
-      $container->get('request_stack'),
-      $container->get('plugin.manager.mail'),
-      $container->get('language_manager'),
-      $container->get('logger.factory')->get('action')
-    );
+    $instance = parent::create($container);
+    $instance->configFactory = $container->get('config.factory');
+    $instance->requestStack = $container->get('request_stack');
+    $instance->mailManager = $container->get('plugin.manager.mail');
+    $instance->languageManager = $container->get('language_manager');
+    $instance->logger = $container->get('logger.factory')->get('action');
+    return $instance;
   }
 
   /**

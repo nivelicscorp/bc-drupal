@@ -13,7 +13,7 @@ use Drupal\simple_sitemap\Queue\QueueWorker;
  *
  * @group simple_sitemap
  */
-class SimplesitemapTest extends SimplesitemapTestBase {
+class SimpleSitemapTest extends SimpleSitemapTestBase {
 
   /**
    * Verify sitemap.xml has the link to the front page after first generation.
@@ -418,7 +418,7 @@ class SimplesitemapTest extends SimplesitemapTestBase {
     $this->assertSession()->responseNotContains('node/' . $this->node->id());
   }
 
-  // @todo testGenerateDurationSetting
+  // phpcs:ignore @todo testGenerateDurationSetting
 
   /**
    * Test setting the base URL.
@@ -504,15 +504,15 @@ class SimplesitemapTest extends SimplesitemapTestBase {
 
     // Assert that creating a new content type doesn't remove the overrides.
     $this->drupalGet('node/' . $this->node->id() . '/edit');
-    $this->submitForm(['simple_sitemap[default][index]' => 0], 'Save');
+    $this->submitForm(['simple_sitemap[default][index]' => '0'], 'Save');
     $this->assertEquals(1, $this->getOverridesCount('node', $this->node->id()));
     // Create a new content type.
     $this->drupalGet('admin/structure/types/add');
     $this->submitForm([
       'name' => 'simple_sitemap_type',
       'type' => 'simple_sitemap_type',
-      'simple_sitemap[default][index]' => 0,
-    ], 'Save content type');
+      'simple_sitemap[default][index]' => '0',
+    ], 'Save');
     // The entity override from the other content type should not be affected.
     $this->assertEquals(1, $this->getOverridesCount('node', $this->node->id()));
 
@@ -582,8 +582,8 @@ class SimplesitemapTest extends SimplesitemapTestBase {
     $this->assertSession()->responseContains('user/' . $user_id);
   }
 
-  // @todo Test indexing menu.
-  // @todo Test deleting a bundle.
+  // phpcs:ignore @todo Test indexing menu.
+  // phpcs:ignore @todo Test deleting a bundle.
 
   /**
    * Test disabling sitemap support for an entity type.
@@ -634,7 +634,7 @@ class SimplesitemapTest extends SimplesitemapTestBase {
     $this->assertTrue($this->generator->entityManager()->entityTypeIsEnabled('node'));
   }
 
-  // @todo testSitemapLanguages.
+  // phpcs:ignore @todo testSitemapLanguages.
 
   /**
    * Test adding and removing sitemap variants.
@@ -661,7 +661,7 @@ class SimplesitemapTest extends SimplesitemapTestBase {
     $this->assertSession()->responseNotContains('node/' . $this->node->id());
 
     $this->generator->entityManager()->setBundleSettings('node', 'page');
-    $this->generator->setVariants('test')->generate(QueueWorker::GENERATE_TYPE_BACKEND);
+    $this->generator->setSitemaps('test')->generate(QueueWorker::GENERATE_TYPE_BACKEND);
 
     // Test if bundle settings have been set for correct variant.
     $this->drupalGet($this->defaultSitemapUrl);
@@ -677,12 +677,12 @@ class SimplesitemapTest extends SimplesitemapTestBase {
     $this->assertSession()->statusCodeEquals(404);
   }
 
-  // @todo Test removeSitemap().
+  // phpcs:ignore @todo Test removeSitemap().
 
   /**
    * Test cases for ::testGenerationResume.
    */
-  public function generationResumeProvider() {
+  public static function generationResumeProvider() {
     return [
       [1000, 500, 1],
       [1000, 500, 3, ['de']],

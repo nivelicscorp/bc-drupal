@@ -22,7 +22,7 @@ class ViewsVcardsDisplayPluginVcardTest extends ViewTestBase {
   /**
    * {@inheritdoc}
    */
-  public static $modules = [
+  protected static $modules = [
     'text',
     'image',
     'user',
@@ -64,9 +64,12 @@ class ViewsVcardsDisplayPluginVcardTest extends ViewTestBase {
   /**
    * {@inheritdoc}
    */
-  protected function setUp($import_test_views = TRUE, $modules = [
-    'views_vcards_test',
-  ]): void {
+  protected function setUp(
+    $import_test_views = TRUE,
+    $modules = [
+      'views_vcards_test',
+    ],
+  ): void {
     // Do not yet import test views here, but do prepare the test setup.
     parent::setUp(FALSE, $modules);
 
@@ -252,7 +255,7 @@ class ViewsVcardsDisplayPluginVcardTest extends ViewTestBase {
 
     $zip = new \ZipArchive();
     $open_status = $zip->open($local_path);
-    $this->assertSame(TRUE, $open_status, 'Zip was opened correctly. Anything other than TRUE indicates an error.');
+    $this->assertTrue($open_status, 'Zip was opened correctly. Anything other than TRUE indicates an error.');
 
     // Check if the zip contains all test names and 100 of the last user.
     $this->assertEquals(count($this->testNames) + 99, $zip->numFiles, 'Number of files in the zip matches with created accounts.');

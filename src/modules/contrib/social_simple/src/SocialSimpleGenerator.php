@@ -170,7 +170,7 @@ class SocialSimpleGenerator implements SocialSimpleGeneratorInterface {
    * {@inheritdoc}
    */
   public function getShareUrl(EntityInterface $entity = NULL) {
-    if ($entity) {
+    if ($entity && !$entity->isNew()) {
       $share_url = $entity->toUrl('canonical', ['absolute' => TRUE])->toString();
     }
     else {

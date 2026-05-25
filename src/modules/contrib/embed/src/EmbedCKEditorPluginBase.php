@@ -1,26 +1,45 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\embed;
 
 use Drupal\ckeditor\CKEditorPluginBase;
+use Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException;
 use Drupal\Component\Utility\Html;
-use Drupal\Core\Entity\Query\QueryInterface;
+use Drupal\Core\Access\CsrfTokenGenerator;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\editor\Entity\Editor;
-use Drupal\embed\Entity\EmbedButton;
+use Drupal\embed\Controller\EmbedController;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+
+@trigger_error('EmbedCKEditorPluginBase is deprecated in embed:8.x-1.9 and is removed from embed:2.0.0. Use \Drupal\entity_embed\Plugin\CKEditor5Plugin\EmbedCKEditor5PluginBase instead. See https://www.drupal.org/node/3467748', E_USER_DEPRECATED);
 
 /**
  * Provides a base class for embed CKEditor plugins.
+ *
+ * @deprecated in embed:8.x-1.9 and is removed from embed:2.0.0. Use
+ *   \Drupal\entity_embed\Plugin\CKEditor5Plugin\EmbedCKEditor5PluginBase
+ *   instead.
+ *
+ * @see https://www.drupal.org/node/3467748
  */
 abstract class EmbedCKEditorPluginBase extends CKEditorPluginBase implements ContainerFactoryPluginInterface {
 
   /**
-   * The embed button query.
+   * The entity type manager.
    *
-   * @var \Drupal\Core\Entity\Query\QueryInterface
+   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
    */
-  protected $embedButtonQuery;
+  protected $entityTypeManager;
+
+  /**
+   * The CSRF token generator.
+   *
+   * @var \Drupal\Core\Access\CsrfTokenGenerator
+   */
+  protected $csrfTokenGenerator;
 
   /**
    * Constructs a Drupal\entity_embed\Plugin\CKEditorPlugin\DrupalEntity object.
@@ -31,14 +50,17 @@ abstract class EmbedCKEditorPluginBase extends CKEditorPluginBase implements Con
    *   The plugin_id for the plugin instance.
    * @param mixed $plugin_definition
    *   The plugin implementation definition.
-   * @param \Drupal\Core\Entity\Query\QueryInterface $embed_button_query
-   *   The entity query object for embed button.
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
+   *   The entity type manager.
+   * @param \Drupal\Core\Access\CsrfTokenGenerator $csrf_token_generator
+   *   The CSRF token generator.
    */
-  public function __construct(array $configuration, $plugin_id, $plugin_definition, QueryInterface $embed_button_query) {
+  public function __construct(array $configuration, $plugin_id, $plugin_definition, EntityTypeManagerInterface $entity_type_manager, CsrfTokenGenerator $csrf_token_generator) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
-    $this->embedButtonQuery = $embed_button_query;
-    if (!empty($plugin_definition['embed_type_id'])) {
-      $this->embedButtonQuery->condition('type_id', $plugin_definition['embed_type_id']);
+    $this->entityTypeManager = $entity_type_manager;
+    $this->csrfTokenGenerator = $csrf_token_generator;
+    if (!isset($plugin_definition['embed_type_id'])) {
+      throw new InvalidPluginDefinitionException($plugin_id, sprintf('The %s plugin must define the embed_type_id property.', $plugin_id));
     }
   }
 
@@ -50,7 +72,8 @@ abstract class EmbedCKEditorPluginBase extends CKEditorPluginBase implements Con
       $configuration,
       $plugin_id,
       $plugin_definition,
-      $container->get('entity_type.manager')->getStorage('embed_button')->getQuery()
+      $container->get('entity_type.manager'),
+      $container->get('csrf_token')
     );
   }
 
@@ -60,8 +83,7 @@ abstract class EmbedCKEditorPluginBase extends CKEditorPluginBase implements Con
   public function getButtons() {
     $buttons = [];
 
-    if ($ids = $this->embedButtonQuery->execute()) {
-      $embed_buttons = EmbedButton::loadMultiple($ids);
+    if ($embed_buttons = $this->entityTypeManager->getStorage('embed_button')->loadByProperties(['type_id' => $this->pluginDefinition['embed_type_id']])) {
       foreach ($embed_buttons as $embed_button) {
         $buttons[$embed_button->id()] = $this->getButton($embed_button);
       }
@@ -100,6 +122,13 @@ abstract class EmbedCKEditorPluginBase extends CKEditorPluginBase implements Con
     return [
       'embed/embed',
     ];
+  }
+
+  /**
+   * Get the embed preview route CSRF token.
+   */
+  public function getEmbedPreviewCsrfToken(): string {
+    return $this->csrfTokenGenerator->get(EmbedController::PREVIEW_CSRF_TOKEN_NAME);
   }
 
 }

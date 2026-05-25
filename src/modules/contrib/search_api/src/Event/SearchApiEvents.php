@@ -90,11 +90,11 @@ final class SearchApiEvents {
    * This can be used to modify the items in some way before their fields are
    * extracted and they are passed to the server.
    *
-   * Please be aware that generally preventing the indexing of certain items is
+   * Be aware that generally preventing the indexing of certain items is
    * deprecated. This is better done with processors, which can easily be
-   * configured and only added to indexes where this behaviour is wanted.
-   * If your module will use this event to reject certain items from indexing,
-   * please document this clearly to avoid confusion.
+   * configured and only added to indexes where this behavior is wanted. If your
+   * module will use this event to reject certain items from indexing, you
+   * should document this clearly to avoid confusion.
    *
    * @Event
    *
@@ -208,5 +208,26 @@ final class SearchApiEvents {
    * @see \Drupal\search_api\Event\ReindexScheduledEvent
    */
   public const REINDEX_SCHEDULED = 'search_api.reindex_scheduled';
+
+  /**
+   * Event fired when detecting if a display is rendered in the current request.
+   *
+   * Detection for whether a specific search display is rendered in the current
+   * request is unreliable in some cases, for instance, for Views blocks when
+   * placed via the Layout Builder module. For this reason, this event is fired
+   * in some situations where a reliable result could not be determined. Event
+   * listeners can then modify the result of the detection process.
+   *
+   * It is important to note that this event will not be fired every time the
+   * framework is trying to detect whether a given search display will be
+   * rendered, but only under specific circumstances. It is therefore important
+   * to check whether the event is even being fired for the scenario in which it
+   * is desired to change the result.
+   *
+   * @Event
+   *
+   * @see \Drupal\search_api\Event\IsRenderedInCurrentRequestEvent
+   */
+  public const IS_RENDERED_IN_CURRENT_REQUEST = 'search_api.is_rendered_in_current_request';
 
 }

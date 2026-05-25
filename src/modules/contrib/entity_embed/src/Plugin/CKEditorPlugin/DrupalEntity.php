@@ -15,6 +15,9 @@ use Drupal\embed\EmbedCKEditorPluginBase;
  *   label = @Translation("Entity"),
  *   embed_type_id = "entity"
  * )
+ *
+ * @deprecated in entity_embed:8.x-1.7 and is removed from entity_embed:2.0.0.
+ * Use \Drupal\entity_embed\Plugin\CKEditor5Plugin\DrupalEntity instead.
  */
 class DrupalEntity extends EmbedCKEditorPluginBase implements CKEditorPluginCssInterface {
 
@@ -42,7 +45,7 @@ class DrupalEntity extends EmbedCKEditorPluginBase implements CKEditorPluginCssI
       'DrupalEntity_dialogTitleAdd' => t('Insert entity'),
       'DrupalEntity_dialogTitleEdit' => t('Edit entity'),
       'DrupalEntity_buttons' => $this->getButtons(),
-      'DrupalEntity_previewCsrfToken' => \Drupal::csrfToken()->get('X-Drupal-EmbedPreview-CSRF-Token'),
+      'DrupalEntity_previewCsrfToken' => $this->getEmbedPreviewCsrfToken(),
     ];
   }
 

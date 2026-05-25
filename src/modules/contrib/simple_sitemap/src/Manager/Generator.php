@@ -4,6 +4,7 @@ namespace Drupal\simple_sitemap\Manager;
 
 use Drupal\Core\Lock\LockBackendInterface;
 use Drupal\simple_sitemap\Entity\SimpleSitemap;
+use Drupal\simple_sitemap\Entity\SimpleSitemapInterface;
 use Drupal\simple_sitemap\Logger;
 use Drupal\simple_sitemap\Queue\QueueWorker;
 use Drupal\simple_sitemap\Settings;
@@ -11,13 +12,13 @@ use Drupal\simple_sitemap\Settings;
 /**
  * Main managing service.
  *
- * Capable of setting/loading module settings, queuing elements and generating
+ * Capable of setting/loading module settings, queueing elements and generating
  * the sitemap. Services for custom link and entity link generation can be
  * fetched from this service as well.
  */
-class Generator {
+class Generator implements SitemapGetterInterface {
 
-  use VariantSetterTrait;
+  use SitemapGetterTrait;
 
   /**
    * The simple_sitemap.settings service.
@@ -48,22 +49,22 @@ class Generator {
   protected $logger;
 
   /**
-   * Simplesitemap constructor.
+   * Generator constructor.
    *
    * @param \Drupal\simple_sitemap\Settings $settings
    *   The simple_sitemap.settings service.
    * @param \Drupal\simple_sitemap\Queue\QueueWorker $queue_worker
    *   The simple_sitemap.queue_worker service.
-   * @param \Drupal\Core\Lock\LockBackendInterface|null $lock
+   * @param \Drupal\Core\Lock\LockBackendInterface $lock
    *   The lock backend that should be used.
-   * @param \Drupal\simple_sitemap\Logger|null $logger
+   * @param \Drupal\simple_sitemap\Logger $logger
    *   Simple XML Sitemap logger.
    */
   public function __construct(
     Settings $settings,
     QueueWorker $queue_worker,
-    LockBackendInterface $lock = NULL,
-    Logger $logger = NULL
+    LockBackendInterface $lock,
+    Logger $logger,
   ) {
     $this->settings = $settings;
     $this->queueWorker = $queue_worker;
@@ -107,21 +108,35 @@ class Generator {
    *
    * @return string|null
    *   The default variant or NULL if there are no variants.
+   *
+   * @deprecated in simple_sitemap:4.1.7 and is removed from simple_sitemap:5.0.0.
+   *   Use getDefaultSitemap() instead.
+   * @see https://www.drupal.org/project/simple_sitemap/issues/3375932
    */
   public function getDefaultVariant(): ?string {
-    if (empty($variants = $this->getVariants())) {
+    return ($defaultSitemap = $this->getDefaultSitemap()) ? $defaultSitemap->id() : NULL;
+  }
+
+  /**
+   * Gets the default sitemap from the currently set sitemaps.
+   *
+   * @return \Drupal\simple_sitemap\Entity\SimpleSitemapInterface|null
+   *   The default sitemap or NULL if there are no sitemaps.
+   */
+  public function getDefaultSitemap(): ?SimpleSitemapInterface {
+    if (empty($sitemaps = $this->getSitemaps())) {
       return NULL;
     }
 
-    if (count($variants) > 1) {
+    if (count($sitemaps) > 1) {
       $variant = $this->getSetting('default_variant');
 
-      if ($variant && in_array($variant, $variants)) {
-        return $variant;
+      if ($variant && array_key_exists($variant, $sitemaps)) {
+        return $sitemaps[$variant];
       }
     }
 
-    return reset($variants);
+    return reset($sitemaps);
   }
 
   /**
@@ -137,10 +152,10 @@ class Generator {
    *   Returns null if the content is not retrievable from the database.
    */
   public function getContent(?int $delta = NULL): ?string {
-    $variant = $this->getDefaultVariant();
+    $sitemap = $this->getDefaultSitemap();
 
-    /** @var \Drupal\simple_sitemap\Entity\SimpleSitemapInterface $sitemap */
-    if ($variant && ($sitemap = SimpleSitemap::load($variant)) && $sitemap->isEnabled()
+    if ($sitemap
+      && $sitemap->isEnabled()
       && ($sitemap_string = $sitemap->fromPublished()->toString($delta))) {
       return $sitemap_string;
     }
@@ -165,7 +180,7 @@ class Generator {
     }
     switch ($from) {
       case QueueWorker::GENERATE_TYPE_FORM:
-      case QueueWorker::GENERATE_TYPE_DRUSH;
+      case QueueWorker::GENERATE_TYPE_DRUSH:
         $this->queueWorker->batchGenerate($from);
         break;
 
@@ -186,7 +201,7 @@ class Generator {
    * @throws \Drupal\Component\Plugin\Exception\PluginException
    */
   public function queue(): Generator {
-    $this->queueWorker->queue($this->getVariants());
+    $this->queueWorker->queue($this->getSitemaps());
 
     return $this;
   }
@@ -203,7 +218,7 @@ class Generator {
       $this->logger->m('Unable to acquire a lock for sitemap generation.')->log('error')->display('error');
       return $this;
     }
-    $this->queueWorker->rebuildQueue($this->getVariants());
+    $this->queueWorker->rebuildQueue($this->getSitemaps());
 
     return $this;
   }
@@ -215,10 +230,15 @@ class Generator {
    *   The simple_sitemap.entity_manager service.
    */
   public function entityManager(): EntityManager {
-    /** @var \Drupal\simple_sitemap\Manager\EntityManager $entities */
-    $entities = \Drupal::service('simple_sitemap.entity_manager');
+    /** @var \Drupal\simple_sitemap\Manager\EntityManager $entity_manager */
+    // phpcs:ignore DrupalPractice.Objects.GlobalDrupal.GlobalDrupal
+    $entity_manager = \Drupal::service('simple_sitemap.entity_manager');
 
-    return $entities->setVariants($this->getVariants());
+    if ($this->sitemaps !== NULL) {
+      $entity_manager->setSitemaps($this->getSitemaps());
+    }
+
+    return $entity_manager;
   }
 
   /**
@@ -228,10 +248,25 @@ class Generator {
    *   The simple_sitemap.custom_link_manager service.
    */
   public function customLinkManager(): CustomLinkManager {
-    /** @var \Drupal\simple_sitemap\Manager\CustomLinkManager $custom_links */
-    $custom_links = \Drupal::service('simple_sitemap.custom_link_manager');
+    /** @var \Drupal\simple_sitemap\Manager\CustomLinkManager $custom_link_manager */
+    // phpcs:ignore DrupalPractice.Objects.GlobalDrupal.GlobalDrupal
+    $custom_link_manager = \Drupal::service('simple_sitemap.custom_link_manager');
 
-    return $custom_links->setVariants($this->getVariants());
+    if ($this->sitemaps !== NULL) {
+      $custom_link_manager->setSitemaps($this->getSitemaps());
+    }
+
+    return $custom_link_manager;
+  }
+
+  /**
+   * Gets all compatible sitemaps.
+   *
+   * @return \Drupal\simple_sitemap\Entity\SimpleSitemapInterface[]
+   *   Array of sitemaps.
+   */
+  protected function getCompatibleSitemaps(): array {
+    return SimpleSitemap::loadMultiple();
   }
 
 }

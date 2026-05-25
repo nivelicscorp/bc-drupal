@@ -1,17 +1,23 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\Tests\migrate_plus\Kernel\Plugin\migrate_plus\data_fetcher;
 
 use Drupal\KernelTests\KernelTestBase;
 use Drupal\migrate_plus\Plugin\migrate_plus\data_fetcher\Http;
 
 /**
- * Class HttpTest.
+ * Tests the http data_fetcher plugin.
  *
  * @group migrate_plus
- * @package Drupal\Tests\migrate_plus\Unit\migrate_plus\data_fetcher
  */
-class HttpTest extends KernelTestBase {
+final class HttpTest extends KernelTestBase {
+
+  /**
+   * {@inheritdoc}
+   */
+  protected static $modules = ['migrate_plus', 'migrate'];
 
   /**
    * Test http headers option.
@@ -19,7 +25,7 @@ class HttpTest extends KernelTestBase {
    * @dataProvider headerDataProvider
    */
   public function testHttpHeaders(array $definition, array $expected, array $preSeed = []): void {
-    $http = new Http($definition, 'http', []);
+    $http = new Http($definition, 'http', [], $this->container->get('http_client'), $this->container->get('plugin.manager.migrate_plus.authentication'));
     $this->assertEquals($expected, $http->getRequestHeaders());
   }
 
@@ -29,7 +35,7 @@ class HttpTest extends KernelTestBase {
    * @return array
    *   The test cases
    */
-  public function headerDataProvider(): array {
+  public static function headerDataProvider(): array {
     return [
       'dummy headers specified' => [
         'definition' => [
@@ -37,14 +43,14 @@ class HttpTest extends KernelTestBase {
             'Accept' => 'application/json',
             'User-Agent' => 'Internet Explorer 6',
             'Authorization-Key' => 'secret',
-            'Arbitrary-Header' => 'foobarbaz',
+            'Arbitrary-Header' => 'fooBarBaz',
           ],
         ],
         'expected' => [
           'Accept' => 'application/json',
           'User-Agent' => 'Internet Explorer 6',
           'Authorization-Key' => 'secret',
-          'Arbitrary-Header' => 'foobarbaz',
+          'Arbitrary-Header' => 'fooBarBaz',
         ],
       ],
       'no headers specified' => [

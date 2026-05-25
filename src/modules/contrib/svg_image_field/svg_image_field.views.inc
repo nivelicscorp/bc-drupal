@@ -45,12 +45,20 @@ function svg_image_field_field_views_data_views_data_alter(array &$data, FieldSt
   /** @var \Drupal\Core\Entity\Sql\DefaultTableMapping $table_mapping */
   $table_mapping = $entity_manager->getStorage($entity_type_id)->getTableMapping();
 
-  list($label) = views_entity_field_label($entity_type_id, $field_name);
+  [$label] = views_entity_field_label($entity_type_id, $field_name);
 
   $data['file_managed'][$pseudo_field_name]['relationship'] = [
-    'title' => t('@entity using @field', ['@entity' => $entity_type->getLabel(), '@field' => $label]),
+    'title' => t('@entity using @field',
+      [
+        '@entity' => $entity_type->getLabel(),
+        '@field' => $label,
+      ]),
     'label' => t('@field_name', ['@field_name' => $field_name]),
-    'help' => t('Relate each @entity with a @field set to the svg image.', ['@entity' => $entity_type->getLabel(), '@field' => $label]),
+    'help' => t('Relate each @entity with a @field set to the svg image.',
+      [
+        '@entity' => $entity_type->getLabel(),
+        '@field' => $label,
+      ]),
     'group' => $entity_type->getLabel(),
     'id' => 'entity_reverse',
     'base' => $entity_type->getDataTable() ?: $entity_type->getBaseTable(),

@@ -1,5 +1,7 @@
 <?php
 
+// @codingStandardsIgnoreStart
+
 namespace Drupal\social_media\EventSubscriber;
 
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -52,3 +54,5 @@ class SocialMediaSubscriber implements EventSubscriberInterface {
   }
 
 }
+
+// @codingStandardsIgnoreEnd

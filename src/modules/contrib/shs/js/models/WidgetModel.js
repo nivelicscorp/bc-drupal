@@ -32,6 +32,11 @@
       defaultValue: '_none',
 
       /**
+       * The new item that was created.
+       */
+      createValue: null,
+
+      /**
        * Position of widget in app.
        *
        * @type {integer}

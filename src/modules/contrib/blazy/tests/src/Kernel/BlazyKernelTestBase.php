@@ -2,8 +2,8 @@
 
 namespace Drupal\Tests\blazy\Kernel;
 
-use Drupal\Tests\field\Kernel\FieldKernelTestBase;
 use Drupal\Tests\blazy\Traits\BlazyKernelTestTrait;
+use Drupal\Tests\field\Kernel\FieldKernelTestBase;
 
 /**
  * Defines base class for the Blazy formatter tests.
@@ -24,14 +24,13 @@ abstract class BlazyKernelTestBase extends FieldKernelTestBase {
   protected $strictConfigSchema = TRUE;
 
   /**
-   * Modules to enable.
+   * {@inheritdoc}
    *
-   * @var array
+   * @var array<string>
    */
   protected static $modules = [
     'system',
     'user',
-    // @todo 'entity_test',
     'field',
     'field_ui',
     'file',

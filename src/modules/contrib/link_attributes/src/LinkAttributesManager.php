@@ -8,6 +8,7 @@ use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Plugin\DefaultPluginManager;
 use Drupal\Core\Plugin\Discovery\ContainerDerivativeDiscoveryDecorator;
 use Drupal\Core\Plugin\Discovery\YamlDiscovery;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 
 /**
  * Provides the link_attributes plugin manager.
@@ -61,6 +62,31 @@ class LinkAttributesManager extends DefaultPluginManager implements PluginManage
     if (empty($definition['type'])) {
       $definition['type'] = 'textfield';
     }
+    // Translate options.
+    if (!empty($definition['options'])) {
+      $definition['options'] = $this->translateOptions($definition['options']);
+    }
+  }
+
+  /**
+   * Translate options, preserving optgroups.
+   *
+   * @param array<string,mixed> $options
+   *   Array of options, possibly grouped.
+   *
+   * @return array<string,mixed>
+   *   Array with optgroups and option values translated.
+   */
+  private function translateOptions(array $options): array {
+    $translated = [];
+    foreach ($options as $property => $option) {
+      if (is_array($option)) {
+        $translated[(string) new TranslatableMarkup($property)] = $this->translateOptions($option); // phpcs:ignore
+        continue;
+      }
+      $translated[$property] = new TranslatableMarkup($option); // phpcs:ignore
+    }
+    return $translated;
   }
 
 }

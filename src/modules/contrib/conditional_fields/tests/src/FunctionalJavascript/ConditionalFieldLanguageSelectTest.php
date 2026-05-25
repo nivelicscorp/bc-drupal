@@ -2,9 +2,9 @@
 
 namespace Drupal\Tests\conditional_fields\FunctionalJavascript;
 
+use Drupal\Tests\conditional_fields\FunctionalJavascript\TestCases\ConditionalFieldValueInterface;
 use Drupal\conditional_fields\ConditionalFieldsInterface;
 use Drupal\language\Entity\ContentLanguageSettings;
-use Drupal\Tests\conditional_fields\FunctionalJavascript\TestCases\ConditionalFieldValueInterface;
 
 /**
  * Test Conditional Fields Language Select Plugin.
@@ -18,7 +18,7 @@ class ConditionalFieldLanguageSelectTest extends ConditionalFieldTestBase implem
    *
    * @var array
    */
-  public static $modules = [
+  protected static $modules = [
     'conditional_fields',
     'language',
     'node',
@@ -68,7 +68,7 @@ class ConditionalFieldLanguageSelectTest extends ConditionalFieldTestBase implem
   /**
    * {@inheritdoc}
    */
-  protected function setUp() {
+  protected function setUp(): void {
     parent::setUp();
 
     $this->fieldSelector = "[name=\"{$this->fieldName}[0][value]\"]";

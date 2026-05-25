@@ -7,6 +7,9 @@
 # These changes are finished, excluding bug reports.
 finished:
   7:
+    # The main configuration and all entity values are fully migrated.
+    metatag: metatag
+
     # All of the meta tags from these submodules have breen ported and should
     # work correctly.
     metatag_app_links: metatag
@@ -15,6 +18,10 @@ finished:
     metatag_facebook: metatag
     metatag_favicons: metatag
     metatag_google_cse: metatag
+    metatag_hreflang: metatag
+    metatag_mobile: metatag
+    metatag_opengraph: metatag
+    metatag_opengraph_products: metatag
     metatag_twitter_cards: metatag
     metatag_verification: metatag
 
@@ -37,17 +44,6 @@ not_finished:
     page_title: metatag
 
   7:
-    # Metatag.
-    # @todo Configuration: https://www.drupal.org/project/metatag/issues/2563651
-    metatag: metatag
-    # @todo Missings tags: https://www.drupal.org/project/metatag/issues/3077778
-    metatag_hreflang: metatag
-    metatag_mobile: metatag
-    # @todo Missings tags: https://www.drupal.org/project/metatag/issues/3077782
-    metatag_opengraph: metatag
-    # @todo Missings tags: https://www.drupal.org/project/metatag/issues/2835925
-    metatag_opengraph_products: metatag
-
     # These will need custom work.
     # @todo https://www.drupal.org/project/metatag/issues/2563653
     metatag_context: metatag_context

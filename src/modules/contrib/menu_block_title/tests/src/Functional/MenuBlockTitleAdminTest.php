@@ -14,16 +14,9 @@ use Drupal\Tests\BrowserTestBase;
 class MenuBlockTitleAdminTest extends BrowserTestBase {
 
   /**
-   * Modules to enable.
-   *
-   * @var array
-   */
-  protected static $modules = ['menu_block_title_test'];
-
-  /**
    * {@inheritdoc}
    */
-  protected $profile = 'minimal';
+  protected static $modules = ['menu_block_title_test'];
 
   /**
    * {@inheritdoc}
@@ -35,7 +28,7 @@ class MenuBlockTitleAdminTest extends BrowserTestBase {
    *
    * @var array
    */
-  protected static $userPermissions = [
+  protected array $userPermissions = [
     'access content',
     'administer blocks',
   ];
@@ -47,31 +40,39 @@ class MenuBlockTitleAdminTest extends BrowserTestBase {
    */
   protected function setUp(): void {
     parent::setUp();
-    $account = $this->drupalCreateUser(static::$userPermissions);
+    $account = $this->drupalCreateUser($this->userPermissions);
     $this->drupalLogin($account);
   }
 
   /**
+   * Admin page test.
+   *
    * Tests that a user with the correct permissions can access the
    * block settings.
+   *
+   * @throws \Behat\Mink\Exception\ExpectationException
    */
-  public function testAccessAdminPage() {
+  public function testAccessAdminPage(): void {
     $this->drupalGet('/admin/structure/block/manage/sidebar_nav_main');
     $this->assertSession()->statusCodeEquals(200);
   }
 
   /**
    * Tests that the checkbox is visible on the menu block.
+   *
+   * @throws \Behat\Mink\Exception\ExpectationException
    */
-  public function testMenuBlockSettingsForm() {
+  public function testMenuBlockSettingsForm(): void {
     $this->drupalGet('/admin/structure/block/manage/sidebar_nav_main');
     $this->assertSession()->checkboxChecked('edit-third-party-settings-menu-block-title-modify-title');
   }
 
   /**
    * Tests that disabling the checkbox and saving the form works.
+   *
+   * @throws \Behat\Mink\Exception\ExpectationException
    */
-  public function testMenuBlockToggleSettingsForm() {
+  public function testMenuBlockToggleSettingsForm(): void {
     $this->drupalGet('/admin/structure/block/manage/sidebar_nav_main');
     $this->assertSession()->checkboxChecked('edit-third-party-settings-menu-block-title-modify-title');
     $this->getSession()->getPage()->uncheckField('edit-third-party-settings-menu-block-title-modify-title');

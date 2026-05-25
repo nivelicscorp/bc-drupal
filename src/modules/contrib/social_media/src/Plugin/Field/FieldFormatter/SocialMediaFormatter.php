@@ -2,10 +2,8 @@
 
 namespace Drupal\social_media\Plugin\Field\FieldFormatter;
 
-use Drupal\Core\Field\FormatterBase;
 use Drupal\Core\Field\FieldItemListInterface;
-use Drupal\Core\Field\FieldDefinitionInterface;
-use Drupal\Core\Block\BlockManagerInterface;
+use Drupal\Core\Field\FormatterBase;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -31,20 +29,20 @@ class SocialMediaFormatter extends FormatterBase implements ContainerFactoryPlug
   protected $blockManager;
 
   /**
-   * {@inheritdoc}
+   * The AccountProxyInterface.
+   *
+   * @var \Drupal\Core\Session\AccountProxyInterface
    */
-  public function __construct($plugin_id, $plugin_definition, FieldDefinitionInterface $field_definition, array $settings, $label, $view_mode, array $third_party_settings, BlockManagerInterface $block_manager) {
-    parent::__construct($plugin_id, $plugin_definition, $field_definition, $settings, $label, $view_mode, $third_party_settings);
-    $this->blockManager = $block_manager;
-  }
+  protected $account;
 
   /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
-    return new static(
-      $plugin_id, $plugin_definition, $configuration['field_definition'], $configuration['settings'], $configuration['label'], $configuration['view_mode'], $configuration['third_party_settings'], $container->get('plugin.manager.block')
-    );
+    $instance = parent::create($container, $configuration, $plugin_id, $plugin_definition);
+    $instance->blockManager = $container->get('plugin.manager.block');
+    $instance->account = $container->get('current_user');
+    return $instance;
   }
 
   /**
@@ -58,7 +56,7 @@ class SocialMediaFormatter extends FormatterBase implements ContainerFactoryPlug
       $config = [];
       $block_instance = $this->blockManager->createInstance('social_sharing_block', $config);
       // Some blocks might implement access check.
-      $access_result = $block_instance->access(\Drupal::currentUser());
+      $access_result = $block_instance->access($this->account);
       // Return empty render array if user doesn't have access.
       // $access_result can be boolean or an AccessResult class.
       if (is_object($access_result) && $access_result->isForbidden() || is_bool($access_result) && !$access_result) {

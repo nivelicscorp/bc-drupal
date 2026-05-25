@@ -5,13 +5,13 @@ namespace Drupal\Tests\twig_tweak\Functional;
 use Drupal\Core\Link;
 use Drupal\Core\Render\Markup;
 use Drupal\Core\Url;
-use Drupal\file\FileInterface;
-use Drupal\Tests\BrowserTestBase;
-use Drupal\Tests\TestFileCreationTrait;
 use Drupal\file\Entity\File;
+use Drupal\file\FileInterface;
 use Drupal\language\Entity\ConfigurableLanguage;
 use Drupal\media\Entity\Media;
 use Drupal\responsive_image\Entity\ResponsiveImageStyle;
+use Drupal\Tests\BrowserTestBase;
+use Drupal\Tests\TestFileCreationTrait;
 use Drupal\user\Entity\Role;
 
 /**
@@ -59,7 +59,7 @@ final class TwigTweakTest extends BrowserTestBase {
     $image_file->save();
 
     $media_file = File::create([
-      'uri' => $test_files[8]->uri,
+      'uri' => $test_files[9]->uri,
       'uuid' => '5dd794d0-cb75-4130-9296-838aebc1fe74',
       'status' => FileInterface::STATUS_PERMANENT,
     ]);
@@ -75,6 +75,7 @@ final class TwigTweakTest extends BrowserTestBase {
     $node_values = [
       'title' => 'Alpha',
       'uuid' => 'ad1b902a-344f-41d1-8c61-a69f0366dbfa',
+      'body' => 'The node content.',
       'field_image' => [
         'target_id' => $image_file->id(),
         'alt' => 'Alt text',
@@ -152,8 +153,8 @@ final class TwigTweakTest extends BrowserTestBase {
 
     // -- Entity (default view mode).
     $xpath = '//div[@class = "tt-entity-default"]';
-    $xpath .= '/article[contains(@class, "node") and not(contains(@class, "node--view-mode-teaser"))]';
-    $xpath .= '/h2/a/span[text() = "Alpha"]';
+    $xpath .= '/article[contains(@class, "node") and contains(@class, "node--view-mode-full")]';
+    $xpath .= '/div[@class = "node__content"]/div/p[text() = "The node content."]';
     $this->assertXpath($xpath);
 
     // -- Entity (teaser view mode).
@@ -165,7 +166,7 @@ final class TwigTweakTest extends BrowserTestBase {
     // -- Entity by UUID.
     $xpath = '//div[@class = "tt-entity-uuid"]';
     $xpath .= '/article[contains(@class, "node")]';
-    $xpath .= '/h2/a/span[text() = "Alpha"]';
+    $xpath .= '/div[@class = "node__content"]/div/p[text() = "The node content."]';
     $this->assertXpath($xpath);
 
     // -- Entity by UUID (missing).
@@ -265,18 +266,23 @@ final class TwigTweakTest extends BrowserTestBase {
     $xpath = sprintf('//div[@class = "tt-url"]/div[@data-case="with-langcode" and text() = "%s"]', $url);
     $this->assertXpath($xpath);
 
+    // -- External URL.
+    $url = 'https://example.com/node?foo=bar&page=1#here';
+    $xpath = sprintf('//div[@class = "tt-url"]/div[@data-case="external" and text() = "%s"]', $url);
+    $this->assertXpath($xpath);
+
     // -- Link.
     $url = Url::fromUserInput('/node/1/edit', ['absolute' => TRUE]);
     $link = Link::fromTextAndUrl('Edit', $url)->toString();
     $xpath = '//div[@class = "tt-link"]';
-    self::assertEquals($link, $this->xpath($xpath)[0]->getHtml());
+    self::assertSame((string) $link, $this->xpath($xpath)[0]->getHtml());
 
     // -- Link with HTML.
     $text = Markup::create('<b>Edit</b>');
     $url = Url::fromUserInput('/node/1/edit', ['absolute' => TRUE]);
     $link = Link::fromTextAndUrl($text, $url)->toString();
     $xpath = '//div[@class = "tt-link-html"]';
-    self::assertEquals($link, $this->xpath($xpath)[0]->getHtml());
+    self::assertSame((string) $link, $this->xpath($xpath)[0]->getHtml());
 
     // -- Status messages.
     $xpath = '//div[@class = "tt-messages"]//div[contains(@class, "messages--status") and contains(., "Hello world!")]';
@@ -337,7 +343,16 @@ final class TwigTweakTest extends BrowserTestBase {
     $xpath = '//div[@class = "tt-with-nested" and text() = "{alpha:{beta:{gamma:456}}}"]';
     $this->assertXpath($xpath);
 
+    // -- Data URI (SVG).
+    $xpath = '//div[@class = "tt-data-uri-svg"]/img[@src = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSIxMDAiIGhlaWdodD0iNTAiIGZpbGw9ImxpbWUiLz48L3N2Zz4="]';
+    $this->assertXpath($xpath);
+
+    // -- Data URI (Iframe).
+    $xpath = '//div[@class = "tt-data-uri-iframe"]/iframe[@src = "data:text/html;charset=UTF-8;base64,PGgxPkhlbGxvIHdvcmxkITwvaDE+"]';
+    $this->assertXpath($xpath);
+
     // -- 'children'.
+    // cspell:disable-next-line
     $xpath = '//div[@class = "tt-children" and text() = "doremi"]';
     $this->assertXpath($xpath);
 

@@ -5,6 +5,7 @@ namespace Drupal\svg_image_field\Plugin\Field\FieldType;
 use Drupal\Core\Field\FieldStorageDefinitionInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\StreamWrapper\StreamWrapperInterface;
+use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\TypedData\DataDefinition;
 use Drupal\file\Plugin\Field\FieldType\FileItem;
 
@@ -13,9 +14,12 @@ use Drupal\file\Plugin\Field\FieldType\FileItem;
  *
  * @FieldType(
  *   id = "svg_image_field",
- *   label = @Translation("Svg Image"),
- *   description = @Translation("This field stores the ID of an image file as an integer value."),
- *   category = @Translation("Reference"),
+ *   label = @Translation("Vector image"),
+ *   description = {
+ *     @Translation("For uploading scalable vector graphics (SVG) images."),
+ *     @Translation("Can be configured with display options such as inline rendering, SVG sanitization, apply dimensions, and more."),
+ *   },
+ *   category = "file_upload",
  *   default_widget = "svg_image_field_widget",
  *   default_formatter = "svg_image_field_formatter",
  *   column_groups = {
@@ -40,7 +44,7 @@ use Drupal\file\Plugin\Field\FieldType\FileItem;
  * )
  */
 class SvgImageFieldItem extends FileItem {
-
+  use StringTranslationTrait;
   /**
    * The entity manager service.
    *
@@ -150,15 +154,15 @@ class SvgImageFieldItem extends FileItem {
     $scheme_options = \Drupal::service('stream_wrapper_manager')->getNames(StreamWrapperInterface::WRITE_VISIBLE);
     $element['uri_scheme'] = [
       '#type' => 'radios',
-      '#title' => t('Upload destination'),
+      '#title' => $this->t('Upload destination'),
       '#options' => $scheme_options,
       '#default_value' => $settings['uri_scheme'],
-      '#description' => t('Select where the final files should be stored. Private file storage has significantly more overhead than public files, but allows restricted access to files within this field.'),
+      '#description' => $this->t('Select where the final files should be stored. Private file storage has significantly more overhead than public files, but allows restricted access to files within this field.'),
     ];
 
     // Add default_image element.
     static::defaultImageForm($element, $settings);
-    $element['default_image']['#description'] = t('If no image is uploaded, this image will be shown on display.');
+    $element['default_image']['#description'] = $this->t('If no image is uploaded, this image will be shown on display.');
 
     return $element;
   }
@@ -177,16 +181,16 @@ class SvgImageFieldItem extends FileItem {
     // Add title and alt configuration options.
     $element['alt_field'] = [
       '#type' => 'checkbox',
-      '#title' => t('Enable <em>Alt</em> field'),
+      '#title' => $this->t('Enable <em>Alt</em> field'),
       '#default_value' => $settings['alt_field'],
-      '#description' => t('The alt attribute may be used by search engines, screen readers, and when the image cannot be loaded. Enabling this field is recommended.'),
+      '#description' => $this->t('The alt attribute may be used by search engines, screen readers, and when the image cannot be loaded. Enabling this field is recommended.'),
       '#weight' => 9,
     ];
     $element['alt_field_required'] = [
       '#type' => 'checkbox',
-      '#title' => t('<em>Alt</em> field required'),
+      '#title' => $this->t('<em>Alt</em> field required'),
       '#default_value' => $settings['alt_field_required'],
-      '#description' => t('Making this field required is recommended.'),
+      '#description' => $this->t('Making this field required is recommended.'),
       '#weight' => 10,
       '#states' => [
         'visible' => [
@@ -196,14 +200,14 @@ class SvgImageFieldItem extends FileItem {
     ];
     $element['title_field'] = [
       '#type' => 'checkbox',
-      '#title' => t('Enable <em>Title</em> field'),
+      '#title' => $this->t('Enable <em>Title</em> field'),
       '#default_value' => $settings['title_field'],
-      '#description' => t('The title attribute is used as a tooltip when the mouse hovers over the image. Enabling this field is not recommended as it can cause problems with screen readers.'),
+      '#description' => $this->t('The title attribute is used as a tooltip when the mouse hovers over the image. Enabling this field is not recommended as it can cause problems with screen readers.'),
       '#weight' => 11,
     ];
     $element['title_field_required'] = [
       '#type' => 'checkbox',
-      '#title' => t('<em>Title</em> field required'),
+      '#title' => $this->t('<em>Title</em> field required'),
       '#default_value' => $settings['title_field_required'],
       '#weight' => 12,
       '#states' => [
@@ -215,7 +219,7 @@ class SvgImageFieldItem extends FileItem {
 
     // Add default_image element.
     static::defaultImageForm($element, $settings);
-    $element['default_image']['#description'] = t("If no image is uploaded, this image will be shown on display and will override the field's default image.");
+    $element['default_image']['#description'] = $this->t("If no image is uploaded, this image will be shown on display and will override the field's default image.");
     return $element;
   }
 
@@ -230,7 +234,7 @@ class SvgImageFieldItem extends FileItem {
   protected function defaultImageForm(array &$element, array $settings) {
     $element['default_image'] = [
       '#type' => 'details',
-      '#title' => t('Default image'),
+      '#title' => $this->t('Default image'),
       '#open' => TRUE,
     ];
     // Convert the stored UUID to a FID.
@@ -244,8 +248,8 @@ class SvgImageFieldItem extends FileItem {
     $upload_validators['svg_image_field_validate_mime_type'] = [];
     $element['default_image']['uuid'] = [
       '#type' => 'managed_file',
-      '#title' => t('Image'),
-      '#description' => t('Image to be shown if no image is uploaded.'),
+      '#title' => $this->t('Image'),
+      '#description' => $this->t('Image to be shown if no image is uploaded.'),
       '#default_value' => $fids,
       '#upload_location' => $settings['uri_scheme'] . '://default_images/',
       '#element_validate' => [
@@ -256,15 +260,15 @@ class SvgImageFieldItem extends FileItem {
     ];
     $element['default_image']['alt'] = [
       '#type' => 'textfield',
-      '#title' => t('Alternative text'),
-      '#description' => t('This text will be used by screen readers, search engines, and when the image cannot be loaded.'),
+      '#title' => $this->t('Alternative text'),
+      '#description' => $this->t('This text will be used by screen readers, search engines, and when the image cannot be loaded.'),
       '#default_value' => $settings['default_image']['alt'],
       '#maxlength' => 512,
     ];
     $element['default_image']['title'] = [
       '#type' => 'textfield',
-      '#title' => t('Title'),
-      '#description' => t('The title attribute is used as a tooltip when the mouse hovers over the image.'),
+      '#title' => $this->t('Title'),
+      '#description' => $this->t('The title attribute is used as a tooltip when the mouse hovers over the image.'),
       '#default_value' => $settings['default_image']['title'],
       '#maxlength' => 1024,
     ];

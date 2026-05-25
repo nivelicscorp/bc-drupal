@@ -25,7 +25,7 @@ class BlockGroupTest extends BrowserTestBase {
    *
    * @var array
    */
-  public static $modules = ['block', 'blockgroup'];
+  protected static $modules = ['block', 'blockgroup'];
 
   /**
    * Creates a block group and verifies its consistency.
@@ -67,26 +67,20 @@ class BlockGroupTest extends BrowserTestBase {
     // Verify that we can manage entities through the user interface.
     $blockgroup_label = 'group_test';
     $blockgroup_machine_name = 'group_test';
-    $this->drupalPostForm(
-      '/admin/structure/block_group_content/add',
-      [
-        'label' => $blockgroup_label,
-        'id' => $blockgroup_machine_name,
-      ],
-      $this->t('Save')
-    );
+    $this->drupalGet('/admin/structure/block_group_content/add');
+    $this->submitForm([
+      'label' => $blockgroup_label,
+      'id' => $blockgroup_machine_name,
+    ], $this->t('Save'));
     // Check if the created blockgroup is in the list.
     $this->drupalGet('/admin/structure/block_group_content');
     $this->assertSession()->pageTextContains($blockgroup_machine_name);
     // Verify that "Group test" blockgroup is editable.
     $this->drupalGet('/admin/structure/block_group_content/' . $blockgroup_machine_name);
     $this->assertSession()->fieldExists('label');
+    $this->drupalGet('/admin/structure/block_group_content/' . $blockgroup_machine_name . '/delete');
     // Verify that "Group test" blockgroup can be deleted.
-    $this->drupalPostForm(
-      '/admin/structure/block_group_content/' . $blockgroup_machine_name . '/delete',
-      [],
-      $this->t('Delete')
-    );
+    $this->submitForm([], $this->t('Delete'));
   }
 
   /**
@@ -109,11 +103,8 @@ class BlockGroupTest extends BrowserTestBase {
       'label' => $blockgroup_label,
       'id' => $blockgroup_machine_name,
     ];
-    $this->drupalPostForm(
-      '/admin/structure/block_group_content/add',
-      $block_group,
-      $this->t('Save')
-    );
+    $this->drupalGet('/admin/structure/block_group_content/add');
+    $this->submitForm($block_group, $this->t('Save'));
     // Check if the created blockgroup is in the list.
     $this->drupalGet('/admin/structure/block_group_content');
     $this->assertSession()->pageTextContains($blockgroup_machine_name);
@@ -131,7 +122,8 @@ class BlockGroupTest extends BrowserTestBase {
     $block['region'] = $blockgroup_machine_name;
     $block['settings[label]'] = $block_label;
     $block['settings[label_display]'] = TRUE;
-    $this->drupalPostForm('admin/structure/block/add/system_powered_by_block', $block, $this->t('Save block'));
+    $this->drupalGet('admin/structure/block/add/system_powered_by_block');
+    $this->submitForm($block, $this->t('Save block'));
     $this->assertSession()->addressEquals("admin/structure/block/list/$theme?block-placement=" . Html::getClass($block['id']));
 
     // Check that the block is not visible on the front page.
@@ -147,7 +139,8 @@ class BlockGroupTest extends BrowserTestBase {
     $group_block['region'] = 'content';
     $group_block['settings[label]'] = $group_block_label;
     $group_block['settings[label_display]'] = TRUE;
-    $this->drupalPostForm("admin/structure/block/add/block_group:$blockgroup_machine_name", $group_block, $this->t('Save block'));
+    $this->drupalGet("admin/structure/block/add/block_group:$blockgroup_machine_name");
+    $this->submitForm($group_block, $this->t('Save block'));
     $this->assertSession()->addressEquals("admin/structure/block/list/$theme?block-placement=" . Html::getClass($group_block['id']));
 
     // Check that the block is visible on the front page.

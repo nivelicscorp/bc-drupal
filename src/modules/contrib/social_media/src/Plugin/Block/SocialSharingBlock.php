@@ -3,15 +3,11 @@
 namespace Drupal\social_media\Plugin\Block;
 
 use Drupal\Core\Block\BlockBase;
-use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
-use Drupal\social_media\Event\SocialMediaEvent;
-use Drupal\Core\Config\ConfigFactoryInterface;
-use Drupal\Core\Utility\Token;
-use Symfony\Component\EventDispatcher\EventDispatcherInterface;
-use Drupal\Core\Template\Attribute;
-use Drupal\Core\Path\CurrentPathStack;
 use Drupal\Core\Cache\Cache;
+use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
+use Drupal\Core\Template\Attribute;
+use Drupal\social_media\Event\SocialMediaEvent;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Provides a 'SocialSharingBlock' block.
@@ -52,23 +48,23 @@ class SocialSharingBlock extends BlockBase implements ContainerFactoryPluginInte
   protected $currentPath;
 
   /**
-   * Constructor.
+   * The list of available modules.
+   *
+   * @var \Drupal\Core\Extension\ModuleExtensionList
    */
-  public function __construct(array $configuration, $plugin_id, $plugin_definition, ConfigFactoryInterface $config_factory, Token $token, EventDispatcherInterface $event_dispatcher, CurrentPathStack $current_path) {
-    parent::__construct($configuration, $plugin_id, $plugin_definition);
-    $this->configFactory = $config_factory;
-    $this->token = $token;
-    $this->eventDispatcher = $event_dispatcher;
-    $this->currentPath = $current_path;
-  }
+  protected $extensionListModule;
 
   /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
-    return new static(
-      $configuration, $plugin_id, $plugin_definition, $container->get('config.factory'), $container->get('token'), $container->get('event_dispatcher'), $container->get('path.current')
-    );
+    $instance = new static($configuration, $plugin_id, $plugin_definition);
+    $instance->configFactory = $container->get('config.factory');
+    $instance->token = $container->get('token');
+    $instance->eventDispatcher = $container->get('event_dispatcher');
+    $instance->currentPath = $container->get('path.current');
+    $instance->extensionListModule = $container->get('extension.list.module');
+    return $instance;
   }
 
   /**
@@ -79,14 +75,14 @@ class SocialSharingBlock extends BlockBase implements ContainerFactoryPluginInte
     global $base_url;
     $library = ['social_media/basic'];
     $settings = [];
-    $icon_path = $base_url . '/' . drupal_get_path('module', 'social_media') . '/icons/';
+    $icon_path = $base_url . '/' . $this->extensionListModule->getPath('social_media') . '/icons/';
     $elements = [];
     $social_medias = $this->configFactory->get('social_media.settings')
       ->get('social_media');
 
     // Call pre_execute event before doing anything.
     $event = new SocialMediaEvent($social_medias);
-    $this->eventDispatcher->dispatch('social_media.pre_execute', $event);
+    $this->eventDispatcher->dispatch($event, 'social_media.pre_execute');
     $social_medias = $event->getElement();
 
     $social_medias = $this->sortSocialMedias($social_medias);
@@ -136,7 +132,7 @@ class SocialSharingBlock extends BlockBase implements ContainerFactoryPluginInte
 
     // Call prerender event before render.
     $event = new SocialMediaEvent($elements);
-    $this->eventDispatcher->dispatch('social_media.pre_render', $event);
+    $this->eventDispatcher->dispatch($event, 'social_media.pre_render');
     $elements = $event->getElement();
 
     $build['social_sharing_block'] = [
@@ -151,9 +147,12 @@ class SocialSharingBlock extends BlockBase implements ContainerFactoryPluginInte
   }
 
   /**
-   * TODO describe what this does and what $element is.
+   * Sorts the provided social media elements by weight.
+   *
+   * @param array $element
+   *   An associative array of elements to sort.
    */
-  protected function sortSocialMedias(&$element) {
+  protected function sortSocialMedias(array &$element) {
     $weight = [];
     foreach ($element as $key => $row) {
       $weight[$key] = $row['weight'];
@@ -163,7 +162,13 @@ class SocialSharingBlock extends BlockBase implements ContainerFactoryPluginInte
   }
 
   /**
-   * TODO describe what this does and what $variables is.
+   * Converts a pipe-delimited attributes string to an Attributes array.
+   *
+   * @param string $variables
+   *   A string of multi-line pipe delimited key-value pairs.
+   *
+   * @return array
+   *   An array of attribute objects.
    */
   protected function socialMediaConvertAttributes($variables) {
     $variable = explode("\n", $variables);
@@ -182,7 +187,13 @@ class SocialSharingBlock extends BlockBase implements ContainerFactoryPluginInte
   }
 
   /**
-   * TODO describe what this does and what $variables is.
+   * Converts a pipe-delimited drupal settings string to an associative array.
+   *
+   * @param string $variables
+   *   A string of multi-line pipe delimited key-value pairs.
+   *
+   * @return array
+   *   An associative array.
    */
   protected function socialMediaConvertDrupalSettings($variables) {
     $variable = explode("\n", $variables);

@@ -1,6 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\migrate_plus\Plugin\migrate_plus\data_parser;
+
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 
 /**
  * Common functionality for XML data parsers.
@@ -13,7 +17,7 @@ trait XmlTrait {
    * @param \SimpleXMLElement $xml
    *   The element to apply namespace registrations to.
    */
-  protected function registerNamespaces(\SimpleXMLElement $xml) {
+  protected function registerNamespaces(\SimpleXMLElement $xml): void {
     if (isset($this->configuration['namespaces']) && is_array($this->configuration['namespaces'])) {
       foreach ($this->configuration['namespaces'] as $prefix => $ns) {
         $xml->registerXPathNamespace($prefix, $ns);
@@ -30,7 +34,7 @@ trait XmlTrait {
    * @return string
    *   Error message
    */
-  public static function parseLibXmlError(\LibXMLError $error) {
+  public static function parseLibXmlError(\LibXMLError $error): TranslatableMarkup {
     $error_code_name = 'Unknown Error';
     switch ($error->level) {
       case LIBXML_ERR_WARNING:
@@ -47,14 +51,14 @@ trait XmlTrait {
     }
 
     return t(
-      "@libxmlerrorcodename @libxmlerrorcode: @libxmlerrormessage\nLine: @libxmlerrorline\nColumn: @libxmlerrorcolumn\nFile: @libxmlerrorfile",
+      "@libxml_error_code_name @libxml_error_code: @libxml_error_message\nLine: @libxml_error_line\nColumn: @libxml_error_column\nFile: @libxml_error_file",
       [
-        '@libxmlerrorcodename' => $error_code_name,
-        '@libxmlerrorcode' => $error->code,
-        '@libxmlerrormessage' => trim($error->message),
-        '@libxmlerrorline' => $error->line,
-        '@libxmlerrorcolumn' => $error->column,
-        '@libxmlerrorfile' => $error->file,
+        '@libxml_error_code_name' => $error_code_name,
+        '@libxml_error_code' => $error->code,
+        '@libxml_error_message' => trim((string) $error->message),
+        '@libxml_error_line' => $error->line,
+        '@libxml_error_column' => $error->column,
+        '@libxml_error_file' => $error->file,
       ]
     );
   }

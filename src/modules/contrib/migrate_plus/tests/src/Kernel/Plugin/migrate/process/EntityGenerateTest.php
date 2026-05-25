@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\Tests\migrate_plus\Kernel\Plugin\migrate\process;
 
 use Drupal\Core\Config\Entity\ConfigEntityInterface;
@@ -10,10 +12,11 @@ use Drupal\field\Entity\FieldStorageConfig;
 use Drupal\KernelTests\KernelTestBase;
 use Drupal\migrate\MigrateExecutable;
 use Drupal\migrate\MigrateMessageInterface;
+use Drupal\migrate\Plugin\MigrationPluginManager;
 use Drupal\node\Entity\NodeType;
 use Drupal\taxonomy\Entity\Term;
 use Drupal\taxonomy\Entity\Vocabulary;
-use Drupal\Tests\field\Traits\EntityReferenceTestTrait;
+use Drupal\Tests\field\Traits\EntityReferenceFieldCreationTrait;
 
 /**
  * Tests the migration plugin.
@@ -21,9 +24,9 @@ use Drupal\Tests\field\Traits\EntityReferenceTestTrait;
  * @coversDefaultClass \Drupal\migrate_plus\Plugin\migrate\process\EntityGenerate
  * @group migrate_plus
  */
-class EntityGenerateTest extends KernelTestBase implements MigrateMessageInterface {
+final class EntityGenerateTest extends KernelTestBase implements MigrateMessageInterface {
 
-  use EntityReferenceTestTrait;
+  use EntityReferenceFieldCreationTrait;
 
   /**
    * {@inheritdoc}
@@ -41,32 +44,24 @@ class EntityGenerateTest extends KernelTestBase implements MigrateMessageInterfa
   ];
 
   /**
-   * The bundle used in this test.
-   *
-   * @var string
+   * The bundle.
    */
-  protected $bundle = 'page';
+  private static ?string $bundle = 'page';
 
   /**
-   * The name of the field used in this test.
-   *
-   * @var string
+   * The field name.
    */
-  protected $fieldName = 'field_entity_reference';
+  private static ?string $fieldName = 'field_entity_reference';
 
   /**
-   * The vocabulary id.
-   *
-   * @var string
+   * The vocabulary.
    */
-  protected $vocabulary = 'fruit';
+  private static ?string $vocabulary = 'fruit';
 
   /**
    * The migration plugin manager.
-   *
-   * @var \Drupal\migrate\Plugin\MigrationPluginManager
    */
-  protected $migrationPluginManager;
+  protected ?MigrationPluginManager $migrationPluginManager;
 
   /**
    * {@inheritdoc}
@@ -75,7 +70,7 @@ class EntityGenerateTest extends KernelTestBase implements MigrateMessageInterfa
     parent::setUp();
     // Create article content type.
     $values = [
-      'type' => $this->bundle,
+      'type' => self::$bundle,
       'name' => 'Page',
     ];
     $node_type = NodeType::create($values);
@@ -85,15 +80,14 @@ class EntityGenerateTest extends KernelTestBase implements MigrateMessageInterfa
     $this->installEntitySchema('taxonomy_term');
     $this->installEntitySchema('taxonomy_vocabulary');
     $this->installEntitySchema('user');
-    $this->installSchema('system', ['sequences']);
     $this->installSchema('user', 'users_data');
     $this->installConfig(self::$modules);
 
     // Create a vocabulary.
     $vocabulary = Vocabulary::create([
-      'name' => $this->vocabulary,
-      'description' => $this->vocabulary,
-      'vid' => $this->vocabulary,
+      'name' => self::$vocabulary,
+      'description' => self::$vocabulary,
+      'vid' => self::$vocabulary,
       'langcode' => LanguageInterface::LANGCODE_NOT_SPECIFIED,
     ]);
     $vocabulary->save();
@@ -101,12 +95,12 @@ class EntityGenerateTest extends KernelTestBase implements MigrateMessageInterfa
     // Create a field.
     $this->createEntityReferenceField(
       'node',
-      $this->bundle,
-      $this->fieldName,
+      self::$bundle,
+      self::$fieldName,
       'Term reference',
       'taxonomy_term',
       'default',
-      ['target_bundles' => [$this->vocabulary]],
+      ['target_bundles' => [self::$vocabulary]],
       FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED
     );
 
@@ -119,7 +113,7 @@ class EntityGenerateTest extends KernelTestBase implements MigrateMessageInterfa
     FieldConfig::create([
       'field_name' => 'field_integer',
       'entity_type' => 'node',
-      'bundle' => $this->bundle,
+      'bundle' => self::$bundle,
     ])->save();
 
     $this->migrationPluginManager = \Drupal::service('plugin.manager.migration');
@@ -151,7 +145,7 @@ class EntityGenerateTest extends KernelTestBase implements MigrateMessageInterfa
     $migration = $this->migrationPluginManager->createStubMigration($definition);
     $reflector = new \ReflectionObject($migration->getDestinationPlugin());
     $attribute = $reflector->getProperty('storage');
-    $attribute->setAccessible(true);
+    $attribute->setAccessible(TRUE);
     /** @var \Drupal\Core\Entity\EntityStorageBase $storage */
     $storage = $attribute->getValue($migration->getDestinationPlugin());
     $migrationExecutable = (new MigrateExecutable($migration, $this));
@@ -198,7 +192,7 @@ class EntityGenerateTest extends KernelTestBase implements MigrateMessageInterfa
                     $this->assertTrue($entity->{$property}[0]->entity->{$key}->isEmpty(), "Expected value is empty but field $property.$key is not empty.");
                   }
                   else {
-                    $this->assertTrue($entity->{$property}->isEmpty(), "BINBAZ Expected value is empty but field $property is not empty.");
+                    $this->assertTrue($entity->{$property}->isEmpty(), "Expected value is empty but field $property is not empty.");
                   }
                 }
                 elseif ($entity->{$property}->getValue()) {
@@ -224,10 +218,10 @@ class EntityGenerateTest extends KernelTestBase implements MigrateMessageInterfa
   /**
    * Test lookup without a reference field.
    */
-  public function testNonReferenceField() {
+  public function testNonReferenceField(): void {
     $values = [
       'name' => 'Apples',
-      'vid' => $this->vocabulary,
+      'vid' => self::$vocabulary,
       'langcode' => LanguageInterface::LANGCODE_NOT_SPECIFIED,
     ];
     $this->createTestData('taxonomy_term', $values);
@@ -251,7 +245,7 @@ class EntityGenerateTest extends KernelTestBase implements MigrateMessageInterfa
         'id' => 'id',
         'type' => [
           'plugin' => 'default_value',
-          'default_value' => $this->bundle,
+          'default_value' => self::$bundle,
         ],
         'title' => 'title',
         'field_integer' => [
@@ -289,7 +283,7 @@ class EntityGenerateTest extends KernelTestBase implements MigrateMessageInterfa
         'id' => 'id',
         'type' => [
           'plugin' => 'default_value',
-          'default_value' => $this->bundle,
+          'default_value' => self::$bundle,
         ],
         'title' => 'title',
         'field_integer' => [
@@ -297,7 +291,7 @@ class EntityGenerateTest extends KernelTestBase implements MigrateMessageInterfa
           'source' => 'term',
           'value_key' => 'name',
           'bundle_key' => 'vid',
-          'bundle' => $this->vocabulary,
+          'bundle' => self::$vocabulary,
           'entity_type' => 'taxonomy_term',
         ],
       ],
@@ -317,7 +311,7 @@ class EntityGenerateTest extends KernelTestBase implements MigrateMessageInterfa
   /**
    * Provides multiple migration definitions for "transform" test.
    */
-  public function transformDataProvider() {
+  public static function transformDataProvider(): array {
     return [
       'no arguments' => [
         'definition' => [
@@ -348,10 +342,10 @@ class EntityGenerateTest extends KernelTestBase implements MigrateMessageInterfa
             'id' => 'id',
             'type' => [
               'plugin' => 'default_value',
-              'default_value' => $this->bundle,
+              'default_value' => self::$bundle,
             ],
             'title' => 'title',
-            $this->fieldName => [
+            self::$fieldName => [
               'plugin' => 'entity_generate',
               'source' => 'term',
             ],
@@ -364,7 +358,7 @@ class EntityGenerateTest extends KernelTestBase implements MigrateMessageInterfa
           'row 1' => [
             'id' => 1,
             'title' => 'content item 1',
-            $this->fieldName => [
+            self::$fieldName => [
               'tid' => 2,
               'name' => 'Apples',
             ],
@@ -372,7 +366,7 @@ class EntityGenerateTest extends KernelTestBase implements MigrateMessageInterfa
           'row 2' => [
             'id' => 2,
             'title' => 'content item 2',
-            $this->fieldName => [
+            self::$fieldName => [
               'tid' => 3,
               'name' => 'Bananas',
             ],
@@ -380,16 +374,16 @@ class EntityGenerateTest extends KernelTestBase implements MigrateMessageInterfa
           'row 3' => [
             'id' => 3,
             'title' => 'content item 3',
-            $this->fieldName => [
+            self::$fieldName => [
               'tid' => 1,
               'name' => 'Grapes',
             ],
           ],
         ],
-        'pre seed' => [
+        'preSeed' => [
           'taxonomy_term' => [
             'name' => 'Grapes',
-            'vid' => $this->vocabulary,
+            'vid' => self::$vocabulary,
             'langcode' => LanguageInterface::LANGCODE_NOT_SPECIFIED,
           ],
         ],
@@ -423,10 +417,10 @@ class EntityGenerateTest extends KernelTestBase implements MigrateMessageInterfa
             'id' => 'id',
             'type' => [
               'plugin' => 'default_value',
-              'default_value' => $this->bundle,
+              'default_value' => self::$bundle,
             ],
             'title' => 'title',
-            $this->fieldName => [
+            self::$fieldName => [
               'plugin' => 'entity_lookup',
               'source' => 'term',
             ],
@@ -439,7 +433,7 @@ class EntityGenerateTest extends KernelTestBase implements MigrateMessageInterfa
           'row 1' => [
             'id' => 1,
             'title' => 'content item 1',
-            $this->fieldName => [
+            self::$fieldName => [
               'tid' => NULL,
               'name' => NULL,
             ],
@@ -447,7 +441,7 @@ class EntityGenerateTest extends KernelTestBase implements MigrateMessageInterfa
           'row 2' => [
             'id' => 2,
             'title' => 'content item 2',
-            $this->fieldName => [
+            self::$fieldName => [
               'tid' => NULL,
               'name' => NULL,
             ],
@@ -455,16 +449,16 @@ class EntityGenerateTest extends KernelTestBase implements MigrateMessageInterfa
           'row 3' => [
             'id' => 3,
             'title' => 'content item 3',
-            $this->fieldName => [
+            self::$fieldName => [
               'tid' => 1,
               'name' => 'Grapes',
             ],
           ],
         ],
-        'pre seed' => [
+        'preSeed' => [
           'taxonomy_term' => [
             'name' => 'Grapes',
-            'vid' => $this->vocabulary,
+            'vid' => self::$vocabulary,
             'langcode' => LanguageInterface::LANGCODE_NOT_SPECIFIED,
           ],
         ],
@@ -498,7 +492,7 @@ class EntityGenerateTest extends KernelTestBase implements MigrateMessageInterfa
             'id' => 'id',
             'type' => [
               'plugin' => 'default_value',
-              'default_value' => $this->bundle,
+              'default_value' => self::$bundle,
             ],
             'title' => 'title',
             'term_upper' => [
@@ -506,7 +500,7 @@ class EntityGenerateTest extends KernelTestBase implements MigrateMessageInterfa
               'source' => 'term',
               'callable' => 'strtoupper',
             ],
-            $this->fieldName => [
+            self::$fieldName => [
               'plugin' => 'entity_generate',
               'source' => 'term',
               'values' => [
@@ -522,7 +516,7 @@ class EntityGenerateTest extends KernelTestBase implements MigrateMessageInterfa
           'row 1' => [
             'id' => 1,
             'title' => 'content item 1',
-            $this->fieldName => [
+            self::$fieldName => [
               'tid' => 2,
               'name' => 'Apples',
               'description' => 'APPLES',
@@ -531,7 +525,7 @@ class EntityGenerateTest extends KernelTestBase implements MigrateMessageInterfa
           'row 2' => [
             'id' => 2,
             'title' => 'content item 2',
-            $this->fieldName => [
+            self::$fieldName => [
               'tid' => 3,
               'name' => 'Bananas',
               'description' => 'BANANAS',
@@ -540,17 +534,17 @@ class EntityGenerateTest extends KernelTestBase implements MigrateMessageInterfa
           'row 3' => [
             'id' => 3,
             'title' => 'content item 3',
-            $this->fieldName => [
+            self::$fieldName => [
               'tid' => 1,
               'name' => 'Grapes',
               'description' => NULL,
             ],
           ],
         ],
-        'pre seed' => [
+        'preSeed' => [
           'taxonomy_term' => [
             'name' => 'Grapes',
-            'vid' => $this->vocabulary,
+            'vid' => self::$vocabulary,
             'langcode' => LanguageInterface::LANGCODE_NOT_SPECIFIED,
           ],
         ],
@@ -587,7 +581,7 @@ class EntityGenerateTest extends KernelTestBase implements MigrateMessageInterfa
             'id' => 'id',
             'type' => [
               'plugin' => 'default_value',
-              'default_value' => $this->bundle,
+              'default_value' => self::$bundle,
             ],
             'title' => 'title',
             'term_upper' => [
@@ -595,7 +589,7 @@ class EntityGenerateTest extends KernelTestBase implements MigrateMessageInterfa
               'source' => 'term',
               'callable' => 'strtoupper',
             ],
-            $this->fieldName => [
+            self::$fieldName => [
               'plugin' => 'entity_generate',
               'source' => 'term',
               'values' => [
@@ -612,7 +606,7 @@ class EntityGenerateTest extends KernelTestBase implements MigrateMessageInterfa
           'row 1' => [
             'id' => 1,
             'title' => 'content item 1',
-            $this->fieldName => [
+            self::$fieldName => [
               'tid' => 2,
               'name' => 'APPLES',
               'description' => 'bar',
@@ -621,7 +615,7 @@ class EntityGenerateTest extends KernelTestBase implements MigrateMessageInterfa
           'row 2' => [
             'id' => 2,
             'title' => 'content item 2',
-            $this->fieldName => [
+            self::$fieldName => [
               'tid' => 3,
               'name' => 'BANANAS',
               'description' => 'bar',
@@ -630,17 +624,17 @@ class EntityGenerateTest extends KernelTestBase implements MigrateMessageInterfa
           'row 3' => [
             'id' => 3,
             'title' => 'content item 3',
-            $this->fieldName => [
+            self::$fieldName => [
               'tid' => 1,
               'name' => 'Grapes',
               'description' => NULL,
             ],
           ],
         ],
-        'pre seed' => [
+        'preSeed' => [
           'taxonomy_term' => [
             'name' => 'Grapes',
-            'vid' => $this->vocabulary,
+            'vid' => self::$vocabulary,
             'langcode' => LanguageInterface::LANGCODE_NOT_SPECIFIED,
           ],
         ],
@@ -664,10 +658,10 @@ class EntityGenerateTest extends KernelTestBase implements MigrateMessageInterfa
             'id' => 'id',
             'type' => [
               'plugin' => 'default_value',
-              'default_value' => $this->bundle,
+              'default_value' => self::$bundle,
             ],
             'title' => 'title',
-            $this->fieldName => [
+            self::$fieldName => [
               'plugin' => 'entity_lookup',
               'source' => 'term',
             ],
@@ -680,16 +674,16 @@ class EntityGenerateTest extends KernelTestBase implements MigrateMessageInterfa
           'row 1' => [
             'id' => 1,
             'title' => 'content item 1',
-            $this->fieldName => [
+            self::$fieldName => [
               'tid' => 1,
               'name' => 'Grapes',
             ],
           ],
         ],
-        'pre seed' => [
+        'preSeed' => [
           'taxonomy_term' => [
             'name' => 'Grapes',
-            'vid' => $this->vocabulary,
+            'vid' => self::$vocabulary,
             'langcode' => LanguageInterface::LANGCODE_NOT_SPECIFIED,
           ],
         ],
@@ -713,10 +707,10 @@ class EntityGenerateTest extends KernelTestBase implements MigrateMessageInterfa
             'id' => 'id',
             'type' => [
               'plugin' => 'default_value',
-              'default_value' => $this->bundle,
+              'default_value' => self::$bundle,
             ],
             'title' => 'title',
-            $this->fieldName => [
+            self::$fieldName => [
               'plugin' => 'entity_lookup',
               'source' => 'term',
             ],
@@ -729,13 +723,13 @@ class EntityGenerateTest extends KernelTestBase implements MigrateMessageInterfa
           'row 1' => [
             'id' => 1,
             'title' => 'content item 1',
-            $this->fieldName => [],
+            self::$fieldName => [],
           ],
         ],
-        'pre seed' => [
+        'preSeed' => [
           'taxonomy_term' => [
             'name' => 'Grapes',
-            'vid' => $this->vocabulary,
+            'vid' => self::$vocabulary,
             'langcode' => LanguageInterface::LANGCODE_NOT_SPECIFIED,
           ],
         ],
@@ -763,9 +757,9 @@ class EntityGenerateTest extends KernelTestBase implements MigrateMessageInterfa
             'title' => 'title',
             'type' => [
               'plugin' => 'default_value',
-              'default_value' => $this->bundle,
+              'default_value' => self::$bundle,
             ],
-            $this->fieldName => [
+            self::$fieldName => [
               'plugin' => 'entity_lookup',
               'source' => 'term',
             ],
@@ -778,7 +772,7 @@ class EntityGenerateTest extends KernelTestBase implements MigrateMessageInterfa
           'row 1' => [
             'id' => 1,
             'title' => 'content item 1',
-            $this->fieldName => [
+            self::$fieldName => [
               [
                 'tid' => 1,
                 'name' => 'Grapes',
@@ -790,16 +784,16 @@ class EntityGenerateTest extends KernelTestBase implements MigrateMessageInterfa
             ],
           ],
         ],
-        'pre seed' => [
+        'preSeed' => [
           'taxonomy_term' => [
             [
               'name' => 'Grapes',
-              'vid' => $this->vocabulary,
+              'vid' => self::$vocabulary,
               'langcode' => LanguageInterface::LANGCODE_NOT_SPECIFIED,
             ],
             [
               'name' => 'Apples',
-              'vid' => $this->vocabulary,
+              'vid' => self::$vocabulary,
               'langcode' => LanguageInterface::LANGCODE_NOT_SPECIFIED,
             ],
           ],
@@ -828,9 +822,9 @@ class EntityGenerateTest extends KernelTestBase implements MigrateMessageInterfa
             'title' => 'title',
             'type' => [
               'plugin' => 'default_value',
-              'default_value' => $this->bundle,
+              'default_value' => self::$bundle,
             ],
-            $this->fieldName => [
+            self::$fieldName => [
               'plugin' => 'entity_lookup',
               'source' => 'term',
             ],
@@ -843,7 +837,7 @@ class EntityGenerateTest extends KernelTestBase implements MigrateMessageInterfa
           'row 1' => [
             'id' => '1',
             'title' => 'content item 1',
-            $this->fieldName => [
+            self::$fieldName => [
               [
                 'tid' => 1,
                 'name' => 'Grapes',
@@ -851,16 +845,16 @@ class EntityGenerateTest extends KernelTestBase implements MigrateMessageInterfa
             ],
           ],
         ],
-        'pre seed' => [
+        'preSeed' => [
           'taxonomy_term' => [
             [
               'name' => 'Grapes',
-              'vid' => $this->vocabulary,
+              'vid' => self::$vocabulary,
               'langcode' => LanguageInterface::LANGCODE_NOT_SPECIFIED,
             ],
             [
               'name' => 'Apples',
-              'vid' => $this->vocabulary,
+              'vid' => self::$vocabulary,
               'langcode' => LanguageInterface::LANGCODE_NOT_SPECIFIED,
             ],
           ],
@@ -886,9 +880,9 @@ class EntityGenerateTest extends KernelTestBase implements MigrateMessageInterfa
             'title' => 'title',
             'type' => [
               'plugin' => 'default_value',
-              'default_value' => $this->bundle,
+              'default_value' => self::$bundle,
             ],
-            $this->fieldName => [
+            self::$fieldName => [
               'plugin' => 'entity_lookup',
               'source' => 'term',
             ],
@@ -901,13 +895,13 @@ class EntityGenerateTest extends KernelTestBase implements MigrateMessageInterfa
           'row 1' => [
             'id' => 1,
             'title' => 'content item 1',
-            $this->fieldName => [],
+            self::$fieldName => [],
           ],
         ],
-        'pre seed' => [
+        'preSeed' => [
           'taxonomy_term' => [
             'name' => 'Grapes',
-            'vid' => $this->vocabulary,
+            'vid' => self::$vocabulary,
             'langcode' => LanguageInterface::LANGCODE_NOT_SPECIFIED,
           ],
         ],
@@ -952,7 +946,7 @@ class EntityGenerateTest extends KernelTestBase implements MigrateMessageInterfa
             ],
           ],
         ],
-        'pre seed' => [
+        'preSeed' => [
           'user_role' => [
             'id' => 'role_1',
             'label' => 'Role 1',
@@ -965,7 +959,7 @@ class EntityGenerateTest extends KernelTestBase implements MigrateMessageInterfa
   /**
    * {@inheritdoc}
    */
-  public function display($message, $type = 'status') {
+  public function display($message, $type = 'status'): void {
     $this->assertTrue($type == 'status', $message);
   }
 

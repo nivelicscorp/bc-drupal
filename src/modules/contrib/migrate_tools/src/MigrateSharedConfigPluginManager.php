@@ -1,15 +1,15 @@
 <?php
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Drupal\migrate_tools;
 
 use Drupal\Component\Plugin\Discovery\DiscoveryInterface;
 use Drupal\Core\Cache\CacheBackendInterface;
-use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Plugin\DefaultPluginManager;
 use Drupal\Core\Plugin\Discovery\YamlDiscovery;
 use Drupal\Core\Plugin\Factory\ContainerFactory;
+use Drupal\migrate_tools\Discovery\YamlDiscoveryDecorator;
 
 /**
  * Defines a plugin manager to deal with migrate_shared_configuration.
@@ -46,9 +46,11 @@ final class MigrateSharedConfigPluginManager extends DefaultPluginManager {
     'class' => MigrateSharedConfigDefault::class,
   ];
 
-  public function __construct(ModuleHandlerInterface $module_handler, CacheBackendInterface $cache_backend) {
+  public function __construct(
+    protected $moduleHandler,
+    CacheBackendInterface $cache_backend,
+  ) {
     $this->factory = new ContainerFactory($this);
-    $this->moduleHandler = $module_handler;
     $this->alterInfo('migrate_shared_configuration_info');
     $this->setCacheBackend($cache_backend, 'migrate_shared_configuration_plugins');
   }
@@ -58,7 +60,13 @@ final class MigrateSharedConfigPluginManager extends DefaultPluginManager {
    */
   protected function getDiscovery(): DiscoveryInterface {
     if (!isset($this->discovery)) {
-      $this->discovery = new YamlDiscovery('migrate_shared_configuration', $this->moduleHandler->getModuleDirectories());
+      // @todo Remove this in 7.0.0.
+      $old_discovery = new YamlDiscovery('migrate_shared_configuration', $this->moduleHandler->getModuleDirectories());
+
+      $directories = array_map(function ($directory) {
+        return [$directory . '/migrate_shared_configuration'];
+      }, $this->moduleHandler->getModuleDirectories());
+      $this->discovery = new YamlDiscoveryDecorator($old_discovery, $directories, 'migrate_shared_configuration');
     }
     return $this->discovery;
   }

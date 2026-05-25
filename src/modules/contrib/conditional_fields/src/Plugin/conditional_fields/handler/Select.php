@@ -33,12 +33,7 @@ class Select extends ConditionalFieldsHandlerBase {
         return $this->widgetCase($field, $options);
 
       case ConditionalFieldsInterface::CONDITIONAL_FIELDS_DEPENDENCY_VALUES_AND:
-        if (isset($state[$options['state']][$options['selector']]['value'])) {
-          $state[$options['state']][$options['selector']]['value'] = (array) $state[$options['state']][$options['selector']]['value'];
-        }
-        else {
-          $state[$options['state']][$options['selector']]['value'] = $values_array;
-        }
+        $state[$options['state']][$options['selector']]['value'] = $values_array;
         break;
 
       case ConditionalFieldsInterface::CONDITIONAL_FIELDS_DEPENDENCY_VALUES_XOR:
@@ -61,6 +56,7 @@ class Select extends ConditionalFieldsHandlerBase {
         $options['state'] = '!' . $options['state'];
       case ConditionalFieldsInterface::CONDITIONAL_FIELDS_DEPENDENCY_VALUES_OR:
         foreach ((array) $options['values'] as $value) {
+          $field['#multiple'] && $value = [$value];
           $select_states[$options['state']][$options['selector']][] = [$options['condition'] => $value];
         }
         $state = $select_states;
@@ -81,7 +77,7 @@ class Select extends ConditionalFieldsHandlerBase {
       return $state;
     }
 
-    if (!empty($options['value_form'][0][$key_column]) && $options['field_cardinality'] == 1) {
+    if (isset($options['value_form'][0][$key_column]) && $options['field_cardinality'] == 1) {
       $state[$options['state']][$options['selector']] = [
         'value' => $options['value_form'][0][$key_column],
       ];

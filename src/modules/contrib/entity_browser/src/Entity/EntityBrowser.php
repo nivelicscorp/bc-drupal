@@ -6,9 +6,9 @@ use Drupal\Core\Config\Entity\ConfigEntityBase;
 use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Entity\EntityWithPluginCollectionInterface;
 use Drupal\Core\Plugin\DefaultSingleLazyPluginCollection;
+use Drupal\entity_browser\DisplayRouterInterface;
 use Drupal\entity_browser\EntityBrowserInterface;
 use Drupal\entity_browser\WidgetInterface;
-use Drupal\entity_browser\DisplayRouterInterface;
 use Drupal\entity_browser\WidgetsCollection;
 use Symfony\Component\Routing\Route;
 
@@ -30,7 +30,6 @@ use Symfony\Component\Routing\Route;
  *     "list_builder" = "Drupal\entity_browser\Controllers\EntityBrowserListBuilder",
  *   },
  *   links = {
- *     "canonical" = "/admin/config/content/entity_browser/{entity_browser}",
  *     "collection" = "/admin/config/content/entity_browser",
  *     "edit-form" = "/admin/config/content/entity_browser/{entity_browser}/edit",
  *     "edit-widgets" = "/admin/config/content/entity_browser/{entity_browser}/edit_widgets",
@@ -204,7 +203,7 @@ class EntityBrowser extends ConfigEntityBase implements EntityBrowserInterface, 
    */
   public function setDisplay($display) {
     $this->display = $display;
-    $this->displayPluginCollection = NULL;
+    $this->displayCollection = NULL;
     $this->display_configuration = [];
     $this->getDisplay();
     return $this;
@@ -320,7 +319,7 @@ class EntityBrowser extends ConfigEntityBase implements EntityBrowserInterface, 
    * {@inheritdoc}
    */
   public function addAdditionalWidgetParameters(array $parameters) {
-    // TODO - this doesn't make much sense. Refactor.
+    // @todo this doesn't make much sense. Refactor.
     $this->additional_widget_parameters += $parameters;
     return $this;
   }
@@ -329,7 +328,7 @@ class EntityBrowser extends ConfigEntityBase implements EntityBrowserInterface, 
    * {@inheritdoc}
    */
   public function getAdditionalWidgetParameters() {
-    // TODO - this doesn't make much sense. Refactor.
+    // @todo this doesn't make much sense. Refactor.
     return $this->get('additional_widget_parameters');
   }
 
@@ -383,7 +382,7 @@ class EntityBrowser extends ConfigEntityBase implements EntityBrowserInterface, 
    * {@inheritdoc}
    */
   public function route() {
-    // TODO: Allow displays to define more than just path.
+    // @todo Allow displays to define more than just path.
     // See: https://www.drupal.org/node/2364193
     $display = $this->getDisplay();
     if ($display instanceof DisplayRouterInterface) {
@@ -425,7 +424,7 @@ class EntityBrowser extends ConfigEntityBase implements EntityBrowserInterface, 
    * Prevents plugin collections from being serialized and correctly serializes
    * selected entities.
    */
-  public function __sleep() {
+  public function __sleep(): array {
     // Save configuration for all plugins.
     $this->widgets = $this->getWidgets()->getConfiguration();
     $this->widget_selector_configuration = $this->widgetSelectorPluginCollection()->getConfiguration();

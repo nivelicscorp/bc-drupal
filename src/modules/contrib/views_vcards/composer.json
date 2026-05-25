@@ -17,9 +17,9 @@
   "license": "GPL-2.0+",
   "minimum-stability": "dev",
   "require": {
-    "maennchen/zipstream-php": "^2.1"
+    "maennchen/zipstream-php": "^2.0 || ^3.0"
   },
-  "require-dev" : {
+  "require-dev": {
     "ext-zip": "*"
   }
 }

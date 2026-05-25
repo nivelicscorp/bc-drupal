@@ -2,13 +2,13 @@
 
 namespace Drupal\fullcalendar_view\Controller;
 
-use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Drupal\Core\Access\CsrfTokenGenerator;
 use Drupal\Core\Controller\ControllerBase;
-use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
+use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 /**
  * Calendar Event Controller.
@@ -20,7 +20,7 @@ class CalendarEventController extends ControllerBase {
    *
    * @var \Drupal\Core\Access\CsrfTokenGenerator
    */
-  private $csrfToken;
+  protected $csrfToken;
 
   /**
    * Construct the Controller.
@@ -93,7 +93,7 @@ class CalendarEventController extends ControllerBase {
                   ];
                 }
                 else {
-                  ($entity->$start_field)[0] = ['value' => $start_date];
+                  ($entity->$start_field)[0] = ['value' => substr($start_date, 0, $length)];
                 }
               }
             }
@@ -111,7 +111,7 @@ class CalendarEventController extends ControllerBase {
                   $entity->$start_field->value = gmdate("Y-m-d\TH:i:s", strtotime($start_date));
                 }
                 else {
-                  $entity->$start_field->value = $start_date;
+                  $entity->$start_field->value = substr($start_date, 0, $length);
                 }
               }
             }
@@ -130,7 +130,7 @@ class CalendarEventController extends ControllerBase {
                     ];
                   }
                   else {
-                    ($entity->$end_field)[0] = ['value' => $end_date];
+                    ($entity->$end_field)[0] = ['value' => substr($end_date, 0, $length)];
                   }
                 }
                 // Daterange field.
@@ -142,7 +142,13 @@ class CalendarEventController extends ControllerBase {
                     ($entity->$end_field)[0]->end_value = gmdate("Y-m-d\TH:i:s", strtotime($end_date));
                   }
                   else {
-                    ($entity->$end_field)[0]->end_value = $end_date;
+                    if ($length == strlen($end_date)) {
+                      ($entity->$end_field)[0]->end_value = $end_date;
+                    }
+                    else {
+                      ($entity->$end_field)[0]->end_value = substr($end_date, 0, $length ? : strlen($end_date));
+                    }
+
                   }
                 }
                 // Timestamp field.
@@ -161,7 +167,12 @@ class CalendarEventController extends ControllerBase {
                     $entity->$end_field->value = gmdate("Y-m-d\TH:i:s", strtotime($end_date));
                   }
                   else {
-                    $entity->$end_field->value = $end_date;
+                    if ($length == strlen($end_date)) {
+                      $entity->$end_field->value = $end_date;
+                    }
+                    else {
+                      $entity->$end_field->value = substr($end_date, 0, $length ? : strlen($end_date));
+                    }
                   }
                 }
                 // Daterange field.
@@ -173,7 +184,12 @@ class CalendarEventController extends ControllerBase {
                     $entity->$end_field->end_value = gmdate("Y-m-d\TH:i:s", strtotime($end_date));
                   }
                   else {
-                    $entity->$end_field->end_value = $end_date;
+                    if ($length == strlen($end_date)) {
+                      $entity->$end_field->end_value = $end_date;
+                    }
+                    else {
+                      $entity->$end_field->end_value = substr($end_date, 0, $length ? : strlen($end_date));
+                    }
                   }
                 }
                 // Timestamp field.
@@ -186,14 +202,11 @@ class CalendarEventController extends ControllerBase {
             $entity->save();
             // Log the content changed.
             $this->loggerFactory->get($entity_type)->notice('%entity_type: updated %title', [
-              '%entity_type' => $entity->getType(),
-              '%title' => $entity->getTitle(),
+              '%entity_type' => $entity->getEntityType()->getLabel(),
+              '%title' => $entity->label(),
             ]);
-            return new Response($this->t('%title is updated to from %start to %end', [
-              '%title' => $entity->getTitle(),
-              '%start' => $start_date,
-              '%end' => $end_date,
-            ]));
+            // Returen 1 as success.
+            return new Response(1);
           }
 
         }
@@ -224,7 +237,6 @@ class CalendarEventController extends ControllerBase {
     $bundle = $request->get('bundle', '');
     $start_field = $request->get('start_field', '');
     $end_field = $request->get('end_field', '');
-    $form = [];
 
     if (!empty($bundle) && !empty($entity_type_id)) {
       $access_control_handler = $this->entityTypeManager()->getAccessControlHandler($entity_type_id);
@@ -235,7 +247,7 @@ class CalendarEventController extends ControllerBase {
         ];
         // Create a new event entity for this form.
         $entity = $this->entityTypeManager()
-        ->getStorage($entity_type_id)
+          ->getStorage($entity_type_id)
           ->create($data);
 
         if (!empty($entity)) {

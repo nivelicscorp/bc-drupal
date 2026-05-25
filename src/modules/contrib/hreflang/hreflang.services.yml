@@ -1,0 +1,7 @@
+services:
+
+  hreflang.config_subscriber:
+    class: Drupal\hreflang\EventSubscriber\HreflangConfigSubscriber
+    arguments: ['@cache_tags.invalidator', '@messenger']
+    tags:
+      - { name: event_subscriber }

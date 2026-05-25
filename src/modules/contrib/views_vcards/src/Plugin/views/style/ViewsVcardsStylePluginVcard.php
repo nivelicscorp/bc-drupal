@@ -2,8 +2,8 @@
 
 namespace Drupal\views_vcards\Plugin\views\style;
 
-use Drupal\views\Plugin\views\style\StylePluginBase;
 use Drupal\Core\Url;
+use Drupal\views\Plugin\views\style\StylePluginBase;
 
 /**
  * Default style plugin to render one or more vCards.

@@ -78,6 +78,7 @@ class EntityHelper {
       if ($entity_type_id === 'menu_link_content') {
         $bundle_info = [];
 
+        // phpcs:ignore DrupalPractice.Objects.GlobalClass.GlobalClass
         foreach (Menu::loadMultiple() as $menu) {
           $bundle_info[$menu->id()]['label'] = $menu->label();
         }
@@ -121,7 +122,10 @@ class EntityHelper {
    *   The bundle of the entity.
    */
   public function getEntityBundle(EntityInterface $entity): string {
-    return $entity->getEntityTypeId() === 'menu_link_content' && method_exists($entity, 'getMenuName') ? $entity->getMenuName() : $entity->bundle();
+    $bundle = $entity->getEntityTypeId() === 'menu_link_content' && method_exists($entity, 'getMenuName')
+      ? ($entity->getMenuName() ?? $entity->bundle())
+      : $entity->bundle();
+    return $bundle ?? $entity->getEntityTypeId();
   }
 
   /**
@@ -161,9 +165,14 @@ class EntityHelper {
    *
    * @return bool
    *   TRUE if entity type is supported, FALSE if not.
+   *
+   * @see \Drupal\commerce_product\Entity\ProductVariation::toUrl()
+   * @see https://www.drupal.org/project/simple_sitemap/issues/3458079
    */
   public function supports(EntityTypeInterface $entity_type): bool {
-    return $entity_type instanceof ContentEntityTypeInterface && $entity_type->hasLinkTemplate('canonical');
+    // A product variation is a special case because it doesn't have a canonical
+    // link template. Product variation URLs depend on the parent product.
+    return $entity_type instanceof ContentEntityTypeInterface && ($entity_type->hasLinkTemplate('canonical') || $entity_type->id() === 'commerce_product_variation');
   }
 
   /**
@@ -194,7 +203,7 @@ class EntityHelper {
   /**
    * Gets the entity from URL object.
    *
-   * @param \Drupal\Core\Url $url_object
+   * @param \Drupal\Core\Url $url
    *   The URL object.
    *
    * @return \Drupal\Core\Entity\EntityInterface|null
@@ -203,19 +212,21 @@ class EntityHelper {
    * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
    * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
    */
-  public function getEntityFromUrlObject(Url $url_object): ?EntityInterface {
-    if ($url_object->isRouted()) {
+  public function getEntityFromUrlObject(Url $url): ?EntityInterface {
+    if ($url->isRouted()) {
 
       // Fix for the homepage, see
       // https://www.drupal.org/project/simple_sitemap/issues/3194130.
-      if ($url_object->getRouteName() === '<front>' &&
+      if ($url->getRouteName() === '<front>' &&
         !empty($uri = $this->configFactory->get('system.site')->get('page.front'))) {
-        $url_object = Url::fromUri('internal:' . $uri);
+        $url = Url::fromUri('internal:' . $uri);
       }
 
-      if (!empty($route_parameters = $url_object->getRouteParameters())
-        && $this->entityTypeManager->getDefinition($entity_type_id = key($route_parameters), FALSE)) {
-        return $this->entityTypeManager->getStorage($entity_type_id)->load($route_parameters[$entity_type_id]);
+      foreach ($url->getRouteParameters() as $entity_type_id => $entity_id) {
+        if ($entity_id && $this->entityTypeManager->hasDefinition($entity_type_id)
+          && $entity = $this->entityTypeManager->getStorage($entity_type_id)->load($entity_id)) {
+          return $entity;
+        }
       }
     }
 

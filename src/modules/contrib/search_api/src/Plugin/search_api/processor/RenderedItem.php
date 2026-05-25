@@ -2,20 +2,24 @@
 
 namespace Drupal\search_api\Plugin\search_api\processor;
 
-use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Component\Utility\DeprecationHelper;
 use Drupal\Core\Entity\Entity\EntityViewMode;
 use Drupal\Core\Link;
+use Drupal\Core\Logger\RfcLogLevel;
 use Drupal\Core\Render\RendererInterface;
 use Drupal\Core\Session\AccountSwitcherInterface;
 use Drupal\Core\Session\UserSession;
-use Drupal\Core\Theme\ThemeInitializationInterface;
-use Drupal\Core\Theme\ThemeManagerInterface;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\Url;
+use Drupal\Core\Utility\Error;
+use Drupal\search_api\Attribute\SearchApiProcessor;
 use Drupal\search_api\Datasource\DatasourceInterface;
 use Drupal\search_api\Item\ItemInterface;
 use Drupal\search_api\LoggerTrait;
 use Drupal\search_api\Plugin\search_api\processor\Property\RenderedItemProperty;
 use Drupal\search_api\Processor\ProcessorPluginBase;
+use Drupal\search_api\Utility\PostRequestIndexingInterface;
+use Drupal\search_api\Utility\ThemeSwitcherInterface;
 use Drupal\user\RoleInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -23,18 +27,17 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  * Adds an additional field containing the rendered item.
  *
  * @see \Drupal\search_api\Plugin\search_api\processor\Property\RenderedItemProperty
- *
- * @SearchApiProcessor(
- *   id = "rendered_item",
- *   label = @Translation("Rendered item"),
- *   description = @Translation("Adds an additional field containing the rendered item as it would look when viewed."),
- *   stages = {
- *     "add_properties" = 0,
- *   },
- *   locked = true,
- *   hidden = true,
- * )
  */
+#[SearchApiProcessor(
+  id: 'rendered_item',
+  label: new TranslatableMarkup('Rendered item'),
+  description: new TranslatableMarkup('Adds an additional field containing the rendered item as it would look when viewed.'),
+  stages: [
+    'add_properties' => 0,
+  ],
+  locked: TRUE,
+  hidden: TRUE,
+)]
 class RenderedItem extends ProcessorPluginBase {
 
   use LoggerTrait;
@@ -54,25 +57,16 @@ class RenderedItem extends ProcessorPluginBase {
   protected $renderer;
 
   /**
-   * Theme manager service.
+   * The theme switcher.
    *
-   * @var \Drupal\Core\Theme\ThemeManagerInterface
+   * @var \Drupal\search_api\Utility\ThemeSwitcherInterface|null
    */
-  protected $themeManager;
+  protected $themeSwitcher;
 
   /**
-   * Theme initialization service.
-   *
-   * @var \Drupal\Core\Theme\ThemeInitializationInterface
+   * The post request indexing service.
    */
-  protected $themeInitialization;
-
-  /**
-   * Theme settings config.
-   *
-   * @var \Drupal\Core\Config\ConfigFactoryInterface
-   */
-  protected $configFactory;
+  protected PostRequestIndexingInterface $postRequestIndexing;
 
   /**
    * {@inheritdoc}
@@ -83,10 +77,9 @@ class RenderedItem extends ProcessorPluginBase {
 
     $plugin->setAccountSwitcher($container->get('account_switcher'));
     $plugin->setRenderer($container->get('renderer'));
+    $plugin->setThemeSwitcher($container->get('search_api.theme_switcher'));
+    $plugin->setPostRequestIndexing($container->get('search_api.post_request_indexing'));
     $plugin->setLogger($container->get('logger.channel.search_api'));
-    $plugin->setThemeManager($container->get('theme.manager'));
-    $plugin->setThemeInitializer($container->get('theme.initialization'));
-    $plugin->setConfigFactory($container->get('config.factory'));
 
     return $plugin;
   }
@@ -138,71 +131,48 @@ class RenderedItem extends ProcessorPluginBase {
   }
 
   /**
-   * Retrieves the theme manager.
+   * Retrieves the theme switcher.
    *
-   * @return \Drupal\Core\Theme\ThemeManagerInterface
-   *   The theme manager.
+   * @return \Drupal\search_api\Utility\ThemeSwitcherInterface
+   *   The theme switcher.
    */
-  protected function getThemeManager() {
-    return $this->themeManager ?: \Drupal::theme();
+  public function getThemeSwitcher(): ThemeSwitcherInterface {
+    return $this->themeSwitcher ?: \Drupal::service('search_api.theme_switcher');
   }
 
   /**
-   * Sets the theme manager.
+   * Sets the theme switcher.
    *
-   * @param \Drupal\Core\Theme\ThemeManagerInterface $theme_manager
-   *   The theme manager.
+   * @param \Drupal\search_api\Utility\ThemeSwitcherInterface $theme_switcher
+   *   The new theme switcher.
    *
    * @return $this
    */
-  protected function setThemeManager(ThemeManagerInterface $theme_manager) {
-    $this->themeManager = $theme_manager;
+  public function setThemeSwitcher(ThemeSwitcherInterface $theme_switcher): self {
+    $this->themeSwitcher = $theme_switcher;
     return $this;
   }
 
   /**
-   * Retrieves the theme initialization service.
+   * Retrieves the post request indexing service.
    *
-   * @return \Drupal\Core\Theme\ThemeInitializationInterface
-   *   The theme initialization service.
+   * @return \Drupal\search_api\Utility\PostRequestIndexingInterface
+   *   The post request indexing service.
    */
-  protected function getThemeInitializer() {
-    return $this->themeInitialization ?: \Drupal::service('theme.initialization');
+  public function getPostRequestIndexing(): PostRequestIndexingInterface {
+    return $this->postRequestIndexing ?? \Drupal::service('search_api.post_request_indexing');
   }
 
   /**
-   * Sets the theme initialization service.
+   * Sets the post request indexing service.
    *
-   * @param \Drupal\Core\Theme\ThemeInitializationInterface $theme_initialization
-   *   The theme initialization service.
+   * @param \Drupal\search_api\Utility\PostRequestIndexingInterface $post_request_indexing
+   *   The new post request indexing service.
    *
    * @return $this
    */
-  protected function setThemeInitializer(ThemeInitializationInterface $theme_initialization) {
-    $this->themeInitialization = $theme_initialization;
-    return $this;
-  }
-
-  /**
-   * Retrieves the config factory service.
-   *
-   * @return \Drupal\Core\Config\ConfigFactoryInterface
-   *   The config factory.
-   */
-  protected function getConfigFactory() {
-    return $this->configFactory ?: \Drupal::configFactory();
-  }
-
-  /**
-   * Sets the config factory service.
-   *
-   * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
-   *   The config factory.
-   *
-   * @return $this
-   */
-  protected function setConfigFactory(ConfigFactoryInterface $config_factory) {
-    $this->configFactory = $config_factory;
+  public function setPostRequestIndexing(PostRequestIndexingInterface $post_request_indexing,): static {
+    $this->postRequestIndexing = $post_request_indexing;
     return $this;
   }
 
@@ -212,7 +182,7 @@ class RenderedItem extends ProcessorPluginBase {
   /**
    * {@inheritdoc}
    */
-  public function getPropertyDefinitions(DatasourceInterface $datasource = NULL) {
+  public function getPropertyDefinitions(?DatasourceInterface $datasource = NULL) {
     $properties = [];
 
     if (!$datasource) {
@@ -234,20 +204,7 @@ class RenderedItem extends ProcessorPluginBase {
   public function addFieldValues(ItemInterface $item) {
     // Switch to the default theme in case the admin theme (or any other theme)
     // is enabled.
-    $active_theme = $this->getThemeManager()->getActiveTheme();
-    $default_theme = $this->getConfigFactory()
-      ->get('system.theme')
-      ->get('default');
-    $default_theme = $this->getThemeInitializer()
-      ->getActiveThemeByName($default_theme);
-    $active_theme_switched = FALSE;
-    if ($default_theme->getName() !== $active_theme->getName()) {
-      $this->getThemeManager()->setActiveTheme($default_theme);
-      // Ensure that static cached default variables are set correctly,
-      // especially the directory variable.
-      drupal_static_reset('template_preprocess');
-      $active_theme_switched = TRUE;
-    }
+    $previous_theme = $this->getThemeSwitcher()->switchToDefault();
 
     // Fields for which some view mode config is missing.
     $unset_view_modes = [];
@@ -268,34 +225,50 @@ class RenderedItem extends ProcessorPluginBase {
       // Change the current user to our dummy implementation to ensure we are
       // using the configured roles.
       $this->getAccountSwitcher()
-        ->switchTo(new UserSession(['roles' => array_values($roles)]));
+        ->switchTo(new UserSession([
+          'roles' => array_values($roles),
+          'search_api_processor' => 'rendered_item',
+        ]));
 
       $datasource_id = $item->getDatasourceId();
       $datasource = $item->getDatasource();
       $bundle = $datasource->getItemBundle($item->getOriginalObject());
+      $datasource_config = $configuration['view_mode'][$datasource_id] ?? [];
+      // If the view mode was not set, or explicitly set to ":default", try to
+      // get the global value.
+      if (($datasource_config[$bundle] ?? ':default') === ':default') {
+        $datasource_config[$bundle] = $datasource_config[':default'] ?? NULL;
+      }
       // When no view mode has been set for the bundle, or it has been set to
       // "Don't include the rendered item", skip this item.
-      if (empty($configuration['view_mode'][$datasource_id][$bundle])) {
+      if (empty($datasource_config[$bundle])) {
         // If it was really not set, also notify the user through the log.
-        if (!isset($configuration['view_mode'][$datasource_id][$bundle])) {
-          $unset_view_modes[$field->getFieldIdentifier()] = $field->getLabel();
+        if (!isset($datasource_config[$bundle])) {
+          $unset_view_modes[$field->getFieldIdentifier()] = $field->getLabel() ?? $field->getFieldIdentifier();
         }
+        // Restore the original user.
+        $this->getAccountSwitcher()->switchBack();
         continue;
       }
-      $view_mode = (string) $configuration['view_mode'][$datasource_id][$bundle];
+      $view_mode = (string) $datasource_config[$bundle];
 
       try {
         $build = $datasource->viewItem($item->getOriginalObject(), $view_mode);
         if ($build) {
-          // Add the excerpt to the render array to allow adding it to view modes.
+          // Add the excerpt to the render array to allow adding it to view
+          // modes.
           $build['#search_api_excerpt'] = $item->getExcerpt();
-          $value = (string) $this->getRenderer()->renderPlain($build);
+          $value = (string) DeprecationHelper::backwardsCompatibleCall(
+            \Drupal::VERSION, '10.3.0',
+            fn () => $this->getRenderer()->renderInIsolation($build),
+            fn () => $this->getRenderer()->renderPlain($build),
+          );
           if ($value) {
             $field->addValue($value);
           }
         }
       }
-      catch (\Exception $e) {
+      catch (\Throwable $e) {
         // This could throw all kinds of exceptions in specific scenarios, so we
         // just catch all of them here. Not having a field value for this field
         // probably makes sense in that case, so we just log an error and
@@ -303,38 +276,50 @@ class RenderedItem extends ProcessorPluginBase {
         $variables = [
           '%item_id' => $item->getId(),
           '%view_mode' => $view_mode,
-          '%index' => $this->index->label(),
+          '%index' => $this->index->label() ?? $this->index->id(),
         ];
-        $this->logException($e, '%type while trying to render item %item_id with view mode %view_mode for search index %index: @message in %function (line %line of %file).', $variables);
-      }
-    }
+        $variables += Error::decodeException($e);
+        $level = RfcLogLevel::ERROR;
 
-    // Restore the original user.
-    $this->getAccountSwitcher()->switchBack();
+        // Special case: If this happened during post-request indexing (that is,
+        // via the "Index items immediately" functionality) there is a chance
+        // that this problem doesn't occur when indexing during cron. Therefore,
+        // add a warning to the item so it will not be marked as "indexed" in
+        // the tracker and will get reindexed during the next cron run.
+        if ($this->getPostRequestIndexing()->isIndexingActive()) {
+          $item->addWarning($this->t('%type while trying to render item %item_id with view mode %view_mode for search index %index: @message in %function (line %line of %file).', $variables));
+          // Only log a warning in this case instead of an error. If rendering
+          // still fails during cron then an error will be logged at that point.
+          $level = RfcLogLevel::WARNING;
+        }
+        $this->getLogger()->log(
+          $level,
+          '%type while trying to render item %item_id with view mode %view_mode for search index %index: @message in %function (line %line of %file).',
+          $variables,
+        );
+      }
+
+      // Restore the original user.
+      $this->getAccountSwitcher()->switchBack();
+    }
 
     // Restore the original theme if themes got switched before.
-    if ($active_theme_switched) {
-      $this->getThemeManager()->setActiveTheme($active_theme);
-      // Ensure that static cached default variables are set correctly,
-      // especially the directory variable.
-      drupal_static_reset('template_preprocess');
-    }
+    $this->getThemeSwitcher()->switchBack($previous_theme);
 
-    if ($unset_view_modes > 0) {
-      foreach ($unset_view_modes as $field_id => $field_label) {
-        $url = new Url('entity.search_api_index.field_config', [
-          'search_api_index' => $this->index->id(),
-          'field_id' => $field_id,
-        ]);
-        $context = [
-          '%index' => $this->index->label(),
-          '%field_id' => $field_id,
-          '%field_label' => $field_label,
-          'link' => (new Link($this->t('Field settings'), $url))->toString(),
-        ];
-        $this->getLogger()
-          ->warning('The field %field_label (%field_id) on index %index is missing view mode configuration for some datasources or bundles. Please review (and re-save) the field settings.', $context);
-      }
+    // Log a warning for any unset view modes.
+    foreach ($unset_view_modes as $field_id => $field_label) {
+      $url = new Url('entity.search_api_index.field_config', [
+        'search_api_index' => $this->index->id(),
+        'field_id' => $field_id,
+      ]);
+      $context = [
+        '%index' => $this->index->label(),
+        '%field_id' => $field_id,
+        '%field_label' => $field_label,
+        'link' => (new Link($this->t('Field settings'), $url))->toString(),
+      ];
+      $this->getLogger()
+        ->warning('The field %field_label (%field_id) on index %index is missing view mode configuration for some datasources or bundles. Review (and re-save) the field settings.', $context);
     }
   }
 

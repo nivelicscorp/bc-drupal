@@ -12,14 +12,14 @@ class MenuBlockTitle implements TrustedCallbackInterface {
   /**
    * {@inheritdoc}
    */
-  public static function trustedCallbacks() {
+  public static function trustedCallbacks(): array {
     return ['preRender'];
   }
 
   /**
    * The preRender callback which modifies the build output.
    */
-  public static function preRender($build) {
+  public static function preRender($build): array {
     $items = [];
 
     if (!isset($build['#derivative_plugin_id'])) {
@@ -49,8 +49,6 @@ class MenuBlockTitle implements TrustedCallbackInterface {
           '#title' => $item['title'],
         ];
         $build['#configuration']['label'] = $linked_title;
-
-        continue;
       }
     }
 

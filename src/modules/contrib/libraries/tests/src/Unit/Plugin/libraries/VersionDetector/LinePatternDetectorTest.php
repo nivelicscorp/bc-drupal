@@ -2,6 +2,7 @@
 
 namespace Drupal\Tests\libraries\Unit\Plugin\libraries\VersionDetector;
 
+use Prophecy\PhpUnit\ProphecyTrait;
 use Drupal\libraries\ExternalLibrary\Local\LocalLibraryInterface;
 use Drupal\libraries\ExternalLibrary\Version\VersionedLibraryInterface;
 use Drupal\libraries\Plugin\libraries\VersionDetector\LinePatternDetector;
@@ -18,6 +19,7 @@ use org\bovigo\vfs\vfsStream;
  */
 class LinePatternDetectorTest extends UnitTestCase {
 
+  use ProphecyTrait;
   protected $libraryId = 'test_library';
 
   /**
@@ -65,7 +67,7 @@ class LinePatternDetectorTest extends UnitTestCase {
   /**
    * @return array
    */
-  public function providerTestDetectVersionNoVersion() {
+  public static function providerTestDetectVersionNoVersion(): array {
     $test_cases = [];
 
     $configuration = [
@@ -125,7 +127,7 @@ EOF
   /**
    * @return array
    */
-  public function providerTestDetectVersion() {
+  public static function providerTestDetectVersion(): array {
     $test_cases = [];
 
     $configuration = [

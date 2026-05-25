@@ -3,29 +3,19 @@
 namespace Drupal\Tests\blazy\Unit\Form;
 
 use Drupal\Core\DependencyInjection\ContainerBuilder;
-use Drupal\blazy\Form\BlazyAdminFormatter;
-use Drupal\blazy\BlazyDefault;
 use Drupal\Tests\UnitTestCase;
-use Drupal\Tests\blazy\Traits\BlazyUnitTestTrait;
 use Drupal\Tests\blazy\Traits\BlazyManagerUnitTestTrait;
+use Drupal\Tests\blazy\Traits\BlazyUnitTestTrait;
+use Drupal\blazy\BlazyDefault;
+use Drupal\blazy\Form\BlazyAdminFormatter;
 
 /**
  * Tests the Blazy admin formatter form.
- *
- * @coversDefaultClass \Drupal\blazy\Form\BlazyAdminFormatter
- * @group blazy
  */
 class BlazyAdminFormatterUnitTest extends UnitTestCase {
 
   use BlazyUnitTestTrait;
   use BlazyManagerUnitTestTrait;
-
-  /**
-   * The mocked translator.
-   *
-   * @var \Drupal\Core\StringTranslation\TranslationInterface|\PHPUnit_Framework_MockObject_MockObject
-   */
-  protected $stringTranslation;
 
   /**
    * {@inheritdoc}
@@ -36,12 +26,10 @@ class BlazyAdminFormatterUnitTest extends UnitTestCase {
     $this->setUpUnitServices();
     $this->setUpUnitContainer();
 
-    $this->stringTranslation = $this->createMock('Drupal\Core\StringTranslation\TranslationInterface');
-    $this->entityDisplayRepository = $this->createMock('Drupal\Core\Entity\EntityDisplayRepositoryInterface');
-    $this->typedConfig = $this->createMock('Drupal\Core\Config\TypedConfigManagerInterface');
-    $this->dateFormatter = $this->getMockBuilder('Drupal\Core\Datetime\DateFormatter')
-      ->disableOriginalConstructor()
-      ->getMock();
+    $this->stringTranslation = $this->createMock('\Drupal\Core\StringTranslation\TranslationInterface');
+    $this->entityDisplayRepository = $this->createMock('\Drupal\Core\Entity\EntityDisplayRepositoryInterface');
+    $this->typedConfig = $this->createMock('\Drupal\Core\Config\TypedConfigManagerInterface');
+    $this->dateFormatter = $this->createMock('\Drupal\Core\Datetime\DateFormatter');
 
     $container = new ContainerBuilder();
     $container->set('entity_display.repository', $this->entityDisplayRepository);
@@ -61,22 +49,31 @@ class BlazyAdminFormatterUnitTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::buildSettingsForm
-   * @covers ::openingForm
-   * @covers ::imageStyleForm
-   * @covers ::mediaSwitchForm
-   * @covers ::gridForm
-   * @covers ::closingForm
-   * @covers ::finalizeForm
+   * Provide test cases for ::testBuildSettingsForm.
    */
-  public function testBuildSettingsForm() {
+  public static function providerTestBuildSettingsForm() {
+    return [
+      [FALSE],
+      [TRUE],
+    ];
+  }
+
+  /**
+   * Tests settings form.
+   *
+   * @dataProvider providerTestBuildSettingsForm
+   */
+  public function testBuildSettingsForm($vanilla) {
     $form = [];
     $definition = $this->getDefaulEntityFormatterDefinition()
       + $this->getScopedFormElements();
 
     $definition['settings'] += $this->getDefaultFields(TRUE);
+    $definition['vanilla'] = $vanilla;
+    $definition['_views'] = TRUE;
 
-    $this->assertArrayHasKey('scopes', $definition);
+    $this->blazyAdminFormatter->openingForm($form, $definition);
+    $this->assertEquals($vanilla, !empty($form['vanilla']));
 
     $this->blazyAdminFormatter->buildSettingsForm($form, $definition);
     $this->assertArrayHasKey('scopes', $definition);
@@ -87,7 +84,7 @@ class BlazyAdminFormatterUnitTest extends UnitTestCase {
   /**
    * Provider for ::testGetSettingsSummary.
    */
-  public function providerTestGetSettingsSummary() {
+  public static function providerTestGetSettingsSummary() {
     return [
       [FALSE, FALSE, FALSE, '', FALSE],
       [TRUE, TRUE, TRUE, 'blazy_responsive_test', TRUE],
@@ -102,7 +99,7 @@ class BlazyAdminFormatterUnitTest extends UnitTestCase {
    */
   public function testGetSettingsSummary($use_settings, $vanilla, $override, $responsive_image_style, $expected) {
     $definition = $this->getFormatterDefinition();
-    $settings = array_merge(BlazyDefault::gridSettings(), $definition['settings']);
+    $settings = array_merge(BlazyDefault::gridSettings(), $definition['settings'] ?? []);
 
     $settings['vanilla']                = $vanilla;
     $settings['image_syle']             = 'large';
@@ -121,6 +118,19 @@ class BlazyAdminFormatterUnitTest extends UnitTestCase {
     $check_summary = !$expected ? empty($summary) : !empty($summary);
 
     $this->assertTrue($check_summary);
+  }
+
+}
+
+namespace Drupal\blazy\Form;
+
+if (!function_exists('responsive_image_get_image_dimensions')) {
+
+  /**
+   * Dummy function.
+   */
+  function responsive_image_get_image_dimensions() {
+    // Empty block to satisfy coder.
   }
 
 }

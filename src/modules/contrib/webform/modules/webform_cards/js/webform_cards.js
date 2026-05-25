@@ -24,7 +24,7 @@
         ? $(context)
         : $('form.webform-submission-form', context);
 
-      $forms.once('webform-cards').each(function () {
+      $(once('webform-cards', $forms)).each(function () {
         // Form.
         var $form = $(this);
 
@@ -177,9 +177,17 @@
           $(document).on('state:visible state:visible-slide', function stateVisibleEventHandler(e) {
             if ($(e.target).hasClass('webform-card') && $.contains($form[0], e.target)) {
               trackProgress();
+              trackActions();
             }
           });
         }
+
+        // Custom events.
+        // Add support for custom 'webform_cards:set_active_card' event.
+        $allCards.on('webform_cards:set_active_card', function (event) {
+          var $activeCard = $(event.target);
+          setActiveCard($activeCard);
+        });
 
         initialize();
 
@@ -231,25 +239,6 @@
             initialize = true;
           }
 
-          // Set the previous and next labels.
-          setButtonLabel($previousButton, $activeCard.data('prev-button-label') || $previousButton.data('default-label'));
-          setButtonLabel($nextButton, $activeCard.data('next-button-label') || $nextButton.data('default-label'));
-
-          // Show/hide the previous button.
-          var hasPrevCard = !!$activeCard.prevAll('.webform-card:not([style*="display: none"])').length;
-          $previousButton.toggle(hasPrevCard);
-
-          // Hide/show the next button and submit buttons.
-          var hasNextCard = !!$activeCard.nextAll('.webform-card:not([style*="display: none"])').length;
-          $previewButton.toggle(!hasNextCard);
-          $submitButton.toggle(!hasNextCard);
-          $nextButton.toggle(hasNextCard);
-
-          // Hide the next button when auto-forwarding.
-          if (hideAutoForwardNextButton()) {
-            $nextButton.hide();
-          }
-
           // Show the active card.
           if (!initialize) {
             // Show the active card.
@@ -272,6 +261,8 @@
           // Track progress.
           trackProgress();
 
+          // Track actions.
+          trackActions();
         }
 
         /**
@@ -305,6 +296,32 @@
             url = url + (url.indexOf('?') !== -1 ? '&page=' : '?page=') + page;
           }
           window.history.replaceState(null, null, url);
+        }
+
+        /**
+         * Track actions
+         */
+        function trackActions() {
+          var $activeCard = $allCards.filter('.webform-card--active');
+
+          // Set the previous and next labels.
+          setButtonLabel($previousButton, $activeCard.data('prev-button-label') || $previousButton.data('default-label'));
+          setButtonLabel($nextButton, $activeCard.data('next-button-label') || $nextButton.data('default-label'));
+
+          // Show/hide the previous button.
+          var hasPrevCard = !!$activeCard.prevAll('.webform-card:not([style*="display: none"])').length;
+          $previousButton.toggle(hasPrevCard);
+
+          // Hide/show the next button and submit buttons.
+          var hasNextCard = !!$activeCard.nextAll('.webform-card:not([style*="display: none"])').length;
+          $previewButton.toggle(!hasNextCard);
+          $submitButton.toggle(!hasNextCard);
+          $nextButton.toggle(hasNextCard);
+
+          // Hide the next button when auto-forwarding.
+          if (hideAutoForwardNextButton()) {
+            $nextButton.hide();
+          }
         }
 
         /**
@@ -804,8 +821,8 @@
             return;
           }
 
-          var $firstInput = $activeCard.find(':input:visible').first();
-          if (!inputHasValue($firstInput)) {
+          var $firstInput = $activeCard.find(':input:visible:not([type="submit"])').first();
+          if ($firstInput.length && !inputHasValue($firstInput)) {
             $firstInput.trigger('focus');
           }
         }

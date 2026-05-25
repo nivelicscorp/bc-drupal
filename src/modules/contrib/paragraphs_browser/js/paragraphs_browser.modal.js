@@ -3,7 +3,7 @@
  *
  */
 
-(function ($, Drupal, drupalSettings) {
+(function ($, Drupal, drupalSettings, once) {
 
   'use strict';
 
@@ -87,19 +87,21 @@
 
   Drupal.behaviors.PBStyling = {
     attach: function (context) {
-      $('.paragraphs-browser-wrapper', context)
-        .once('fieldsetclick')
-        .each(function (i, el) {
-          $(el).on('click', '.paragraphs-browser-paragraph-type', function (e) {
+      const elements = once('fieldsetclick', '.paragraphs-browser-wrapper', context);
+      elements.forEach(el => {
+        el.addEventListener('click', function (e) {
+          const element = e.target.closest('.paragraphs-browser-paragraph-type');
+          if (element) {
             e.preventDefault();
             e.stopPropagation();
-
-          $(e.currentTarget)
-            .find('input')
-            .trigger('mousedown');
+            const inputElement = element.querySelector('input');
+            if (inputElement) {
+              inputElement.dispatchEvent(new Event('mousedown'));
+            }
+          }
         });
       });
     }
   };
 
-}(jQuery, Drupal, drupalSettings));
+}(jQuery, Drupal, drupalSettings, once));

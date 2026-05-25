@@ -11,26 +11,26 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 /**
  * Defines a base class from which other display classes may extend.
  *
- * Plugins extending this class need to define a plugin definition array through
- * annotation. The definition includes the following keys:
- * - id: The unique, system-wide identifier of the display class.
- * - label: Human-readable name of the display class, translated.
+ * Plugins extending this class need to provide the plugin definition using the
+ * \Drupal\search_api\Attribute\SearchApiDisplay attribute. These definitions
+ * may be altered using the "search_api.gathering_displays" event.
  *
  * A complete plugin definition should be written as in this example:
  *
  * @code
- * @SearchApiDisplay(
- *   id = "my_display",
- *   label = @Translation("My display"),
- *   description = @Translation("A few words about this search display"),
- *   index = "search_index",
- *   path = "/my/custom/search",
- * )
+ * #[SearchApiDisplay(
+ *   id: 'my_display',
+ *   label: new TranslatableMarkup('My display'),
+ *   description: new TranslatableMarkup('A few words about this search display'),
+ *   index: 'search_index',
+ *   path: '/my/custom/search',
+ * )]
  * @endcode
  *
- * @see \Drupal\search_api\Annotation\SearchApiDisplay
+ * @see \Drupal\search_api\Attribute\SearchApiDisplay
  * @see \Drupal\search_api\Display\DisplayPluginManager
  * @see \Drupal\search_api\Display\DisplayInterface
+ * @see \Drupal\search_api\Event\SearchApiEvents::GATHERING_DISPLAYS
  * @see plugin_api
  */
 abstract class DisplayPluginBase extends HideablePluginBase implements DisplayInterface {
@@ -137,7 +137,7 @@ abstract class DisplayPluginBase extends HideablePluginBase implements DisplayIn
    * {@inheritdoc}
    */
   public function getUrl() {
-    @trigger_error('\Drupal\search_api\Display\DisplayInterface::getUrl() is deprecated in Search API 8.x-1.0 Beta 5. Use ::getPath() instead. See https://www.drupal.org/node/2856050', E_USER_DEPRECATED);
+    @trigger_error('\Drupal\search_api\Display\DisplayInterface::getUrl() is deprecated in search_api:8.x-1.0-beta5 and is removed from search_api:2.0.0. Use ::getPath() instead. See https://www.drupal.org/node/2856050', E_USER_DEPRECATED);
     if ($path = $this->getPath()) {
       return Url::fromUserInput($path);
     }

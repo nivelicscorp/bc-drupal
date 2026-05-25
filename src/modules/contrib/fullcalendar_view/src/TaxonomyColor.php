@@ -44,7 +44,9 @@ class TaxonomyColor {
     if (isset($terms[$vid])) {
       // Create a color box for each terms.
       foreach ($terms[$vid] as $taxonomy) {
-        $color = isset($defaultValues[$taxonomy->id()]) ? $defaultValues[$taxonomy->id()] : '#3a87ad';
+        // If the term name is a valid hex color, use it for the initial default color.
+        $initial_color = preg_match('/^#[a-fA-F0-9]{6}$/', $taxonomy->name->value) ? $taxonomy->name->value : '#3a87ad';
+        $color = $defaultValues[$taxonomy->id()] ?? $initial_color;
         $elements[$taxonomy->id()] = [
           '#title' => $taxonomy->name->value,
           '#default_value' => $color,
@@ -69,7 +71,7 @@ class TaxonomyColor {
   /**
    * Get all terms of a vocabulary.
    */
-  private function getTermIds($vid) {
+  public function getTermIds($vid) {
     if (empty($vid)) {
       return [];
     }
@@ -78,7 +80,7 @@ class TaxonomyColor {
     if (!isset($terms[$vid])) {
       // Get terms Ids.
       $query = $this->entityTypeManager->getStorage('taxonomy_term')->getQuery();
-      $query->condition('vid', $vid);
+      $query->condition('vid', $vid)->accessCheck(TRUE);
       $tids = $query->execute();
       $terms[$vid] = $this->entityTypeManager->getStorage('taxonomy_term')->loadMultiple($tids);
     }

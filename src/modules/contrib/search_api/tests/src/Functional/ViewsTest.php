@@ -16,12 +16,14 @@ use Drupal\search_api\Entity\Index;
 use Drupal\search_api\Utility\Utility;
 use Drupal\search_api_test_views\EventListener;
 use Drupal\views\Entity\View;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * Tests the Views integration of the Search API.
  *
  * @group search_api
  */
+#[RunTestsInSeparateProcesses]
 class ViewsTest extends SearchApiBrowserTestBase {
 
   use ExampleContentTrait;
@@ -106,13 +108,36 @@ class ViewsTest extends SearchApiBrowserTestBase {
     ];
     $label = 'Search for short word';
     $this->checkResults($query, [], $label);
-    $this->assertSession()->pageTextContains('You must include at least one positive keyword with 3 characters or more');
+    $this->assertSession()->pageTextContains('You must include at least one keyword to match in the content. Keywords must be at least 3 characters, and punctuation is ignored.');
     $query = [
       'search_api_fulltext' => 'foo to test',
     ];
     $label = 'Fulltext search including short word';
     $this->checkResults($query, [1, 2, 4], $label);
-    $this->assertSession()->pageTextNotContains('You must include at least one positive keyword with 3 characters or more');
+    $this->assertSession()->pageTextNotContains('You must include at least one keyword to match in the content. Keywords must be at least 3 characters, and punctuation is ignored.');
+
+    // Enable the "Maximum number of words" setting.
+    $view = View::load('search_api_test_view');
+    $displays = $view->get('display');
+    $displays['default']['display_options']['filters']['search_api_fulltext']['expose']['value_max_words'] = 2;
+    $view->set('display', $displays);
+    $view->save();
+
+    $this->checkResults(['search_api_fulltext' => 'foo test'], [1, 2, 4], 'Search with multiple words should now work again');
+    $this->assertSession()->pageTextNotContains('Maximum number of words exceeded.');
+
+    $query = ['search_api_fulltext' => 'foo to test'];
+    $this->checkResults($query, [], 'Search with too many words');
+    $this->assertSession()->pageTextContains('Maximum number of words exceeded. You may enter a maximum of 2 words.');
+
+    // Revert the view change to the "Maximum number of words" setting.
+    $displays['default']['display_options']['filters']['search_api_fulltext']['expose']['value_max_words'] = '';
+    $view->set('display', $displays);
+    $view->save();
+
+    // Use the same search query to confirm the limit is no longer enforced.
+    $this->checkResults($query, [1, 2, 4], 'Search with multiple words should now work again');
+    $this->assertSession()->pageTextNotContains('Maximum number of words exceeded.');
 
     $this->checkResults(['id[value]' => 2], [2], 'Search with ID filter');
     $query = [
@@ -123,10 +148,30 @@ class ViewsTest extends SearchApiBrowserTestBase {
     $this->checkResults($query, [2, 3, 4], 'Search with ID "in between" filter');
     $query = [
       'id[min]' => 2,
+      'id_op' => 'between',
+    ];
+    $this->checkResults($query, [2, 3, 4, 5], 'Search with ID "in between" filter (only min)');
+    $query = [
+      'id[max]' => 4,
+      'id_op' => 'between',
+    ];
+    $this->checkResults($query, [1, 2, 3, 4], 'Search with ID "in between" filter (only max)');
+    $query = [
+      'id[min]' => 2,
       'id[max]' => 4,
       'id_op' => 'not between',
     ];
     $this->checkResults($query, [1, 5], 'Search with ID "not in between" filter');
+    $query = [
+      'id[min]' => 2,
+      'id_op' => 'not between',
+    ];
+    $this->checkResults($query, [1], 'Search with ID "not in between" filter (only min)');
+    $query = [
+      'id[max]' => 4,
+      'id_op' => 'not between',
+    ];
+    $this->checkResults($query, [5], 'Search with ID "not in between" filter (only max)');
     $query = [
       'id[value]' => 2,
       'id_op' => '>',
@@ -396,12 +441,14 @@ class ViewsTest extends SearchApiBrowserTestBase {
    * Contains regression tests for previous, fixed bugs.
    */
   protected function regressionTests() {
+    $this->regressionTest3296477();
     $this->regressionTest3318187();
     $this->regressionTest3187134();
     $this->regressionTest2869121();
     $this->regressionTest3031991();
     $this->regressionTest3136277();
     $this->regressionTest3029582();
+    $this->regressionTest3343250();
   }
 
   /**
@@ -435,7 +482,7 @@ class ViewsTest extends SearchApiBrowserTestBase {
       [],
       'Search for short word'
     );
-    $this->assertSession()->pageTextContains('You must include at least one positive keyword with 3 characters or more');
+    $this->assertSession()->pageTextContains('You must include at least one keyword to match in the content. Keywords must be at least 3 characters, and punctuation is ignored.');
 
     // Make sure this also works with the exposed form in a block, and doesn't
     // throw fatal errors on all pages with the block.
@@ -479,6 +526,7 @@ class ViewsTest extends SearchApiBrowserTestBase {
    */
   protected function regressionTest3031991() {
     $query = [
+      // cspell:disable-next-line
       'search_api_fulltext' => 'foo blabla',
       'search_api_fulltext_op' => 'or',
       'search_api_fulltext_2' => 'bar',
@@ -652,6 +700,40 @@ class ViewsTest extends SearchApiBrowserTestBase {
   }
 
   /**
+   * Tests that arguments play well with multiple filter groups combined by OR.
+   *
+   * @see https://www.drupal.org/node/3343250
+   */
+  protected function regressionTest3343250(): void {
+    $yesterday = date('Y-m-d', strtotime('-1DAY'));
+    $today = date('Y-m-d');
+    $query = [
+      'search_api_fulltext' => 'foo test',
+      'search_api_fulltext_op' => 'or',
+      'created[min]' => $today,
+      'created[max]' => $today,
+      'created_op' => 'between',
+    ];
+    $this->checkResults($query, [1, 2, 3, 4, 5], 'Search with "Created between TODAY and TODAY" filter');
+    $query = [
+      'search_api_fulltext' => 'foo test',
+      'search_api_fulltext_op' => 'or',
+      'created[min]' => $yesterday,
+      'created[max]' => $today,
+      'created_op' => 'between',
+    ];
+    $this->checkResults($query, [1, 2, 3, 4, 5], 'Search with "Created between YESTERDAY and TODAY" filter');
+    $query = [
+      'search_api_fulltext' => 'foo test',
+      'search_api_fulltext_op' => 'or',
+      'created[min]' => $yesterday,
+      'created[max]' => $yesterday,
+      'created_op' => 'between',
+    ];
+    $this->checkResults($query, [], 'Search with "Created between YESTERDAY and YESTERDAY" filter');
+  }
+
+  /**
    * Tests that filters with empty values are ignored.
    *
    * @see https://www.drupal.org/node/3318187
@@ -753,6 +835,32 @@ class ViewsTest extends SearchApiBrowserTestBase {
   }
 
   /**
+   * Tests that date "in between" filters also work with just one value.
+   *
+   * @see https://www.drupal.org/node/3296477
+   */
+  protected function regressionTest3296477(): void {
+    $yesterday = date('Y-m-d', strtotime('-1DAY'));
+    $tomorrow = date('Y-m-d', strtotime('+1DAY'));
+    $query = [
+      'created[min]' => $yesterday,
+      'created[max]' => $tomorrow,
+      'created_op' => 'between',
+    ];
+    $this->checkResults($query, [1, 2, 3, 4, 5], 'Search with "Created between TODAY and TOMORROW" filter');
+    $query = [
+      'created[min]' => $tomorrow,
+      'created_op' => 'between',
+    ];
+    $this->checkResults($query, [], 'Search with "Created between TOMORROW and *" filter');
+    $query = [
+      'created[max]' => $yesterday,
+      'created_op' => 'between',
+    ];
+    $this->checkResults($query, [], 'Search with "Created between * and YESTERDAY" filter');
+  }
+
+  /**
    * Verifies that exposed fulltext fields work correctly.
    */
   protected function checkExposedSearchFields() {
@@ -795,7 +903,7 @@ class ViewsTest extends SearchApiBrowserTestBase {
    * @param string $arguments
    *   (optional) A string to append to the search path.
    */
-  protected function checkResults(array $query, array $expected_results = NULL, string $label = 'Search', string $arguments = '', string $path = 'search-api-test'): void {
+  protected function checkResults(array $query, ?array $expected_results = NULL, string $label = 'Search', string $arguments = '', string $path = 'search-api-test'): void {
     $this->drupalGet($path . '/' . $arguments, ['query' => $query]);
 
     if (isset($expected_results)) {
@@ -811,7 +919,7 @@ class ViewsTest extends SearchApiBrowserTestBase {
       $actual_results = [];
       foreach ($this->entities as $id => $entity) {
         $entity_label = Html::escape($entity->label());
-        if (strpos($this->getSession()->getPage()->getContent(), ">$entity_label<") !== FALSE) {
+        if (str_contains($this->getSession()->getPage()->getContent(), ">$entity_label<")) {
           $actual_results[$id] = $id;
         }
       }
@@ -956,7 +1064,9 @@ class ViewsTest extends SearchApiBrowserTestBase {
     // Add new fields. First check that the listing seems correct.
     $this->clickLink('Add fields');
     $this->assertSession()->statusCodeEquals(200);
-    $this->assertSession()->pageTextContains('Test entity - revisions and data table datasource');
+    // The entity type's label was changed in 10.1.x, so need to keep it
+    // variable as long as we support versions older than 10.1.0.
+    $this->assertSession()->pageTextContains("Test entity - mul changed revisions and data table datasource");
     $this->assertSession()->pageTextContains('Authored on');
     $this->assertSession()->pageTextContains('Body (indexed field)');
     $this->assertSession()->pageTextContains('Index Test index');
@@ -1075,7 +1185,7 @@ class ViewsTest extends SearchApiBrowserTestBase {
       foreach ($fields as $field) {
         $field_entity = $entity;
         while (strpos($field, ':')) {
-          list($direct_property, $field) = Utility::splitPropertyPath($field, FALSE);
+          [$direct_property, $field] = Utility::splitPropertyPath($field, FALSE);
           if (empty($field_entity->{$direct_property}[0]->entity)) {
             continue 2;
           }

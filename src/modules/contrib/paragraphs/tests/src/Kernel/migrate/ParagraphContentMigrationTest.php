@@ -5,6 +5,9 @@ namespace Drupal\Tests\paragraphs\Kernel\migrate;
 use Drupal\Core\TypedData\TranslatableInterface;
 use Drupal\node\Entity\Node;
 use Drupal\Tests\paragraphs\Traits\ParagraphsNodeMigrationAssertionsTrait;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * Test 'classic' Paragraph content migration.
@@ -12,6 +15,8 @@ use Drupal\Tests\paragraphs\Traits\ParagraphsNodeMigrationAssertionsTrait;
  * @group paragraphs
  * @require entity_reference_revisions
  */
+#[RunTestsInSeparateProcesses]
+#[Group('paragraphs')]
 class ParagraphContentMigrationTest extends ParagraphsMigrationTestBase {
 
   use ParagraphsNodeMigrationAssertionsTrait;
@@ -72,15 +77,9 @@ class ParagraphContentMigrationTest extends ParagraphsMigrationTestBase {
    *
    * @dataProvider providerParagraphContentMigration
    */
+  #[DataProvider('providerParagraphContentMigration')]
   public function testParagraphContentMigration($migration_to_run) {
     if ($migration_to_run) {
-      // Drupal 8.8.x only has 'classic' node migrations.
-      // @see https://www.drupal.org/node/3105503
-      if (strpos($migration_to_run, 'd7_node_complete') === 0 && version_compare(\Drupal::VERSION, '8.9', '<')) {
-        $this->pass("Drupal 8.8.x has only the 'classic' node migration.");
-        return;
-      }
-
       $this->executeMigration($migration_to_run);
     }
 
@@ -100,12 +99,12 @@ class ParagraphContentMigrationTest extends ParagraphsMigrationTestBase {
    * @return string[][]
    *   The node migration to run.
    */
-  public function providerParagraphContentMigration() {
+  public static function providerParagraphContentMigration() {
     return [
-      ['node_migration' => NULL],
-      ['node_migration' => 'd7_node_revision:paragraphs_test'],
-      ['node_migration' => 'd7_node_translation:paragraphs_test'],
-      ['node_migration' => 'd7_node_complete:paragraphs_test'],
+      ['migration_to_run' => NULL],
+      ['migration_to_run' => 'd7_node_revision:paragraphs_test'],
+      ['migration_to_run' => 'd7_node_translation:paragraphs_test'],
+      ['migration_to_run' => 'd7_node_complete:paragraphs_test'],
     ];
   }
 

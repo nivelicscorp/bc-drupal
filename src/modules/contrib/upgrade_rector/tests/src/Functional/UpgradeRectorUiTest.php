@@ -50,7 +50,8 @@ class UpgradeRectorUiTest extends BrowserTestBase {
     $edit = [
       'custom[data][project]' => 'upgrade_rector_test_error',
     ];
-    $this->drupalPostForm('admin/reports/upgrade-rector', $edit, 'Run rector');
+    $this->drupalGet('admin/reports/upgrade-rector');
+    $this->submitForm($edit, 'Run rector');
 
     $page = $this->getSession()->getPage();
     $assert_session = $this->assertSession();
@@ -62,15 +63,19 @@ class UpgradeRectorUiTest extends BrowserTestBase {
     $this->assertCount(1, $this->getSession()->getPage()->findAll('css', 'details#edit-custom-data-upgrade-rector-test-error'));
 
     // Find patch portion for drupal_set_message().
-    //$this->assertSession()->responseMatches("!-  drupal_set_message.'Sample message'.;!");
-    //$this->assertSession()->responseMatches("!\+  .Drupal::messenger..->addStatus.'Sample message'.;!");
+    //$this->assertSession()->responseContains("-  drupal_set_message('Sample message');");
+    //$this->assertSession()->responseContains("+  \Drupal::messenger()->addStatus('Sample message');");
 
     // At least two files should be processed.
-    $this->assertSession()->responseMatches("!upgrade_rector_test_error.module!");
-    $this->assertSession()->responseMatches("!UpgradeRectorTestErrorForm.php!");
+    $this->assertSession()->responseContains("upgrade_rector_test_error.module");
+    $this->assertSession()->responseContains("UpgradeRectorTestErrorForm.php");
 
-    // This rector should have been executed.
-    $this->assertSession()->responseMatches("!DrupalRector\\\Rector\\\Deprecation\\\DrupalSetMessageRector!");
+    // These rectors should have been executed.
+    $this->assertSession()->responseContains("DrupalSetMessageRector");
+    $this->assertSession()->responseContains("DrupalURLRector");
+
+    // A total of two files should have a patch with an [OK] result
+    $this->assertSession()->responseContains("[OK] 2 files would have changed");
   }
 
 }

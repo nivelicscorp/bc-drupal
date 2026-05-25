@@ -4,12 +4,15 @@ namespace Drupal\metatag\Form;
 
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\metatag\MetatagSeparator;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Defines the configuration export form.
  */
 class MetatagSettingsForm extends ConfigFormBase {
+
+  use MetatagSeparator;
 
   /**
    * The metatag.manager service.
@@ -40,6 +43,13 @@ class MetatagSettingsForm extends ConfigFormBase {
   protected $tagPluginManager;
 
   /**
+   * The module handler.
+   *
+   * @var \Drupal\Core\Extension\ModuleHandlerInterface
+   */
+  protected $moduleHandler;
+
+  /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container) {
@@ -51,6 +61,7 @@ class MetatagSettingsForm extends ConfigFormBase {
     $instance->metatagManager = $container->get('metatag.manager');
     $instance->state = $container->get('state');
     $instance->tagPluginManager = $container->get('plugin.manager.metatag.tag');
+    $instance->moduleHandler = $container->get('module_handler');
 
     return $instance;
   }
@@ -76,7 +87,24 @@ class MetatagSettingsForm extends ConfigFormBase {
     if ($this->state->get('system.maintenance_mode')) {
       $this->messenger()->addMessage($this->t('Please note that while the site is in maintenance mode none of the usual meta tags will be output.'));
     }
-    $entitySettings = $this->config('metatag.settings')->get('entity_type_groups');
+    $settings = $this->config('metatag.settings');
+    $entity_type_groups = $settings->get('entity_type_groups');
+
+    $separator = $settings->get('separator');
+    if (is_null($separator) || $separator == '') {
+      $separator = $this::$defaultSeparator;
+    }
+    $form['separator'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Separator used with multiple values'),
+      '#description' => $this->t('Controls the separator used when a meta tag allows multiple values. Multiple characters can be used together, it does not have to be one single character long. Defaults to ":default".', [
+        ':default' => $this::$defaultSeparator,
+      ]),
+      '#size' => 10,
+      '#default_value' => trim($separator),
+      '#required' => TRUE,
+    ];
+
     $form['entity_type_groups'] = [
       '#type' => 'details',
       '#open' => TRUE,
@@ -103,14 +131,13 @@ class MetatagSettingsForm extends ConfigFormBase {
         $form['entity_type_groups'][$entity_type][$bundle_id][] = [
           '#type' => 'checkboxes',
           '#options' => $options,
-          '#default_value' => isset($entitySettings[$entity_type]) && isset($entitySettings[$entity_type][$bundle_id]) ? $entitySettings[$entity_type][$bundle_id] : [],
+          '#default_value' => isset($entity_type_groups[$entity_type]) && isset($entity_type_groups[$entity_type][$bundle_id]) ? $entity_type_groups[$entity_type][$bundle_id] : [],
         ];
       }
     }
 
     $trimSettingsMaxlength = $this->config('metatag.settings')->get('tag_trim_maxlength');
     $trimMethod = $this->config('metatag.settings')->get('tag_trim_method');
-    $metatags = $this->tagPluginManager->getDefinitions();
 
     $form['tag_trim'] = [
       '#title' => $this->t('Metatag Trimming Options'),
@@ -120,6 +147,18 @@ class MetatagSettingsForm extends ConfigFormBase {
       '#description' => $this->t("Many Meta-Tags can be trimmed on a specific length for search engine optimization.<br/>If the value is set to '0' or left empty, the whole Metatag will be untrimmed."),
     ];
 
+    // Optional support for the Maxlenth module.
+    $form['tag_trim']['use_maxlength'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Use Maxlength module to force these limits?'),
+      '#default_value' => $this->config('metatag.settings')->get('use_maxlength') ?? TRUE,
+      '#description' => $this->t('Because of how tokens are processed in meta tags, use of the Maxlength module may not provide an accurate representation of the actual current length of each meta tag, so it may cause more problem than it is worth.'),
+    ];
+    if (!$this->moduleHandler->moduleExists('maxlength')) {
+      $form['tag_trim']['use_maxlength']['#disabled'] = TRUE;
+      $form['tag_trim']['use_maxlength']['#description'] = $this->t('Install the Maxlength module to enable this option.');
+    }
+
     $form['tag_trim']['maxlength'] = [
       '#title' => $this->t('Tags'),
       '#type' => 'fieldset',
@@ -128,9 +167,8 @@ class MetatagSettingsForm extends ConfigFormBase {
 
     // Name the variable "metatag_id" to avoid confusing this with the "name"
     // value from the meta tag plugin as it's actually the plugin ID.
-    foreach ($metatags as $metatag_id => $metatag_info) {
+    foreach ($this->metatagManager->sortedTags() as $metatag_id => $metatag_info) {
       if (!empty($metatag_info['trimmable'])) {
-
         $form['tag_trim']['maxlength']['metatag_maxlength_' . $metatag_id] = [
           '#title' => $this->t('Meta Tags:') . ' ' . $metatag_id . ' ' . $this->t('length'),
           '#type' => 'number',
@@ -143,7 +181,7 @@ class MetatagSettingsForm extends ConfigFormBase {
     }
 
     $form['tag_trim']['tag_trim_method'] = [
-      '#title' => $this->t('Meta Tags: Trimming Options'),
+      '#title' => $this->t('Trimming options'),
       '#type' => 'select',
       '#required' => TRUE,
       '#default_value' => $trimMethod ?? 'beforeValue',
@@ -152,6 +190,20 @@ class MetatagSettingsForm extends ConfigFormBase {
         'onValue' => $this->t('Trim the Meta Tag on the given value'),
         'beforeValue' => $this->t('Trim the Meta Tag before the word on the given value'),
       ],
+    ];
+
+    $form['tag_trim']['tag_trim_end'] = [
+      '#title' => $this->t('Characters to trim'),
+      '#type' => 'textfield',
+      '#default_value' => $this->config('metatag.settings')->get('tag_trim_end'),
+      '#description' => $this->t('A list of characters to trim at the end of all metatags. Provide a single string without any separators, e.g. "|,." (instead of "| , ."). Note that spaces, tabs, new lines, carriage returns and vertical tabs (" \n\r\t\v") will be trimmed automatically and do not need to be listed in this field. The trimming is applied at the very end after the tag is trimmed for length, and after the trimming option was executed.'),
+    ];
+
+    $form['tag_trim']['suffix'] = [
+      '#title' => $this->t('Optional suffix to add'),
+      '#type' => 'textfield',
+      '#default_value' => $this->config('metatag.settings')->get('trim_suffix'),
+      '#description' => $this->t('If provided this string will be added at the end of all meta tags that are trimmed to length.'),
     ];
 
     $scrollheight = $this->config('metatag.settings')->get('tag_scroll_max_height');
@@ -190,14 +242,24 @@ class MetatagSettingsForm extends ConfigFormBase {
     }
     $settings->set('entity_type_groups', $entityTypeGroupsValues);
 
+    $settings->set('separator', trim($form_state->getValue('separator')));
+
     // tag_trim handling:
+    $use_maxlength = $form_state->getValue(['tag_trim', 'use_maxlength']);
+    $settings->set('use_maxlength', $use_maxlength);
     $trimmingMethod = $form_state->getValue(['tag_trim', 'tag_trim_method']);
     $settings->set('tag_trim_method', $trimmingMethod);
     $trimmingValues = $form_state->getValue(['tag_trim', 'maxlength']);
     $settings->set('tag_trim_maxlength', $trimmingValues);
+    $trimEndCharacters = $form_state->getValue(['tag_trim', 'tag_trim_end']);
+    $settings->set('tag_trim_end', $trimEndCharacters);
+    $settings->set('trim_suffix', $form_state->getValue(['tag_trim', 'suffix']));
 
     // Widget settings.
-    $scrollheightvalue = $form_state->getValue(['firehose_widget', 'tag_scroll_max_height']);
+    $scrollheightvalue = $form_state->getValue([
+      'firehose_widget',
+      'tag_scroll_max_height',
+    ]);
     $settings->set('tag_scroll_max_height', $scrollheightvalue);
 
     $settings->save();
@@ -213,7 +275,7 @@ class MetatagSettingsForm extends ConfigFormBase {
    * @return array
    *   The filtered array.
    */
-  public static function arrayFilterRecursive(array $input) {
+  public static function arrayFilterRecursive(array $input): array {
     foreach ($input as &$value) {
       if (is_array($value)) {
         $value = static::arrayFilterRecursive($value);

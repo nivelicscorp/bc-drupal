@@ -1,12 +1,20 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\migrate_plus\Plugin\migrate_plus\data_parser;
 
 use Drupal\migrate\MigrateException;
 use Drupal\migrate_plus\DataParserPluginBase;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Obtain XML data for migration using the SimpleXML API.
+ *
+ * SimpleXML parses the whole file into memory, which allows using XPath
+ * expression in the item selector. For large XML sources it results in
+ * consuming lots of memory, which can be undesirable. If you run into memory
+ * issues, then consider using the 'xml' data parser.
  *
  * @DataParser(
  *   id = "simple_xml",
@@ -20,24 +28,23 @@ class SimpleXml extends DataParserPluginBase {
   /**
    * Array of matches from item_selector.
    *
-   * @var array
+   * @var \SimpleXMLElement[]|bool
    */
   protected $matches = [];
 
   /**
    * {@inheritdoc}
    */
-  public function __construct(array $configuration, $plugin_id, $plugin_definition) {
-    parent::__construct($configuration, $plugin_id, $plugin_definition);
-
+  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition): static {
     // Suppress errors during parsing, so we can pick them up after.
     libxml_use_internal_errors(TRUE);
+    return parent::create($container, $configuration, $plugin_id, $plugin_definition);
   }
 
   /**
    * {@inheritdoc}
    */
-  protected function openSourceUrl($url) {
+  protected function openSourceUrl($url): bool {
     // Clear XML error buffer. Other Drupal code that executed during the
     // migration may have polluted the error buffer and could create false
     // positives in our error check below. We are only concerned with errors
@@ -59,7 +66,7 @@ class SimpleXml extends DataParserPluginBase {
   /**
    * {@inheritdoc}
    */
-  protected function fetchNextRow() {
+  protected function fetchNextRow(): void {
     $target_element = array_shift($this->matches);
 
     // If we've found the desired element, populate the currentItem and
@@ -68,7 +75,7 @@ class SimpleXml extends DataParserPluginBase {
       foreach ($this->fieldSelectors() as $field_name => $xpath) {
         foreach ($target_element->xpath($xpath) as $value) {
           if ($value->children() && !trim((string) $value)) {
-            $this->currentItem[$field_name] = $value;
+            $this->currentItem[$field_name][] = $value;
           }
           else {
             $this->currentItem[$field_name][] = (string) $value;

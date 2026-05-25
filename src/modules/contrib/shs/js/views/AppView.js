@@ -5,7 +5,7 @@
  * @see Drupal.shs.AppModel
  */
 
-(function ($, _, Backbone, Drupal) {
+(function ($, _, Backbone, Drupal, once) {
 
   'use strict';
 
@@ -41,7 +41,7 @@
       // Initialize event listeners.
       this.listenTo(this.collection, 'initialize:shs', this.renderWidgets);
 
-      this.$el.once('shs').addClass('hidden');
+      $(once("shs", this.$el)).addClass('hidden');
     },
     /**
      * Main render function of Simple hierarchical select.
@@ -65,9 +65,6 @@
           parents: parents
         }));
       });
-//      $.each(app.getConfig('parents'), function (index, item) {
-//        // Add WidgetModel for each parent.
-//      });
 
       app.collection.trigger('initialize:shs');
 
@@ -127,6 +124,19 @@
           // Use value of parent widget (which is the id of the model ;)).
           value = widgetModel.get('id');
         }
+        else if (widgetModel.get('createValue')) {
+          // Add the created item to the original select item.
+          var options = $("option", app.$el).map(function () {
+            return $(this).val();
+          }).get();
+          if ($.inArray(value, options) === -1) {
+            var item = widgetModel.get('createValue');
+            app.$el.append($("<option/>").val(item.tid).text(item.name));
+            // We can now reset our widget model to the new tid.
+              widgetModel.set('createValue', null);
+            widgetModel.set('defaultValue', item.tid);
+          }
+        }
       }
       // Set the updated value.
       app.$el.val(value).trigger({
@@ -150,7 +160,7 @@
      *
      * @param {string} name
      *   Name of the configuration to get. To get the value of a nested
-     *   configuration the names are concatted by a dot (i.e.
+     *   configuration the names are concatenated by a dot (i.e.
      *   "display.animationSpeed").
      *
      * @returns {mixed}
@@ -205,4 +215,4 @@
     model: Drupal.shs.ContainerModel
   });
 
-}(jQuery, _, Backbone, Drupal));
+}(jQuery, _, Backbone, Drupal, once));

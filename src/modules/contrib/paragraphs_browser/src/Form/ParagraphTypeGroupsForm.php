@@ -77,7 +77,7 @@ class ParagraphTypeGroupsForm extends FormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state, ParagraphsTypeInterface $paragraphs_type = null) {
-    $paragraph_browser_type_ids = $this->entityTypeManager->getStorage('paragraphs_browser_type')->getQuery()->execute();
+    $paragraph_browser_type_ids = $this->entityTypeManager->getStorage('paragraphs_browser_type')->getQuery()->accessCheck(TRUE)->execute();
     //@todo: on unsaved change, hide links to configuration forms.
     if(!$paragraph_browser_type_ids) {
       // @todo set message and link to page

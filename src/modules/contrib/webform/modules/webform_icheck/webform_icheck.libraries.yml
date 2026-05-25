@@ -1,5 +1,4 @@
 webform_icheck.element:
-  version: VERSION
   css:
     component:
       css/webform_icheck.element.css: {}
@@ -7,7 +6,8 @@ webform_icheck.element:
     js/webform_icheck.element.js: { weight: -10 } # iCheck library must be executed before #states.
   dependencies:
     - core/drupal
-    - core/jquery.once
+    - core/jquery
+    - core/once
     - webform_icheck/libraries.jquery.icheck
 
 # External libraries.

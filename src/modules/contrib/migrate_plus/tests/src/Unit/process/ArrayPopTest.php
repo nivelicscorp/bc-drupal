@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\Tests\migrate_plus\Unit\process;
 
 use Drupal\migrate\MigrateException;
@@ -12,7 +14,7 @@ use Drupal\Tests\migrate\Unit\process\MigrateProcessTestCase;
  * @group migrate
  * @coversDefaultClass \Drupal\migrate_plus\Plugin\migrate\process\ArrayPop
  */
-class ArrayPopTest extends MigrateProcessTestCase {
+final class ArrayPopTest extends MigrateProcessTestCase {
 
   /**
    * {@inheritdoc}
@@ -28,7 +30,7 @@ class ArrayPopTest extends MigrateProcessTestCase {
    * @return array
    *   An array containing input values and expected output values.
    */
-  public function arrayPopDataProvider(): array {
+  public static function arrayPopDataProvider(): array {
     return [
       'indexed array' => [
         'input' => ['v1', 'v2', 'v3'],
@@ -55,8 +57,8 @@ class ArrayPopTest extends MigrateProcessTestCase {
    *
    * @dataProvider arrayPopDataProvider
    */
-  public function testArrayPop(array $input, $expected_output): void {
-    $output = $this->plugin->transform($input, $this->migrateExecutable, $this->row, 'destinationproperty');
+  public function testArrayPop(array $input, mixed $expected_output): void {
+    $output = $this->plugin->transform($input, $this->migrateExecutable, $this->row, 'destinationProperty');
     $this->assertSame($output, $expected_output);
   }
 
@@ -66,7 +68,7 @@ class ArrayPopTest extends MigrateProcessTestCase {
   public function testArrayPopFromString(): void {
     $this->expectException(MigrateException::class);
     $this->expectExceptionMessage('Input should be an array.');
-    $this->plugin->transform('foo', $this->migrateExecutable, $this->row, 'destinationproperty');
+    $this->plugin->transform('foo', $this->migrateExecutable, $this->row, 'destinationProperty');
   }
 
 }

@@ -4,6 +4,7 @@ namespace Drupal\blazy;
 
 use Drupal\Component\Utility\Unicode;
 use Drupal\Core\Field\FormatterInterface;
+use Drupal\blazy\internals\Internals;
 use Drupal\editor\Entity\Editor;
 
 /**
@@ -11,16 +12,16 @@ use Drupal\editor\Entity\Editor;
  *
  * @internal
  *   This is an internal part of the Blazy system and should only be used by
- *   blazy-related code in Blazy module.
+ *   blazy-related code in Blazy module. Please use the public method instead.
  */
 class BlazyAlter {
 
   /**
    * The blazy library info.
    *
-   * @var array
+   * @var array|null
    */
-  private static $libraryInfoBuild;
+  protected static $libraryInfoBuild;
 
   /**
    * Implements hook_config_schema_info_alter().
@@ -28,32 +29,24 @@ class BlazyAlter {
   public static function configSchemaInfoAlter(
     array &$definitions,
     $formatter = 'blazy_base',
-    array $settings = []
+    array $settings = [],
   ): void {
     if (isset($definitions[$formatter])) {
       $mappings = &$definitions[$formatter]['mapping'];
-      $settings = $settings ?: BlazyDefault::extendedSettings() + BlazyDefault::gridSettings();
+      $settings += BlazyDefault::extendedSettings();
+      $settings += BlazyDefault::gridSettings();
+      $settings += BlazyDefault::svgSettings();
       $settings += BlazyDefault::deprecatedSettings();
+      $settings += BlazyDefault::nonBlazySettings();
 
       foreach ($settings as $key => $value) {
         // Seems double is ignored, and causes a missing schema, unlike float.
         $type = gettype($value);
         $type = $type == 'double' ? 'float' : $type;
-        $mappings[$key]['type'] = $key == 'breakpoints' ? 'mapping' : (is_array($value) ? 'sequence' : $type);
+        $mappings[$key]['type'] = is_array($value) ? 'sequence' : $type;
 
         if (!is_array($value)) {
           $mappings[$key]['label'] = Unicode::ucfirst(str_replace('_', ' ', $key));
-        }
-      }
-
-      // @todo remove custom breakpoints anytime before 3.x as per #3105243.
-      if (isset($mappings['breakpoints'])) {
-        foreach (['xs', 'sm', 'md', 'lg', 'xl'] as $breakpoint) {
-          $mappings['breakpoints']['mapping'][$breakpoint]['type'] = 'mapping';
-          foreach (['breakpoint', 'width', 'image_style'] as $item) {
-            $mappings['breakpoints']['mapping'][$breakpoint]['mapping'][$item]['type']  = 'string';
-            $mappings['breakpoints']['mapping'][$breakpoint]['mapping'][$item]['label'] = Unicode::ucfirst(str_replace('_', ' ', $item));
-          }
         }
       }
     }
@@ -63,16 +56,60 @@ class BlazyAlter {
    * Implements hook_library_info_alter().
    */
   public static function libraryInfoAlter(&$libraries, $extension): void {
+    static $bajax;
+
     // @todo remove if core changed, right below core/drupal for being generic,
     // and dependency-free and a dependency for many other generic ones.
     // @todo watch out for core @todo to remove drupal namespace for debounce.
     $debounce = 'drupal.debounce';
-    if ($extension === 'core' && isset($libraries[$debounce])) {
-      $libraries[$debounce]['js']['misc/debounce.js'] = ['weight' => -16];
+    if ($extension === 'core') {
+      if (isset($libraries[$debounce])) {
+        $libraries[$debounce]['js']['misc/debounce.js'] = ['weight' => -16];
+      }
+      if (!isset($bajax) && isset($libraries['drupal.ajax'])) {
+        $bajax = TRUE;
+      }
     }
 
     if ($extension === 'media' && isset($libraries['oembed.frame'])) {
       $libraries['oembed.frame']['dependencies'][] = 'blazy/oembed';
+    }
+
+    // Blazy colorbox needs these higher.
+    foreach (BlazyDefault::thirdPartyLibraries() as $module => $libs) {
+      if ($extension === $module) {
+        foreach ($libs as $id => $lib) {
+          if (isset($libraries[$id]) && $js = $lib['js']) {
+            $libraries[$id]['js'][$js]['weight'] = $lib['weight'];
+
+            // See https://stackoverflow.com/questions/10808109
+            if ($attributes = $lib['attributes'] ?? []) {
+              $libraries[$id]['js'][$js]['attributes'] = $attributes;
+            }
+          }
+        }
+      }
+    }
+
+    if ($extension === 'blazy') {
+      if ($manager = Internals::service('blazy.manager')) {
+        $names = ['DOMPurify', 'dompurify'];
+        if ($path = $manager->getLibrariesPath($names)) {
+          $js = [
+            '/' . $path . '/dist/purify.min.js' => [
+              'minified' => TRUE,
+              'weight' => -16,
+            ],
+          ];
+          $libraries['dompurify']['js'] = $js;
+          $libraries['dblazy']['dependencies'][] = 'blazy/dompurify';
+        }
+      }
+
+      // Add blazy/bio.ajax only if both core drupal.ajax and blazy exist.
+      if (isset($bajax) && isset($libraries['load'])) {
+        $libraries['load']['dependencies'][] = 'blazy/bio.ajax';
+      }
     }
   }
 
@@ -81,6 +118,7 @@ class BlazyAlter {
    */
   public static function libraryInfoBuild() {
     if (!isset(static::$libraryInfoBuild)) {
+      $libraries = [];
       // Optional polyfills for IEs, and oldies.
       $polyfills = array_merge(BlazyDefault::polyfills(), BlazyDefault::ondemandPolyfills());
       foreach ($polyfills as $id) {
@@ -101,11 +139,11 @@ class BlazyAlter {
 
       // Plugins extending dBlazy.
       foreach (BlazyDefault::plugins() as $id) {
-        $base = ['eventify', 'viewport', 'dataset', 'css', 'dom'];
+        $base = ['eventify', 'viewport', 'dataset'];
         $base = in_array($id, $base);
         $deps = $base ? ['blazy/dblazy', 'blazy/base'] : ['blazy/xlazy'];
         if ($id == 'xlazy') {
-          $deps = ['blazy/viewport', 'blazy/dataset', 'blazy/dom'];
+          $deps = ['blazy/viewport', 'blazy/dataset'];
         }
 
         // @todo problematic weight, basically compat must be present.
@@ -113,6 +151,7 @@ class BlazyAlter {
           $deps[] = 'blazy/compat';
         }
         $weight = $base ? -5.6 : -5.5;
+
         $common = ['minified' => TRUE, 'weight' => $weight];
         $libraries[$id] = [
           'js' => [
@@ -120,6 +159,11 @@ class BlazyAlter {
           ],
           'dependencies' => $deps,
         ];
+      }
+
+      // Components, normally non-generic, unlike plugins.
+      foreach (BlazyDefault::dyComponents() as $id => $component) {
+        $libraries[$id] = $component;
       }
 
       static::$libraryInfoBuild = $libraries;
@@ -148,7 +192,7 @@ class BlazyAlter {
    */
   public static function ckeditorCssAlter(array &$css, Editor $editor): void {
     if (self::isCkeditorApplicable($editor)) {
-      $path = Blazy::getPath('module', 'blazy', TRUE);
+      $path = Internals::getPath('module', 'blazy', TRUE);
       $css[] = $path . '/css/components/blazy.media.css';
       $css[] = $path . '/css/components/blazy.preview.css';
       $css[] = $path . '/css/components/blazy.ratio.css';
@@ -157,24 +201,12 @@ class BlazyAlter {
 
   /**
    * Provides the third party formatters where full blown Blazy is not worthy.
-   *
-   * The module doesn't automatically convert the relevant theme to use Blazy,
-   * however two attributes are provided: `data-b-lazy` and `data-b-preview`
-   * which can be used to override a particular theme to use Blazy.
-   *
-   * The `data-b-lazy`is a flag indicating Blazy is enabled.
-   * The `data-b-preview` is a flag indicating Blazy in CKEditor preview mode
-   * via Entity/Media Embed which normally means Blazy should be disabled
-   * due to CKEditor not supporting JS assets.
-   *
-   * @see \Drupal\blazy\Theme\BlazyTheme::blazy()
-   * @see \Drupal\blazy\Theme\BlazyTheme::field()
-   * @see \Drupal\blazy\Theme\BlazyTheme::fileVideo()
-   * @see blazy_preprocess_file_video()
    */
   public static function thirdPartyFormatters(): array {
-    $formatters = ['file_video'];
-    \blazy()->getModuleHandler()->alter('blazy_third_party_formatters', $formatters);
+    $formatters = ['file_audio', 'file_video'];
+    if ($manager = Internals::service('blazy.manager')) {
+      $formatters = $manager->thirdPartyFormatters();
+    }
     return array_unique($formatters);
   }
 
@@ -197,48 +229,87 @@ class BlazyAlter {
   /**
    * Implements hook_field_formatter_settings_summary_alter().
    */
-  public static function fieldFormatterSettingsSummaryAlter(&$summary, $context): void {
-    $on = $context['formatter']->getThirdPartySetting('blazy', 'blazy', FALSE);
-    if ($on && in_array($context['formatter']->getPluginId(), self::thirdPartyFormatters())) {
-      $summary[] = 'Blazy';
+  public static function fieldFormatterSettingsSummaryAlter(array &$summary, $context): void {
+    if ($formatter = $context['formatter'] ?? NULL) {
+      $on = $formatter->getThirdPartySetting('blazy', 'blazy', FALSE);
+      if ($on && in_array($formatter->getPluginId(), self::thirdPartyFormatters())) {
+        $summary[] = 'Blazy';
+      }
+
+      // Provide removal message, applicable to all Blazy ecosystem.
+      $plugin_id = $formatter->getPluginId();
+      if (strpos($plugin_id, '_file') !== FALSE) {
+        $config = $formatter->getSettings();
+        // All blazy file ecosystem has this unique option.
+        if (isset($config['svg_hide_caption'])) {
+          $definition = $context['field_definition'];
+          $settings   = $definition->getSettings();
+          $extensions = $settings['file_extensions'] ?? '';
+          $plugin     = $formatter->getPluginDefinition();
+
+          if (!Blazy::has($extensions, 'svg') && $definition->getType() == 'image') {
+            $summary[] = t('<h5>No SVG file extensions, use @provider Image instead.</h5>', [
+              '@provider' => Unicode::ucfirst($plugin['provider']),
+            ]);
+          }
+        }
+      }
     }
   }
 
   /**
    * Implements hook_blazy_settings_alter().
    *
-   * @todo remove, likely no-longer relevant since sub-modules re-use the same
-   * Blazy::containerAttributes() without being exclusive to `blazy` namespace
-   * which was at 1.x, but not 2.x. At 2.x `blazy` is merged into the embedding
-   * parent automatically making this irrelevant. Meaning CSS classes are
-   * preserved by Blazy containing Views style since 2.x.
+   * Provides minimal flags for Blazy field formatters embedded inside a view.
+   * With this limited info, sub-modules like Splidebox can correctly inject
+   * its options via [data-splidebox] to the correct container, etc., and avoid
+   * duplicating injections at both embedded Blazy formatter and Blazy Grid view
+   * style. And the same principle applies to all sub-modules.
+   *
+   * Warning! Do not alter configurable settings like use_theme_field here, it
+   * caused 2.16 chaotic markups with Views embedded blazy formatters.
    */
-  public static function blazySettingsAlter(array &$build, $items): void {
-    $settings = &$build['settings'];
-    $blazies = $settings['blazies'];
+  public static function blazySettingsAlter(array &$build, $object): void {
+    $settings = &$build['#settings'];
+    $blazies  = $settings['blazies'];
+
+    // Adds bio.ajax to fix product variation AJAX within BigPipe.
+    // Views AJAX will automatically work, however to support other non-views
+    // AJAX, add more conditions to your custom hook_blazy_settings_alter.
+    if ($type = $blazies->get('field.entity_type')) {
+      if ($type == 'commerce_product_variation') {
+        $blazies->set('use.ajax', TRUE);
+      }
+    }
 
     // Sniffs for Views to allow block__no_wrapper, views_no_wrapper, etc.
     $function = 'views_get_current_view';
+    // @todo phpstan bug, misleading with nullable function return.
+    /* @phpstan-ignore-next-line */
     if (is_callable($function) && $view = $function()) {
-
-      $style = $view->style_plugin;
-      $display = is_null($style) ? '' : $style->displayHandler->getPluginId();
-
-      $name = $view->storage->id();
+      $name      = $view->storage->id();
       $view_mode = $view->current_display;
-      $plugin_id = is_null($style) ? '' : $style->getPluginId();
+      $style     = $view->style_plugin;
+      $display   = $style ? $style->displayHandler->getPluginId() : '';
+      $plugin_id = $style ? $style->getPluginId() : '';
 
+      // Only eat what we can chew:
+      $data = Internals::getViewFieldData($view);
       $current = [
+        'count'       => count($view->result),
         'display'     => $display,
+        'embedded'    => TRUE,
         'instance_id' => str_replace('_', '-', "{$name}-{$display}-{$view_mode}"),
+        'data'        => $data,
+        'multifield'  => count($data['fields']) > 1,
         'name'        => $name,
         'plugin_id'   => $plugin_id,
         'view_mode'   => $view_mode,
-        'is_view'     => FALSE,
       ];
 
-      // @todo add `formatter` key if the above is proven right.
-      $blazies->set('view', $current, TRUE);
+      // Collects view info for the embedded Blazy, and this is not a view.
+      $blazies->set('view', $current, TRUE)
+        ->set('is.view', FALSE);
     }
   }
 

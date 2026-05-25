@@ -30,7 +30,7 @@ abstract class EntityEmbedTestBase extends BrowserTestBase {
     'entity_embed',
     'entity_embed_test',
     'node',
-    'ckeditor',
+    'ckeditor5',
   ];
 
   /**
@@ -50,7 +50,7 @@ abstract class EntityEmbedTestBase extends BrowserTestBase {
   /**
    * {@inheritdoc}
    */
-  protected function setUp() {
+  protected function setUp(): void {
     parent::setUp();
 
     // Create a page content type.
@@ -76,19 +76,12 @@ abstract class EntityEmbedTestBase extends BrowserTestBase {
       ],
     ]);
     $format->save();
-
-    $editor_group = [
-      'name' => 'Entity Embed',
-      'items' => [
-        'node',
-      ],
-    ];
     $editor = Editor::create([
       'format' => 'custom_format',
-      'editor' => 'ckeditor',
+      'editor' => 'ckeditor5',
       'settings' => [
         'toolbar' => [
-          'rows' => [[$editor_group]],
+          'items' => ['node'],
         ],
       ],
     ]);

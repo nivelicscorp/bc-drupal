@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\migrate_plus\Event;
 
 /**
@@ -13,7 +15,7 @@ final class MigrateEvents {
    * Name of the event fired when preparing a source data row.
    *
    * This event allows modules to perform an action whenever the source plugin
-   * has read the inital source data into a Row object. Typically, this would be
+   * reads the initial source data into a Row object. Typically, this would be
    * used to add data to the row, manipulate the data into a canonical form, or
    * signal by exception that the row should be skipped. The event listener
    * method receives a \Drupal\migrate_plus\Event\MigratePrepareRowEvent
@@ -25,7 +27,7 @@ final class MigrateEvents {
    *
    * @var string
    */
-  const PREPARE_ROW = 'migrate_plus.prepare_row';
+  public const PREPARE_ROW = 'migrate_plus.prepare_row';
 
   /**
    * Name of the event fired when a source item is missing.
@@ -38,6 +40,6 @@ final class MigrateEvents {
    *
    * @see \Drupal\migrate\Event\MigrateRowDeleteEvent
    */
-  const MISSING_SOURCE_ITEM = 'migrate_plus.missing_source_item';
+  public const MISSING_SOURCE_ITEM = 'migrate_plus.missing_source_item';
 
 }

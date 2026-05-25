@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Drupal\migrate_tools;
 
@@ -14,22 +14,11 @@ use Drupal\migrate\Row;
  */
 class IdMapFilter extends \FilterIterator implements MigrateIdMapInterface {
 
-  /**
-   * List of specific source IDs to import.
-   */
-  protected array $idList;
-
-  /**
-   * IdMapFilter constructor.
-   *
-   * @param \Drupal\migrate\Plugin\MigrateIdMapInterface $id_map
-   *   The ID map.
-   * @param array $id_list
-   *   The id list to use in the filter.
-   */
-  public function __construct(MigrateIdMapInterface $id_map, array $id_list) {
+  public function __construct(
+    MigrateIdMapInterface $id_map,
+    protected array $idList,
+  ) {
     parent::__construct($id_map);
-    $this->idList = $id_list;
   }
 
   /**
@@ -213,7 +202,7 @@ class IdMapFilter extends \FilterIterator implements MigrateIdMapInterface {
   public function currentSource(): array {
     $map = $this->getInnerIterator();
     \assert($map instanceof MigrateIdMapInterface);
-    return $map->currentSource();
+    return $map->currentSource() ?? [];
   }
 
   /**

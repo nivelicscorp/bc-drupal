@@ -2,6 +2,7 @@
 
 namespace Drupal\search_api\Plugin\views\filter;
 
+use Drupal\views\Attribute\ViewsFilter;
 use Drupal\Component\Datetime\TimeInterface;
 use Drupal\views\Plugin\views\filter\Date;
 
@@ -9,9 +10,8 @@ use Drupal\views\Plugin\views\filter\Date;
  * Defines a filter for filtering on dates.
  *
  * @ingroup views_filter_handlers
- *
- * @ViewsFilter("search_api_date")
  */
+#[ViewsFilter('search_api_date')]
 class SearchApiDate extends Date {
 
   use SearchApiFilterTrait;
@@ -74,9 +74,16 @@ class SearchApiDate extends Date {
     $return = parent::acceptExposedInput($input);
 
     if (!$return) {
-      // Override for the "(not) empty" operators.
+      // The parent class doesn't always handle operators with 0 or 2 values
+      // correctly.
       $operators = $this->operators();
-      if ($operators[$this->operator]['values'] == 0) {
+      $num_values = $operators[$this->operator]['values'];
+      if ($num_values == 0) {
+        return TRUE;
+      }
+      // @todo Remove this once we depend on a Core version that fixed #3202489.
+      elseif ($num_values == 2
+          && (!empty($this->value['min']) || !empty($this->value['max']))) {
         return TRUE;
       }
     }
@@ -88,19 +95,40 @@ class SearchApiDate extends Date {
    * {@inheritdoc}
    */
   protected function opBetween($field) {
-    if ($this->value['type'] == 'offset') {
-      $time = $this->getTimeService()->getRequestTime();
-      $a = strtotime($this->value['min'], $time);
-      $b = strtotime($this->value['max'], $time);
+    if (!empty($this->value['max'])
+        && ($this->value['type'] ?? '') != 'offset'
+        && !str_contains($this->value['max'], ':')) {
+      // No time was specified, so make the date range inclusive.
+      $this->value['max'] .= ' +1 day';
     }
-    else {
-      $a = intval(strtotime($this->value['min'], 0));
-      $b = intval(strtotime($this->value['max'], 0));
+    $base_timestamp = ($this->value['type'] ?? '') == 'offset'
+      ? $this->getTimeService()->getRequestTime()
+      : 0;
+    $a = $b = NULL;
+    if (!empty($this->value['min'])) {
+      $a = strtotime($this->value['min'], $base_timestamp);
     }
+    if (!empty($this->value['max'])) {
+      $b = strtotime($this->value['max'], $base_timestamp);
+    }
+
     $real_field = $this->realField;
-    $operator = strtoupper($this->operator);
     $group = $this->options['group'];
-    $this->getQuery()->addCondition($real_field, [$a, $b], $operator, $group);
+
+    if (isset($a, $b)) {
+      $operator = strtoupper($this->operator);
+      $this->getQuery()->addCondition($real_field, [$a, $b], $operator, $group);
+    }
+    elseif (isset($a)) {
+      // Using >= for BETWEEN and < for NOT BETWEEN.
+      $operator = $this->operator === 'between' ? '>=' : '<';
+      $this->getQuery()->addCondition($real_field, $a, $operator, $group);
+    }
+    elseif (isset($b)) {
+      // Using <= for BETWEEN and > for NOT BETWEEN.
+      $operator = $this->operator === 'between' ? '<=' : '>';
+      $this->getQuery()->addCondition($real_field, $b, $operator, $group);
+    }
   }
 
   /**

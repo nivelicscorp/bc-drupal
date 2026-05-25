@@ -5,25 +5,25 @@ namespace Drupal\field_defaults\Form;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
-use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\Core\Messenger\Messenger;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
- * Class SettingsForm.
+ * Settings form for field defaults admin.
  */
 class SettingsForm extends FormBase {
 
   /**
    * Config Factory.
    *
-   * @var Drupal\Core\Config\ConfigFactoryInterface
+   * @var \Drupal\Core\Config\ConfigFactoryInterface
    */
   protected $configFactory;
 
   /**
    * Messenger Service.
    *
-   * @var Drupal\Core\Messenger\Messenger
+   * @var \Drupal\Core\Messenger\Messenger
    */
   protected $messenger;
 
@@ -41,7 +41,6 @@ class SettingsForm extends FormBase {
   public static function create(ContainerInterface $container) {
     // Instantiates this form class.
     return new static(
-    // Load the service required to construct this class.
       $container->get('config.factory'),
       $container->get('messenger')
     );
@@ -58,13 +57,14 @@ class SettingsForm extends FormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
-    $config = $this->configFactory->getEditable('field_defaults.configuration');
+    $config = $this->configFactory->getEditable('field_defaults.settings');
 
-    $form['update_date'] = [
+    // @todo change to "preserve" to allow compatibility with preserve_changed module.
+    $form['retain_changed_date'] = [
       '#title' => $this->t('Retain original entity updated time'),
       '#description' => $this->t('When default values are updated retain the entity original update date.'),
       '#type' => 'checkbox',
-      '#default_value' => $config->get('update_date'),
+      '#default_value' => $config->get('retain_changed_date'),
     ];
 
     $form['submit'] = [
@@ -79,8 +79,8 @@ class SettingsForm extends FormBase {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
-    $config = $this->configFactory->getEditable('field_defaults.configuration');
-    $config->set('update_date', $form_state->getValue('update_date'));
+    $config = $this->configFactory->getEditable('field_defaults.settings');
+    $config->set('retain_changed_date', $form_state->getValue('retain_changed_date'));
     $settings = $config->save();
     if ($settings) {
       $this->messenger()->addMessage($this->t('Settings saved'));

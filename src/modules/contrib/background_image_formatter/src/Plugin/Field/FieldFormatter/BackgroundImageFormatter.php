@@ -3,6 +3,7 @@
 namespace Drupal\background_image_formatter\Plugin\Field\FieldFormatter;
 
 use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Field\Annotation\FieldFormatter;
 use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\image\Entity\ImageStyle;
@@ -128,7 +129,7 @@ class BackgroundImageFormatter extends ImageFormatter {
         continue;
       }
 
-      $image_url = file_url_transform_relative(file_create_url($entity->getFileUri()));
+      $image_url = \Drupal::service('file_url_generator')->generateString($entity->getFileUri());
       $id = $entity->id();
 
       if ($image_style) {

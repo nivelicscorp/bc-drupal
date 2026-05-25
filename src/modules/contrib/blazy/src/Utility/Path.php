@@ -3,89 +3,94 @@
 namespace Drupal\blazy\Utility;
 
 use Drupal\blazy\Blazy;
+use Drupal\blazy\internals\Internals;
 
 /**
- * Provides urtl, route, request, stream, or any path-related methods.
+ * Provides url, route, request, stream, or any path-related methods.
+ *
+ * @internal
+ *   This is an internal part of the Blazy system and should only be used by
+ *   blazy-related code in Blazy module. Please use the public method instead.
  */
 class Path {
 
   /**
    * The AMP page.
    *
-   * @var bool
+   * @var bool|null
    */
-  private static $isAmp;
+  protected static $isAmp;
 
   /**
    * The preview mode to disable Blazy where JS is not available, or useless.
    *
-   * @var bool
+   * @var bool|null
    */
-  private static $isPreview;
+  protected static $isPreview;
 
   /**
    * The preview mode to disable interactive elements.
    *
-   * @var bool
+   * @var bool|null
    */
-  private static $isSandboxed;
+  protected static $isSandboxed;
 
   /**
    * Retrieves the file url generator service.
    *
-   * @return \Drupal\Core\File\FileUrlGenerator
+   * @return \Drupal\Core\File\FileUrlGenerator|null
    *   The file url generator.
    *
    * @see https://www.drupal.org/node/2940031
    */
   public static function fileUrlGenerator() {
-    return Blazy::service('file_url_generator');
+    return Internals::service('file_url_generator');
   }
 
   /**
    * Retrieves the path resolver.
    *
-   * @return \Drupal\Core\Extension\ExtensionPathResolver
+   * @return \Drupal\Core\Extension\ExtensionPathResolver|null
    *   The path resolver.
    */
   public static function pathResolver() {
-    return Blazy::service('extension.path.resolver');
+    return Internals::service('extension.path.resolver');
   }
 
   /**
    * Retrieves the request stack.
    *
-   * @return \Symfony\Component\HttpFoundation\RequestStack
+   * @return \Symfony\Component\HttpFoundation\RequestStack|null
    *   The request stack.
    */
   public static function requestStack() {
-    return Blazy::service('request_stack');
+    return Internals::service('request_stack');
   }
 
   /**
    * Retrieves the currently active route match object.
    *
-   * @return \Drupal\Core\Routing\RouteMatchInterface
+   * @return \Drupal\Core\Routing\RouteMatchInterface|null
    *   The currently active route match object.
    */
   public static function routeMatch() {
-    return Blazy::service('current_route_match');
+    return Internals::service('current_route_match');
   }
 
   /**
    * Retrieves the stream wrapper manager service.
    *
-   * @return \Drupal\Core\StreamWrapper\StreamWrapperManager
+   * @return \Drupal\Core\StreamWrapper\StreamWrapperManager|null
    *   The stream wrapper manager.
    */
   public static function streamWrapperManager() {
-    return Blazy::service('stream_wrapper_manager');
+    return Internals::service('stream_wrapper_manager');
   }
 
   /**
    * Retrieves the request.
    *
-   * @return \Symfony\Component\HttpFoundation\Request
+   * @return \Symfony\Component\HttpFoundation\Request|null
    *   The request.
    *
    * @see https://github.com/symfony/symfony/blob/6.0/src/Symfony/Component/HttpFoundation/Request.php
@@ -99,30 +104,14 @@ class Path {
 
   /**
    * Returns the commonly used path, or just the base path.
-   *
-   * @todo remove drupal_get_path check when min D9.3.
    */
   public static function getPath($type, $name, $absolute = FALSE): ?string {
     if ($resolver = self::pathResolver()) {
       $path = $resolver->getPath($type, $name);
-    }
-    else {
-      $function = 'drupal_get_path';
-      $path = is_callable($function) ? $function($type, $name) : '';
-    }
-    return $absolute ? \base_path() . $path : $path;
-  }
 
-  /**
-   * Provides a wrapper to replace deprecated libraries_get_path() at ease.
-   */
-  public static function getLibrariesPath($name, $base_path = FALSE): ?string {
-    if ($finder = Blazy::service('library.libraries_directory_file_finder')) {
-      return $finder->find($name);
+      return $absolute ? Internals::basePath() . $path : $path;
     }
-
-    $function = 'libraries_get_path';
-    return is_callable($function) ? $function($name, $base_path) : '';
+    return '';
   }
 
   /**
@@ -141,7 +130,7 @@ class Path {
   public static function isAmp(): bool {
     if (!isset(static::$isAmp)) {
       $request = self::request();
-      static::$isAmp = $request && $request->query->get('amp');
+      static::$isAmp = $request && $request->query->get('amp') !== NULL;
     }
     return static::$isAmp;
   }
@@ -156,7 +145,7 @@ class Path {
         if ($route = $router->getRouteName()) {
           $edits = ['entity_browser.', 'edit_form', 'add_form', '.preview'];
           foreach ($edits as $key) {
-            if (mb_strpos($route, $key) !== FALSE) {
+            if (Blazy::has($route, $key)) {
               $check = TRUE;
               break;
             }

@@ -1,4 +1,3 @@
-uuid: 633e2a05-fe34-4d60-983c-17577c1efe9f
 langcode: en
 status: true
 dependencies:
@@ -25,6 +24,5 @@ content:
 hidden:
   created: true
   name: true
-  path: true
   status: true
   uid: true

@@ -8,8 +8,8 @@ use Drupal\Core\Entity\Display\EntityViewDisplayInterface;
 use Drupal\Core\Entity\Entity\EntityFormDisplay;
 use Drupal\Core\Entity\Display\EntityFormDisplayInterface;
 use Drupal\Core\Field\FieldStorageDefinitionInterface;
-use Drupal\Tests\field\Traits\EntityReferenceTestTrait;
-use Drupal\Tests\taxonomy\Functional\TaxonomyTestTrait;
+use Drupal\Tests\field\Traits\EntityReferenceFieldCreationTrait;
+use Drupal\Tests\taxonomy\Traits\TaxonomyTestTrait;
 
 /**
  * Provides common helper methods for Social simple module tests.
@@ -17,14 +17,14 @@ use Drupal\Tests\taxonomy\Functional\TaxonomyTestTrait;
 abstract class TestSocialSimpleTestBase extends BrowserTestBase {
 
   use TaxonomyTestTrait;
-  use EntityReferenceTestTrait;
+  use EntityReferenceFieldCreationTrait;
 
   /**
    * Modules to install.
    *
    * @var array
    */
-  public static $modules = [
+  protected static $modules = [
     'system',
     'user',
     'block',
@@ -35,6 +35,11 @@ abstract class TestSocialSimpleTestBase extends BrowserTestBase {
     'taxonomy',
     'social_simple',
   ];
+
+  /**
+   * {@inheritdoc}
+   */
+  protected $defaultTheme = 'stark';
 
   /**
    * User with admin permission.
@@ -102,7 +107,7 @@ abstract class TestSocialSimpleTestBase extends BrowserTestBase {
   /**
    * {@inheritdoc}
    */
-  protected function setUp() {
+  protected function setUp(): void {
     parent::setUp();
 
     // Create vocabulary and terms.

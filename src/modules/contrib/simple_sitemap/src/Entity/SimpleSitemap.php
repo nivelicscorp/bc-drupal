@@ -68,14 +68,14 @@ class SimpleSitemap extends ConfigEntityBase implements SimpleSitemapInterface {
   /**
    * The fetch status.
    *
-   * @var int
+   * @var int|null
    */
   protected $fetchByStatus;
 
   /**
    * The sitemap type entity.
    *
-   * @var \Drupal\simple_sitemap\Entity\SimpleSitemapTypeInterface
+   * @var \Drupal\simple_sitemap\Entity\SimpleSitemapTypeInterface|null
    */
   protected $sitemapType;
 
@@ -213,7 +213,7 @@ class SimpleSitemap extends ConfigEntityBase implements SimpleSitemapInterface {
   }
 
   /**
-   * Returns whether the sitemap is needs a chunk index.
+   * Returns whether the sitemap needs a chunk index.
    *
    * This is not about indexing sitemap variants, it's about creating an index
    * of all sitemap chunks. A sitemap needs a chunk index if it consists of more
@@ -253,7 +253,7 @@ class SimpleSitemap extends ConfigEntityBase implements SimpleSitemapInterface {
    * {@inheritdoc}
    */
   public function status(): bool {
-    return parent::status() && $this->contentStatus();
+    return $this->isEnabled() && $this->contentStatus();
   }
 
   /**
@@ -266,7 +266,7 @@ class SimpleSitemap extends ConfigEntityBase implements SimpleSitemapInterface {
   /**
    * {@inheritdoc}
    */
-  public function getCreated(): ?string {
+  public function getCreated(): ?int {
     return $this->entityTypeManager()->getStorage('simple_sitemap')->getCreated($this, $this->fetchByStatus);
   }
 

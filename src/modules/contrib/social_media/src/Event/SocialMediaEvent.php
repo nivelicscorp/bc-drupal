@@ -2,42 +2,30 @@
 
 namespace Drupal\social_media\Event;
 
-/**
- * Drupal 9 is shipped with Symfony 4, which places the Event class in a
- * different namespace than Symfony 3 did. In order to support Drupal 8 to
- * Drupal 9 upgrades, we must find whichever class is available and extend it.
- */
-if (class_exists('\Symfony\Contracts\EventDispatcher\Event')) {
-  class EventProxy extends \Symfony\Contracts\EventDispatcher\Event {
-    // Using the Symfony 4 class.
-  }
-}
-elseif (class_exists('\Symfony\Component\EventDispatcher\Event')) {
-  class EventProxy extends \Symfony\Component\EventDispatcher\Event {
-    // Using the Symfony 3 class.
-  }
-}
-else {
-  throw new \Exception('Error resolving Event class.');
-}
+use Symfony\Contracts\EventDispatcher\Event;
 
 /**
- * Class SocialMediaEvent.
+ * An event type that is dispatched to alter social media information.
  */
-class SocialMediaEvent extends EventProxy {
+class SocialMediaEvent extends Event {
 
   /**
-   * TODO describe element.
+   * The information that is being altered.
+   *
+   * This may be one of the following:
+   *   social_media.add_more_social_media: An array of social media types.
+   *   social_media.pre_execute: A build array.
+   *   social_media.pre_render: A build array.
    *
    * @var array
    */
   protected $element;
 
   /**
-   * Constructor.
+   * Creates a new social media event.
    *
    * @param array $element
-   *   TODO describe what element is.
+   *   The element that is being altered.
    */
   public function __construct(array $element) {
     $this->element = $element;
@@ -47,17 +35,17 @@ class SocialMediaEvent extends EventProxy {
    * Return the element.
    *
    * @return array
-   *   The element.
+   *   The element that is being altered.
    */
   public function getElement() {
     return $this->element;
   }
 
   /**
-   * Element setter.
+   * Sets the element to alter.
    *
    * @param array $element
-   *   TODO describe what element is.
+   *   The element that is being altered.
    */
   public function setElement(array $element) {
     $this->element = $element;
