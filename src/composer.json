@@ -186,9 +186,6 @@
         },
         "enable-patching": true,
         "patches": {
-            "drupal/context": {
-                "Undefined Index Errors": "https://www.drupal.org/files/issues/2022-01-25/3204399-undefined_index_errors-19.patch"
-            },
             "drupal/international_phone": {
                 "Drupal 9 compatibility": "https://www.drupal.org/files/issues/2022-01-05/international_phone-3144284-3.patch"
             },
