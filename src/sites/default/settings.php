@@ -25,3 +25,4 @@ $settings['config_sync_directory'] = '/opt/drupal/web/sites/default/config/sync'
 $settings['file_private_path'] = '../private/files';
 $cookie_domain = "localhost";
 
+$settings['update_free_access'] = TRUE;
