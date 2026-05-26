@@ -1,0 +1,5 @@
+block_classes_stored:
+  - content-bloques-news-events
+  - block-newsletter
+  - h-card
+maxlength_attributes: 255

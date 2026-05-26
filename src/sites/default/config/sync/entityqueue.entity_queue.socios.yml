@@ -1,0 +1,26 @@
+uuid: 4fe8f303-b72a-4575-918b-e74b1ef4f5d3
+langcode: es
+status: true
+dependencies:
+  module:
+    - node
+id: socios
+label: Socios
+handler: simple
+handler_configuration: {  }
+entity_settings:
+  target_type: node
+  handler: 'default:node'
+  handler_settings:
+    target_bundles:
+      lawyer: lawyer
+    sort:
+      field: _none
+      direction: ASC
+    auto_create: false
+    auto_create_bundle: ''
+queue_settings:
+  min_size: 0
+  max_size: 0
+  act_as_queue: false
+  reverse: false

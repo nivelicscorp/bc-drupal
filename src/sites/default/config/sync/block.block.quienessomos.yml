@@ -1,0 +1,38 @@
+uuid: 468eb61b-0e91-4b7e-8579-067c0c5add34
+langcode: en
+status: true
+dependencies:
+  config:
+    - system.menu.quienes-somos
+  module:
+    - menu_block
+    - menu_block_title
+  theme:
+    - brigard
+third_party_settings:
+  menu_block_title:
+    modify_title: false
+  block_class:
+    classes: null
+id: quienessomos
+theme: brigard
+region: navigation
+weight: -11
+provider: null
+plugin: 'menu_block:quienes-somos'
+settings:
+  id: 'menu_block:quienes-somos'
+  label: 'Quienes somos'
+  label_display: '0'
+  provider: menu_block
+  follow: false
+  follow_parent: child
+  label_link: false
+  label_type: block
+  level: 1
+  depth: 0
+  expand_all_items: false
+  parent: 'quienes-somos:'
+  suggestion: quienes_somos
+  expand: 0
+visibility: {  }

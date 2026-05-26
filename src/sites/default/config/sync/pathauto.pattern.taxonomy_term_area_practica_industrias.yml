@@ -1,0 +1,36 @@
+uuid: 4f91d23e-6a16-48c5-b1bd-4fda2ff21886
+langcode: es
+status: true
+dependencies:
+  config:
+    - taxonomy.vocabulary.areas
+    - taxonomy.vocabulary.indrustrias
+  module:
+    - language
+    - taxonomy
+id: taxonomy_term_area_practica_industrias
+label: 'Taxonomy Term Área Práctica - Industrias'
+type: 'canonical_entities:taxonomy_term'
+pattern: '/[term:name]'
+selection_criteria:
+  084dcf05-d0f1-4b60-bed0-5e5d87d309e6:
+    id: 'entity_bundle:taxonomy_term'
+    negate: false
+    context_mapping:
+      taxonomy_term: taxonomy_term
+    bundles:
+      areas: areas
+      indrustrias: indrustrias
+  36eebd54-4fb9-4402-9957-b5e7990f30a1:
+    id: language
+    negate: false
+    context_mapping:
+      language: 'taxonomy_term:langcode:language'
+    langcodes:
+      es: es
+      en: en
+selection_logic: and
+weight: -5
+relationships:
+  'taxonomy_term:langcode:language':
+    label: Language

@@ -1,0 +1,33 @@
+uuid: ff7da2ad-0b41-4cd5-905c-8c0a369b13e1
+langcode: es
+status: true
+dependencies:
+  module:
+    - bu_sections
+    - system
+  theme:
+    - brigard
+id: subsections_lateral_menu
+theme: brigard
+region: sidebar_right
+weight: -10
+provider: null
+plugin: subsections_lateral_menu_block
+settings:
+  id: subsections_lateral_menu_block
+  label: 'Subsections Lateral Menu Block'
+  label_display: '0'
+  provider: bu_sections
+visibility:
+  request_path:
+    id: request_path
+    negate: true
+    pages: |-
+      /que-hacemos/*
+      /what-we-do/*
+      <front>
+      /abogados
+      /abogados/*
+      /noticias
+      /noticias/*
+      /user/*

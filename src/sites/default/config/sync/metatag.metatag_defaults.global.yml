@@ -1,0 +1,14 @@
+uuid: 965d2293-78ce-4654-80a9-0d3735671652
+langcode: es
+status: true
+dependencies: {  }
+_core:
+  default_config_hash: sL588ui1E_8-2c_UupwyYxcqX2OVyMFp3HTLbbFqvPc
+id: global
+label: Global
+tags:
+  canonical_url: '[current-page:url]'
+  google: IxbQ91AAe6bJknwjaBoy3PMUAUmAInC_Nn-eW6NtK3M
+  'hreflang_per_language:hreflang_en': 'https://bc.com.co/es'
+  'hreflang_per_language:hreflang_es': 'https://bc.com.co/es'
+  title: '[current-page:title] | [site:name]'

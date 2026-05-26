@@ -1,0 +1,34 @@
+uuid: 70f76a14-d8ce-40ef-992e-a06b36e9f5d4
+langcode: es
+status: true
+dependencies:
+  content:
+    - 'block_content:sider_bar:7d106f6c-fd80-407c-b122-1eee75379fce'
+  module:
+    - block_content
+  theme:
+    - brigard
+third_party_settings:
+  block_class:
+    classes: 'block-contact-sidebar block-contact-sidebar-color--transparent nuestros-abogados'
+id: nuestros_profesionales
+theme: brigard
+region: sidebar_right
+weight: 5
+provider: null
+plugin: 'block_content:7d106f6c-fd80-407c-b122-1eee75379fce'
+settings:
+  id: 'block_content:7d106f6c-fd80-407c-b122-1eee75379fce'
+  label: 'Nuestros profesionales'
+  label_display: '0'
+  provider: block_content
+  status: true
+  info: ''
+  view_mode: full
+visibility:
+  request_path:
+    id: request_path
+    negate: false
+    pages: |-
+      /que-hacemos/*
+      /what-we-do/*

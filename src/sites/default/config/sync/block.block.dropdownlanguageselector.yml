@@ -1,0 +1,23 @@
+uuid: dfe81e77-7c55-45a7-9047-73a2b60e21fa
+langcode: es
+status: true
+dependencies:
+  module:
+    - dropdown_language
+  theme:
+    - brigard
+id: dropdownlanguageselector
+theme: brigard
+region: top_header
+weight: 10
+provider: null
+plugin: 'dropdown_language:language_interface'
+settings:
+  id: 'dropdown_language:language_interface'
+  label: 'Language Selector'
+  label_display: '0'
+  provider: dropdown_language
+  labels: {  }
+  wrapper: false
+  display_language_id: true
+visibility: {  }

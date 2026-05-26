@@ -1,0 +1,39 @@
+uuid: 68d095b6-6497-4940-8456-d121dc61c934
+langcode: es
+status: true
+dependencies:
+  content:
+    - 'block_content:sider_bar:bcbb3fb9-71f3-4699-ad1c-47e1722ecdde'
+  module:
+    - block_content
+    - system
+  theme:
+    - brigard
+third_party_settings:
+  block_class:
+    classes: block-contact-sidebar
+id: contactenos_secciones
+theme: brigard
+region: sidebar_right
+weight: 10
+provider: null
+plugin: 'block_content:bcbb3fb9-71f3-4699-ad1c-47e1722ecdde'
+settings:
+  id: 'block_content:bcbb3fb9-71f3-4699-ad1c-47e1722ecdde'
+  label: Contáctenos
+  label_display: '0'
+  provider: block_content
+  view_mode: full
+visibility:
+  request_path:
+    id: request_path
+    negate: true
+    pages: |-
+      /que-hacemos/*
+      /what-we-do/*
+      <front>
+      /abogados
+      /abogados/*
+      /noticias
+      /noticias/*
+      /user/*

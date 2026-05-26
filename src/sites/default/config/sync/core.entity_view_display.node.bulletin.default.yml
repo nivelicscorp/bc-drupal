@@ -1,0 +1,108 @@
+uuid: 6036b000-af99-41a9-aedb-d3974e40a87e
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.field.node.bulletin.body
+    - field.field.node.bulletin.field_area
+    - field.field.node.bulletin.field_es_privado
+    - field.field.node.bulletin.field_footer
+    - field.field.node.bulletin.field_image
+    - field.field.node.bulletin.field_industrias
+    - field.field.node.bulletin.field_metatags
+    - field.field.node.bulletin.field_noticias_asociadas
+    - field.field.node.bulletin.field_resumen
+    - field.field.node.bulletin.field_specialization
+    - field.field.node.bulletin.field_tags
+    - node.type.bulletin
+  module:
+    - field_group
+    - svg_image
+    - text
+    - user
+third_party_settings:
+  field_group:
+    group_shared:
+      children:
+        - social_simple_buttons
+      label: 'Compartir esta noticias'
+      parent_name: ''
+      region: content
+      weight: 4
+      format_type: fieldset
+      format_settings:
+        label: 'Compartir esta noticias'
+        classes: news-share
+        id: ''
+        description: ''
+    group_info_more:
+      children:
+        - field_footer
+      label: 'Para mayor información contacte nuestro equipo'
+      parent_name: ''
+      region: content
+      weight: 2
+      format_type: fieldset
+      format_settings:
+        label: 'Para mayor información contacte nuestro equipo'
+        classes: contact-us
+        id: ''
+        description: ''
+id: node.bulletin.default
+targetEntityType: node
+bundle: bulletin
+mode: default
+content:
+  body:
+    type: text_default
+    label: hidden
+    settings: {  }
+    third_party_settings: {  }
+    weight: 1
+    region: content
+  field_footer:
+    type: text_default
+    label: hidden
+    settings: {  }
+    third_party_settings: {  }
+    weight: 3
+    region: content
+  field_image:
+    type: image
+    label: hidden
+    settings:
+      image_link: ''
+      image_style: ''
+      image_loading:
+        attribute: lazy
+      svg_attributes:
+        width: null
+        height: null
+      svg_render_as_image: true
+    third_party_settings: {  }
+    weight: 0
+    region: content
+  field_noticias_asociadas:
+    type: entity_reference_label
+    label: above
+    settings:
+      link: true
+    third_party_settings: {  }
+    weight: 5
+    region: content
+  social_simple_buttons:
+    settings: {  }
+    third_party_settings: {  }
+    weight: 2
+    region: content
+hidden:
+  field_area: true
+  field_es_privado: true
+  field_industrias: true
+  field_metatags: true
+  field_resumen: true
+  field_specialization: true
+  field_tags: true
+  langcode: true
+  links: true
+  search_api_excerpt: true

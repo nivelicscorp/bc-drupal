@@ -1,0 +1,18 @@
+uuid: f15282f5-a507-4fae-a68e-e47c7dfeb617
+langcode: en
+status: true
+dependencies:
+  config:
+    - paragraphs.paragraphs_type.recognition_items
+id: paragraph.recognition_items.created
+field_name: created
+entity_type: paragraph
+bundle: recognition_items
+label: 'Authored on'
+description: 'The time that the Paragraph was created.'
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: created
