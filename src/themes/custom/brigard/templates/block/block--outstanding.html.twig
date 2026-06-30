@@ -52,7 +52,11 @@
   %}
   <div {{ attributes.addClass(container_classes) }}>
     <div class="outstanding-items-title">
-      <h2 class="title">{{ label|trans }}</h2>
+      {% if label is iterable %}
+        <h2 class="title">{{ label }}</h2>
+      {% else %}
+        <h2 class="title">{{ label|trans }}</h2>
+      {% endif %}
     </div>
     <div class="outstanding-items-wrapper">
       {% block content %}
