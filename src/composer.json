@@ -196,7 +196,8 @@
                 "Drupal 9 compatibility": "https://www.drupal.org/files/issues/2022-10-20/drupal_9_compatibility-14757058-2.patch"
             },
             "drupal/fullcalendar_view": {
-                "error  strlen() (line 395": "patch/modules/fullcalendar_view/0001-error-field-types.patch"
+                "error  strlen() (line 395": "patch/modules/fullcalendar_view/0001-error-field-types.patch",
+                "fix strlen array in Xss::filter": "patch/modules/fullcalendar_view/0002-fix-strlen-array-xss-filter.patch"
             },
             "drupal/advagg": {
                 "3375725#17": "https://www.drupal.org/files/issues/2024-01-16/deprecated-function-creation-of-dynamic-property-3375725-17.patch"

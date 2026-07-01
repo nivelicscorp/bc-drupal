@@ -1,0 +1,15 @@
+--- a/src/FullcalendarViewPreprocess.php
++++ b/src/FullcalendarViewPreprocess.php
+@@ -166,9 +166,9 @@
+     $timezone = !empty($start_field_option['settings']['timezone']) ?
+     $start_field_option['settings']['timezone'] : date_default_timezone_get();
+     // Left side buttons.
+-    $left_buttons = Xss::filter($options['left_buttons']);
++    $left_buttons = is_array($options['left_buttons']) ? implode(',', $options['left_buttons']) : Xss::filter($options['left_buttons']);
+     // Right side buttons.
+-    $right_buttons = Xss::filter($options['right_buttons']);
++    $right_buttons = is_array($options['right_buttons']) ? implode(',', $options['right_buttons']) : Xss::filter($options['right_buttons']);
+     // Slot Duration.
+-    $slot_duration = empty($options['slotDuration']) ? '00:30:00' : Xss::filter($options['slotDuration']);
++    $slot_duration = empty($options['slotDuration']) ? '00:30:00' : (is_array($options['slotDuration']) ? '00:30:00' : Xss::filter($options['slotDuration']));
+     // Display time limit.
