@@ -21,3 +21,6 @@ $settings['config_sync_directory'] = '/opt/drupal/web/sites/default/config/sync'
 // $config['elasticsearch_connector.cluster.elasticsearch']['url'] = getenv('ELASTICSEARCH_URL');
 
 $settings['file_private_path'] = '../private/files';
+
+// Hide error messages from end users in production
+$config['system.logging']['error_level'] = 'hide';
