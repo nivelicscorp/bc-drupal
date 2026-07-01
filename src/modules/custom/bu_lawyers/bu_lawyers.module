@@ -3,6 +3,11 @@
 define('BU_COMPANY_ADDRESS', 'Calle 70A No. 4-41;Bogotá;;Colombia');
 define('BU_COMPANY_NAME', 'Brigard Castro');
 
+function _bu_convert_string_to_meaningful_file_name($string) {
+  $string = str_replace(' ', '-', mb_strtolower($string));
+  return preg_replace('/[^a-z0-9\-]/', '', $string);
+}
+
 /**
  * hook_form_alter().
  */
