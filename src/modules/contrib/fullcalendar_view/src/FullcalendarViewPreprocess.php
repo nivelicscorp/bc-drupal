@@ -166,11 +166,11 @@ class FullcalendarViewPreprocess {
     // Set the first day setting.
     $first_day = isset($options['firstDay']) ? intval($options['firstDay']) : 0;
     // Left side buttons.
-    $left_buttons = Xss::filter($options['left_buttons']);
+    $left_buttons = is_array($options['left_buttons']) ? implode(',', $options['left_buttons']) : Xss::filter($options['left_buttons']);
     // Right side buttons.
-    $right_buttons = Xss::filter($options['right_buttons']);
+    $right_buttons = is_array($options['right_buttons']) ? implode(',', $options['right_buttons']) : Xss::filter($options['right_buttons']);
     // Slot Duration.
-    $slot_duration = empty($options['slotDuration']) ? '00:30:00' : Xss::filter($options['slotDuration']);
+    $slot_duration = empty($options['slotDuration']) ? '00:30:00' : (is_array($options['slotDuration']) ? '00:30:00' : Xss::filter($options['slotDuration']));
     // Display time limit.
     $minTime = !empty($options['minTime']) ? $options['minTime'] : '00:00:00';
     $maxTime = !empty($options['maxTime']) ? $options['maxTime'] : '23:59:59';
