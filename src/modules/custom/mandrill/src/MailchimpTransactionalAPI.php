@@ -79,10 +79,7 @@ class MailchimpTransactionalAPI implements MandrillAPIInterface {
       }
     }
     catch (RequestException $e) {
-      \Drupal::messenger()->addError(
-        t('Mandrill: %message', ['%message' => $e->getMessage()])
-      );
-      $this->log->error($e->getMessage());
+      $this->log->error('Mandrill API error in getMessages: @message', ['@message' => $e->getMessage()]);
     }
     return $messages;
   }
@@ -102,8 +99,7 @@ class MailchimpTransactionalAPI implements MandrillAPIInterface {
       }
     }
     catch (RequestException $e) {
-      \Drupal::messenger()->addError(t('Mandrill: %message', ['%message' => $e->getMessage()]));
-      $this->log->error($e->getMessage());
+      $this->log->error('Mandrill API error in getTemplates: @message', ['@message' => $e->getMessage()]);
     }
     return $templates;
   }
@@ -122,8 +118,7 @@ class MailchimpTransactionalAPI implements MandrillAPIInterface {
       }
     }
     catch (\Exception $e) {
-      \Drupal::messenger()->addError(t('Mandrill: %message', ['%message' => $e->getMessage()]));
-      $this->log->error($e->getMessage());
+      $this->log->error('Mandrill API error in getSubAccounts: @message', ['@message' => $e->getMessage()]);
     }
     return $accounts;
   }
@@ -142,8 +137,7 @@ class MailchimpTransactionalAPI implements MandrillAPIInterface {
       }
     }
     catch (RequestException $e) {
-      \Drupal::messenger()->addError(t('Mandrill: %message', ['%message' => $e->getMessage()]));
-      $this->log->error($e->getMessage());
+      $this->log->error('Mandrill API error in getUser: @message', ['@message' => $e->getMessage()]);
     }
     return $user;
   }
@@ -162,8 +156,7 @@ class MailchimpTransactionalAPI implements MandrillAPIInterface {
       }
     }
     catch (RequestException $e) {
-      \Drupal::messenger()->addError(t('Mandrill: %message', ['%message' => $e->getMessage()]));
-      $this->log->error($e->getMessage());
+      $this->log->error('Mandrill API error in getTags: @message', ['@message' => $e->getMessage()]);
     }
     return $tags;
   }
@@ -185,8 +178,7 @@ class MailchimpTransactionalAPI implements MandrillAPIInterface {
       }
     }
     catch (RequestException $e) {
-      \Drupal::messenger()->addError(t('Mandrill: %message', ['%message' => $e->getMessage()]));
-      $this->log->error($e->getMessage());
+      $this->log->error('Mandrill API error in getTag: @message', ['@message' => $e->getMessage()]);
     }
     return $tag_info;
   }
@@ -208,8 +200,7 @@ class MailchimpTransactionalAPI implements MandrillAPIInterface {
       }
     }
     catch (RequestException $e) {
-      \Drupal::messenger()->addError(t('Mandrill: %message', ['%message' => $e->getMessage()]));
-      $this->log->error($e->getMessage());
+      $this->log->error('Mandrill API error in getTagTimeSeries: @message', ['@message' => $e->getMessage()]);
     }
     return $data;
   }
@@ -228,8 +219,7 @@ class MailchimpTransactionalAPI implements MandrillAPIInterface {
       }
     }
     catch (RequestException $e) {
-      \Drupal::messenger()->addError(t('Mandrill: %message', ['%message' => $e->getMessage()]));
-      $this->log->error($e->getMessage());
+      $this->log->error('Mandrill API error in getTagsAllTimeSeries: @message', ['@message' => $e->getMessage()]);
     }
     return $data;
   }
@@ -248,8 +238,7 @@ class MailchimpTransactionalAPI implements MandrillAPIInterface {
       }
     }
     catch (\Exception $e) {
-      \Drupal::messenger()->addError(t('Mandrill: %message', ['%message' => $e->getMessage()]));
-      $this->log->error($e->getMessage());
+      $this->log->error('Mandrill API key validation failed: @message', ['@message' => $e->getMessage()]);
     }
     return $response;
   }
@@ -279,8 +268,7 @@ class MailchimpTransactionalAPI implements MandrillAPIInterface {
       }
     }
     catch (RequestException $e) {
-      \Drupal::messenger()->addError(t('Mandrill: %message', ['%message' => $e->getMessage()]));
-      $this->log->error($e->getMessage());
+      $this->log->error('Mandrill API error in sendTemplate: @message', ['@message' => $e->getMessage()]);
     }
     return $result;
   }
@@ -306,8 +294,7 @@ class MailchimpTransactionalAPI implements MandrillAPIInterface {
       }
     }
     catch (RequestException $e) {
-      \Drupal::messenger()->addError(t('Could not load Mandrill API: %message', ['%message' => $e->getMessage()]));
-      $this->log->error($e->getMessage());
+      $this->log->error('Mandrill API error in send: @message', ['@message' => $e->getMessage()]);
     }
     return $result;
   }
@@ -335,18 +322,14 @@ class MailchimpTransactionalAPI implements MandrillAPIInterface {
    */
   private function getNewApiObject($api_key) {
     if (!$this->isLibraryInstalled()) {
-      $msg = t('Failed to load Mandrill PHP library. Please refer to the installation requirements.');
-      $this->log->error($msg);
-      \Drupal::messenger()->addError($msg);
+      $this->log->error('Failed to load Mandrill PHP library. Please refer to the installation requirements.');
       return NULL;
     }
 
     $api_key ?? $api_key = $this->config->get('mandrill_api_key');
     $api_timeout = $this->config->get('mandrill_api_timeout');
     if (empty($api_key)) {
-      $msg = t('Failed to load Mandrill API Key. Please check your Mandrill settings.');
-      $this->log->error($msg);
-      \Drupal::messenger()->addError($msg);
+      $this->log->error('Failed to load Mandrill API Key. Please check your Mandrill settings.');
       return FALSE;
     }
     // We allow the class name to be overridden, following the example of core's
