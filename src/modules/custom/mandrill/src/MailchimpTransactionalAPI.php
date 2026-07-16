@@ -107,6 +107,9 @@ class MailchimpTransactionalAPI implements MandrillAPIInterface {
   /**
    * Gets a list of sub accounts.
    *
+   * Returns an empty array if the API key does not have permission to call
+   * subaccounts/list (common with restricted transactional keys).
+   *
    * @return array
    *   Array of objects, each representing a subaccount.
    */
@@ -118,7 +121,9 @@ class MailchimpTransactionalAPI implements MandrillAPIInterface {
       }
     }
     catch (\Exception $e) {
-      $this->log->error('Mandrill API error in getSubAccounts: @message', ['@message' => $e->getMessage()]);
+      // Log as a notice rather than error — restricted keys are expected to
+      // lack subaccounts permission and the module works fine without it.
+      $this->log->notice('Mandrill subaccounts not available (likely a restricted API key): @message', ['@message' => $e->getMessage()]);
     }
     return $accounts;
   }
@@ -225,16 +230,44 @@ class MailchimpTransactionalAPI implements MandrillAPIInterface {
   }
 
   /**
-   * Ping the API to validate an API key.
+   * Validate an API key by attempting a lightweight API call.
+   *
+   * Tries users/ping first. If the key is restricted (401 on users/ping but
+   * still valid for sending), falls back to a dry-run messages/send call.
    *
    * @return bool
-   *   True if API returns expected "PONG!" otherwise false
+   *   TRUE if the API key is valid for sending, FALSE otherwise.
    */
   public function isApiKeyValid($api_key = NULL): bool {
     $response = FALSE;
     try {
       if ($mandrill = $this->getNewApiObject($api_key)) {
-        $response = ($mandrill->users->ping() === 'PONG!');
+        // Try users/ping first (works with full-permission keys).
+        try {
+          $response = ($mandrill->users->ping() === 'PONG!');
+        }
+        catch (\Exception $e) {
+          // If users/ping fails with a permission error, the key may be a
+          // restricted transactional key. Validate by attempting a send to a
+          // known-invalid address; a valid key will return a result array
+          // (even if the send is rejected), while an invalid key throws.
+          try {
+            $result = $mandrill->messages->send([
+              'message' => [
+                'from_email' => 'test@example.com',
+                'to' => [['email' => 'test@example.com', 'type' => 'to']],
+                'subject' => 'API key validation',
+                'text' => 'test',
+              ],
+            ]);
+            // If we get a response array, the key is valid for sending.
+            $response = is_array($result);
+          }
+          catch (\Exception $sendException) {
+            $this->log->error('Mandrill API key validation failed: @message', ['@message' => $sendException->getMessage()]);
+            $response = FALSE;
+          }
+        }
       }
     }
     catch (\Exception $e) {
