@@ -115,14 +115,21 @@ class Api implements ApiInterface {
       return [];
     }
 
-    $result = $mailchimp_transactional->subaccounts->list();
-    if ($result instanceof RequestException) {
-      $this->messenger->addError($this->t('Mailchimp Transactional: %message', ['%message' => $result->getMessage()]));
-      $this->log->error($result->getMessage());
+    try {
+      $result = $mailchimp_transactional->subaccounts->list();
+      if ($result instanceof RequestException) {
+        $this->log->notice('Mailchimp Transactional subaccounts not available: %message', ['%message' => $result->getMessage()]);
+        return [];
+      }
+      return $result;
+    }
+    catch (\Exception $e) {
+      // Restricted transactional API keys do not have permission to call
+      // subaccounts/list. This is not a critical error — the module works
+      // fine without subaccounts.
+      $this->log->notice('Mailchimp Transactional subaccounts not available (likely a restricted API key): %message', ['%message' => $e->getMessage()]);
       return [];
     }
-
-    return $result;
   }
 
   /**
@@ -162,14 +169,38 @@ class Api implements ApiInterface {
   }
 
   /**
-   * Ping the API to validate an API key.
+   * Validate an API key.
+   *
+   * Tries users/ping first. If it fails (restricted key), falls back to
+   * a messages/send test to confirm the key is valid for sending.
    *
    * @return bool
-   *   True if API returns expected "PONG!" otherwise false
+   *   TRUE if the API key is valid for sending, FALSE otherwise.
    */
   public function isApiKeyValid($api_key = NULL): bool {
     if ($mailchimp_transactional = $this->getNewApiObject($api_key)) {
-      return $mailchimp_transactional->users->ping() === 'PONG!';
+      try {
+        return $mailchimp_transactional->users->ping() === 'PONG!';
+      }
+      catch (\Exception $e) {
+        // Restricted transactional keys cannot call users/ping.
+        // Fall back to messages/send to validate the key works for sending.
+        try {
+          $result = $mailchimp_transactional->messages->send([
+            'message' => [
+              'from_email' => 'test@example.com',
+              'to' => [['email' => 'test@example.com', 'type' => 'to']],
+              'subject' => 'API key validation',
+              'text' => 'test',
+            ],
+          ]);
+          return is_array($result);
+        }
+        catch (\Exception $sendException) {
+          $this->log->error('Mailchimp Transactional API key validation failed: %message', ['%message' => $sendException->getMessage()]);
+          return FALSE;
+        }
+      }
     }
 
     return FALSE;
