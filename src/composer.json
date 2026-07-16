@@ -201,6 +201,9 @@
             },
             "drupal/advagg": {
                 "3375725#17": "https://www.drupal.org/files/issues/2024-01-16/deprecated-function-creation-of-dynamic-property-3375725-17.patch"
+            },
+            "drupal/mailchimp_transactional": {
+                "Handle restricted API keys gracefully (401 on subaccounts/list and users/ping)": "patch/modules/mailchimp_transactional/0001-handle-restricted-api-keys.patch"
             }
         }
     },
