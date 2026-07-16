@@ -47,6 +47,9 @@ RUN ln -sf /opt/drupal/web/modules/custom/we_megamenu /opt/drupal/web/modules/co
 # Install dependencies
 RUN composer install --no-interaction --no-dev --prefer-dist --ignore-platform-reqs 2>/dev/null || true
 
+# Fix mailchimp_transactional restricted API key handling
+COPY --chown=nobody:nobody docker/patches/mailchimp_transactional_Api.php /opt/drupal/web/modules/contrib/mailchimp_transactional/src/Api.php
+
 # Fix fullcalendar_view strlen error: options can be arrays in Drupal 11
 COPY --chown=nobody:nobody src/patch/modules/fullcalendar_view/fix-xss-filter.php /tmp/fix-xss-filter.php
 RUN php /tmp/fix-xss-filter.php && rm /tmp/fix-xss-filter.php
