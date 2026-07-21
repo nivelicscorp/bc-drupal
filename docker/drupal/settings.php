@@ -22,5 +22,23 @@ $settings['config_sync_directory'] = '/opt/drupal/web/sites/default/config/sync'
 
 $settings['file_private_path'] = '../private/files';
 
+// Trusted host patterns
+$settings['trusted_host_patterns'] = [
+  '^bc\.com\.co$',
+  '^www\.bc\.com\.co$',
+  '^.+\.elb\.amazonaws\.com$',
+];
+
+// Reverse proxy settings (behind ALB/CloudFront)
+$settings['reverse_proxy'] = TRUE;
+$settings['reverse_proxy_header'] = 'X_FORWARDED_FOR';
+$settings['reverse_proxy_addresses'] = [];
+
+// Force HTTPS when behind load balancer
+if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
+  $_SERVER['HTTPS'] = 'on';
+  $settings['base_url'] = 'https://www.bc.com.co';
+}
+
 // Hide error messages from end users in production
 $config['system.logging']['error_level'] = 'hide';
