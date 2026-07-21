@@ -50,6 +50,9 @@ RUN composer install --no-interaction --no-dev --prefer-dist --ignore-platform-r
 # Fix mailchimp_transactional restricted API key handling
 COPY --chown=nobody:nobody docker/patches/mailchimp_transactional_Api.php /opt/drupal/web/modules/contrib/mailchimp_transactional/src/Api.php
 
+# Fix Unicode::validateUtf8() TypeError with PHP 8.3 (strlen doesn't accept arrays)
+RUN sed -i 's/if (strlen($text) == 0) {/if (!is_string($text) || strlen($text) == 0) {/' /opt/drupal/web/core/lib/Drupal/Component/Utility/Unicode.php
+
 # Fix fullcalendar_view strlen error: options can be arrays in Drupal 11
 COPY --chown=nobody:nobody src/patch/modules/fullcalendar_view/fix-xss-filter.php /tmp/fix-xss-filter.php
 RUN php /tmp/fix-xss-filter.php && rm /tmp/fix-xss-filter.php
