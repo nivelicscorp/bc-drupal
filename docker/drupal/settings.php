@@ -37,8 +37,10 @@ $settings['reverse_proxy_addresses'] = [];
 // Force HTTPS when behind load balancer
 if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
   $_SERVER['HTTPS'] = 'on';
-  $settings['base_url'] = 'https://www.bc.com.co';
+  $_SERVER['REQUEST_SCHEME'] = 'https';
+  $_SERVER['SERVER_PORT'] = 443;
 }
+$base_url = 'https://www.bc.com.co';
 
 // Hide error messages from end users in production
 $config['system.logging']['error_level'] = 'hide';
