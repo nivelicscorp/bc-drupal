@@ -23,11 +23,11 @@ $settings['config_sync_directory'] = '/opt/drupal/web/sites/default/config/sync'
 $settings['file_private_path'] = '../private/files';
 
 // Trusted host patterns
-$settings['trusted_host_patterns'] = [
-  '^bc\.com\.co$',
-  '^www\.bc\.com\.co$',
-  '^.+\.elb\.amazonaws\.com$',
-];
+// Note: trusted_host_patterns disabled to allow ALB health checks
+// $settings['trusted_host_patterns'] = [
+//   '^bc\.com\.co$',
+//   '^www\.bc\.com\.co$',
+// ];
 
 // Reverse proxy settings (behind ALB/CloudFront)
 $settings['reverse_proxy'] = TRUE;
